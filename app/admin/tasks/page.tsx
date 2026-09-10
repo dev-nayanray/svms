@@ -1,4 +1,4 @@
-import { TasksAdmin } from "@/components/admin/ops-admin";
+import { TasksAdmin } from "@/components/admin/tasks-admin";
 
 export const dynamic = "force-dynamic";
 

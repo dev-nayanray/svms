@@ -62,12 +62,36 @@ export const applicationStatusSchema = z.object({
 
 export const taskSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
+  description: z.string().max(5000).optional(),
   assignedToId: z.string().min(1, "Assignee is required"),
   studentId: z.string().optional(),
   applicationId: z.string().optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).default("MEDIUM"),
   dueDate: z.coerce.date().optional(),
+});
+
+/**
+ * Update schema for tasks. Partial — admins can edit any combination of
+ * fields. The `status` field triggers `completedAt` automatically when
+ * set to COMPLETED. `assignedToId` changes go through the dedicated
+ * assign endpoint so they can be audit-logged distinctly.
+ */
+export const taskUpdateSchema = z.object({
+  title: z.string().min(1, "Title is required").optional(),
+  description: z.string().max(5000).optional(),
+  studentId: z.string().optional(),
+  applicationId: z.string().optional(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
+  status: z.enum(["TODO", "IN_PROGRESS", "COMPLETED", "CANCELLED"]).optional(),
+  dueDate: z.coerce.date().nullable().optional(),
+});
+
+/**
+ * Assign/reassign schema. Just the new `assignedToId` — the audit log
+ * records the old → new assignee.
+ */
+export const taskAssignSchema = z.object({
+  assignedToId: z.string().min(1, "Assignee is required"),
 });
 
 export const documentUploadSchema = z.object({

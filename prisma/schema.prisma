@@ -474,12 +474,15 @@ model Task {
   dueDate       DateTime?
   createdById   String?      @db.ObjectId
   completedAt   DateTime?
+  deletedAt     DateTime?
+  deletedBy     String?      @db.ObjectId
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
   @@index([assignedToId])
   @@index([dueDate])
   @@index([status])
+  @@index([priority])
 }
 
 model Note {

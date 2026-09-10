@@ -223,7 +223,8 @@ intake.created/updated/status_changed/archived/unarchived,
 visa_application.created/stage_changed/updated/archived,
 country.created/updated/status_changed/archived/unarchived, visa_requirement.created/updated/deleted,
 document_requirement.created/updated/deleted, university.favorited/unfavorited,
-counseling_request.created, task.created. Viewable at `/admin/audit`.
+counseling_request.created, task.created/updated/status_changed/assigned/archived.
+Viewable at `/admin/audit`.
 
 ## 19. UI/UX Standards
 
@@ -1862,3 +1863,156 @@ timelines (>50 history entries + >30 audit entries) older events are
 truncated. The stage-change dialog uses `window.location.reload()` to
 refresh the DataTable (a proper queryClient invalidation would be
 cleaner — TODO).
+
+## 42. Admin Task Management (v2)
+
+**Routes**: `/admin/tasks` (list). APIs: `GET/POST /api/tasks`,
+`GET/PATCH/DELETE /api/tasks/[id]`, `GET /api/tasks/stats`,
+`GET /api/tasks/meta`.
+
+**Task fields**: Title, Description, Student (optional), Application
+(optional), Assigned Employee, Priority (LOW/MEDIUM/HIGH/URGENT),
+Status (TODO/IN_PROGRESS/COMPLETED/CANCELLED), Due Date, Created By,
+Completed At.
+
+**Statuses**: `TODO → IN_PROGRESS → COMPLETED | CANCELLED`. Terminal
+statuses (COMPLETED, CANCELLED) are excluded from the "overdue"
+calculation.
+
+**Priorities**: `LOW < MEDIUM < HIGH < URGENT` (weight 1-4 for sorting).
+
+**5 Views** (toggle chips):
+- **All**: no date filter
+- **Today**: dueDate falls within today (UTC)
+- **Upcoming**: dueDate is strictly after today
+- **Overdue**: dueDate is in the past AND status is open (TODO or
+  IN_PROGRESS)
+- **Completed**: status is COMPLETED
+
+**List features** (all server-side via the shared `DataTable`):
+- search across title + description
+- filters: Status, Priority, Employee (admin only — employees are
+  auto-scoped to their own tasks)
+- sortable columns: title, status, priority, dueDate, createdAt,
+  updatedAt
+- archived toggle to view soft-deleted tasks
+- row actions: Edit, Assign, Complete, Cancel, Archive
+- overdue highlighting (red text + warning icon on past-due open tasks)
+
+**Row actions** (all RBAC'd server-side via `tasks.manage`):
+- **Edit**: opens FormDialog with title/description/student/priority/
+  status/dueDate fields
+- **Assign**: opens FormDialog with employee dropdown — PATCHes with
+  `assignedToId` which triggers the assign path (audit-logged as
+  `task.assigned`, new assignee notified)
+- **Complete**: confirm dialog → sets status to COMPLETED, sets
+  `completedAt` to now, notifies the task creator
+- **Cancel**: immediate action → sets status to CANCELLED, notifies the
+  assignee
+- **Archive**: confirm dialog → soft-deletes (sets deletedAt + deletedBy)
+
+**Overdue detection**: `isOverdue(dueDate, status, now)` returns true
+when the due date is in the past AND the status is not terminal
+(COMPLETED or CANCELLED). Used by the UI for red highlighting and by the
+"Overdue" view filter.
+
+**Notifications** for important task events:
+- `TASK_ASSIGNED`: new task assigned or reassigned → notifies the new
+  assignee
+- `TASK_COMPLETED`: task marked as completed → notifies the task creator
+  (if different from the actor)
+- `TASK_CANCELLED`: task cancelled → notifies the assignee
+
+**Employee task performance** (`GET /api/tasks/stats`):
+Returns per-employee task counts (pending, overdue, completed, cancelled,
+total) for the admin dashboard's "Employee Task Performance" widget.
+Aggregates all non-archived tasks grouped by `assignedToId`, sorted by
+overdue desc then pending desc — employees who need attention surface
+first. Also returns overall team totals.
+
+**Pure helpers** (`lib/constants/tasks.ts`, unit-tested):
+- `TASK_STATUSES`, `TASK_STATUS_LABELS`, `OPEN_TASK_STATUSES`,
+  `TERMINAL_TASK_STATUSES`
+- `TASK_PRIORITIES`, `TASK_PRIORITY_LABELS`, `TASK_PRIORITY_WEIGHT`
+- `TASK_VIEWS`, `TASK_VIEW_LABELS`
+- `TASK_SORT_KEYS`
+- `isOverdue(dueDate, status, now)` — past due + non-terminal status
+- `isDueToday(dueDate, now)` — due date within today (UTC)
+- `isUpcoming(dueDate, now)` — due date strictly after today
+- `buildTaskViewWhere(view, now)` — Prisma where fragment per view
+- `buildAdminTaskWhere(filters)` — full where with archived toggle +
+  search/status/priority/employee/student/application filters + view
+- `computeTaskStats(tasks, now)` — pending/overdue/completed/cancelled/
+  total counts (reused by the stats endpoint and the existing
+  `employee-insights.ts` helper)
+
+**Validation** (`lib/validations/index.ts`):
+- `taskSchema` — create schema. Requires title + assignedToId; optional
+  description (max 5000), studentId, applicationId, dueDate; priority
+  defaults to MEDIUM.
+- `taskUpdateSchema` — partial update schema. Does NOT include
+  `assignedToId` (that goes through the assign path in the PATCH
+  handler). Status enum validated. DueDate is nullable.
+- `taskAssignSchema` — just `assignedToId` (min 1 char).
+
+**API improvements**:
+- `GET /api/tasks` — full filter set (search, status, priority,
+  assignedToId, studentId, applicationId, view, archived toggle) +
+  sorting + pagination. Employees auto-scoped to their own tasks.
+- `POST /api/tasks` — validates the assignee exists + is active,
+  notifies the assignee, audit-logs creation.
+- `GET /api/tasks/[id]` (new) — single task with student + application
+  joins. Employees can only access their own tasks.
+- `PATCH /api/tasks/[id]` — dual-purpose handler: when `assignedToId`
+  is in the body, runs the assign path (audit + notify); otherwise runs
+  the general update path (structured audit diff + status-change
+  notifications). `completedAt` set automatically when status becomes
+  COMPLETED.
+- `DELETE /api/tasks/[id]` — archive (soft delete). Retains data for
+  audit trails.
+- `GET /api/tasks/stats` (new) — per-employee task performance for the
+  admin dashboard.
+- `GET /api/tasks/meta` (new) — filter options (employees, students,
+  statuses, priorities, views).
+
+**Database change** (run `npx prisma db push` after pulling): added
+`deletedAt` and `deletedBy` to the `Task` model for archive support,
+plus `@@index([priority])`. Non-destructive — existing tasks continue
+to work (the new fields default to null).
+
+**Audit coverage added**: `task.created` (now with structured newValue),
+`task.updated` (structured old→new diff), `task.status_changed`
+(distinct event), `task.assigned` (old→new assignee diff),
+`task.archived`.
+
+**Tests**: `tests/tasks.test.ts` — 59 tests covering:
+- Status/priority/view/sort enum stability + labels + weights
+- `isOverdue` (past + open, past + terminal, future, null, ISO string,
+  invalid date)
+- `isDueToday` (within today, different day, null, ISO string)
+- `isUpcoming` (after today, today, past, null)
+- `buildTaskViewWhere` (all=null, today=range, upcoming=gt, overdue=lt
+  + open statuses, completed=status filter)
+- `buildAdminTaskWhere` (archived toggle, status/priority/employee/
+  student/application filters, search OR clause, whitespace trimming,
+  view filter combination, 'all' no-op)
+- `computeTaskStats` (pending/overdue/completed/cancelled/total,
+  completed-not-overdue, empty list, null due date)
+- `taskSchema` (required fields, default priority, dueDate acceptance,
+  invalid priority, optional studentId/applicationId, description cap)
+- `taskUpdateSchema` (empty accepted, partial updates, nullable
+  dueDate, invalid status/priority rejection, assignedToId not in
+  schema)
+- `taskAssignSchema` (required, empty rejected)
+
+488 tests total via `npm run test` (16 files).
+
+**Known limitations**: the assign action goes through the same PATCH
+endpoint as the general update (the handler inspects the body for
+`assignedToId` to route to the assign path) — a dedicated
+`/api/tasks/[id]/assign` endpoint would be cleaner but the current
+approach avoids a new route file. The "Cancel" action is immediate (no
+confirm dialog) — this is intentional for speed but could be changed to
+a confirm dialog if misclicks become an issue. The task performance
+stats endpoint (`/api/tasks/stats`) is not yet wired into the admin
+dashboard UI — it's ready for the dashboard widget to consume.
