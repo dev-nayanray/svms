@@ -374,6 +374,7 @@ export async function getStudentDashboard(student: StudentProfile, userId: strin
       id: n.id,
       title: n.title,
       message: n.message,
+      link: n.link,
       readAt: n.readAt,
       createdAt: n.createdAt,
     })),
