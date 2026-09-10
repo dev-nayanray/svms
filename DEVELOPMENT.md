@@ -2779,3 +2779,82 @@ each detail page would add an "Audit Timeline" tab that renders the
 component. The per-entity endpoint doesn't validate that the entity
 exists in the DB (it just queries by entity + entityId) — this is
 intentional to allow querying for deleted entities' audit trails.
+
+---
+
+## 50. Student Panel — Module 01: App Shell + PWA (v2)
+
+### Architecture
+
+The Student Panel is a **mobile-first Progressive Web App** layered on the existing
+architecture — Auth.js, RBAC, the shared UI kit, and Prisma services are reused
+unchanged. Admin and Employee panels are untouched.
+
+**Key pieces**
+
+| Piece | Location |
+| --- | --- |
+| Student guard (server-side isolation) | `lib/student/guard.ts` |
+| Navigation config (serializable icons) | `config/student-nav.ts` |
+| Mobile app shell (header + bottom nav + More sheet + desktop rail) | `components/student/app-shell.tsx` |
+| Mobile UI kit (MobilePage, MobileCard, ProgressCard, QuickAction, Timeline, LoadingCards) | `components/student/ui.tsx` |
+| Home screen | `app/student/page.tsx` |
+| PWA manifest (env-driven) | `app/manifest.ts` + `lib/constants/app.ts` |
+| Service worker | `public/sw.js` |
+| Install experience | `components/pwa/install-prompt.tsx` + `lib/pwa/install.ts` |
+| Offline banner / offline page | `components/pwa/offline-banner.tsx`, `app/offline/page.tsx` |
+| Edge role gate | `proxy.ts` (Next 16 replacement for `middleware.ts`) |
+
+### Routes
+
+All under `/student`: `''` (home), `dashboard` (→ home), `application` (→ applications),
+`applications`, `documents`, `universities`, `courses`, `visa`, `tasks`, `payments`,
+`invoices`, `messages`, `notifications`, `appointments`, `support`, `settings`, `profile`.
+Modules shipping later (visa, payments, messages, appointments, support, settings,
+profile) currently render a typed `ModulePage` placeholder — routing, headers and
+guards are real and final.
+
+### Authentication & RBAC (defense in depth)
+
+1. **Edge (`proxy.ts`)**: no session cookie → `/login?callbackUrl=…`; authenticated
+   users are redirected into their own role's prefix (`roleHome()`). Fast gate only.
+2. **Server layout (`app/student/layout.tsx` → `requireStudentProfile()`)**: only the
+   `STUDENT` role with a linked student profile may render anything under `/student`.
+3. **API layer (`studentApiGuard()` / `requireOwnedStudent()`)**: every student API
+   derives the student record from the **session user**, never from client-supplied
+   IDs (IDOR-safe). Foreign/missing records both return 404 so ownership is never
+   confirmed.
+
+### PWA behavior
+
+- `app/manifest.ts` renders `/manifest.webmanifest` from `NEXT_PUBLIC_APP_NAME`,
+  `NEXT_PUBLIC_APP_SHORT_NAME`, `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_APP_THEME_COLOR`,
+  `NEXT_PUBLIC_APP_BACKGROUND_COLOR` — nothing is hardcoded.
+- The service worker registers in production only. It **never intercepts `/api/*` or
+  `/login`**, caches only build-hashed static assets + icons, and serves `/offline`
+  as the navigation fallback. No student data is ever cached.
+- Install CTA: captures `beforeinstallprompt` (Chromium); iOS Safari gets explicit
+  "Share → Add to Home Screen" instructions. Dismissal is remembered for 14 days in
+  `localStorage` (`svms-install-dismissed-at`).
+- Icons: `node scripts/generate-icons.mjs` regenerates `public/icons/*` (no external
+  tooling; PNGs are encoded with node's zlib).
+
+### Security headers
+
+`next.config.ts` sets CSP, `X-Frame-Options: DENY`, `nosniff`, Referrer-Policy,
+Permissions-Policy, disables `x-powered-by`, and adds `Service-Worker-Allowed: /`.
+
+### Mobile UX notes
+
+- Bottom nav: Home / Application / Documents / Messages / More; fixed, 56px rows,
+  safe-area padding (`env(safe-area-inset-bottom)`), active indicator + unread badge.
+- All touch targets ≥ 44px. `MobilePage` reserves bottom padding so content is never
+  hidden behind the nav. Viewport: `viewport-fit=cover`, zoom allowed up to 5×.
+- Desktop (md+) switches to a compact left rail automatically.
+
+### Tests
+
+`tests/student-panel.test.ts` covers: student data isolation (401/403/IDOR),
+server-component role redirects, role-home routing, navigation config integrity,
+PWA manifest shape, install CTA gating (standalone/dismissal/unsupported), and the
+service-worker offline-safety contract (never caches `/api/*`, GET-only).

@@ -49,7 +49,7 @@ export const applicationService = {
     studentId?: string;
     createdFrom?: Date;
     createdTo?: Date;
-    sortBy?: Record<string, string>;
+    sortBy?: Record<string, "asc" | "desc">[];
   }) {
     const where = {
       deletedAt: null,
@@ -84,7 +84,7 @@ export const applicationService = {
           student: true,
           country: true,
         },
-        orderBy: params.sortBy ?? { createdAt: "desc" },
+        orderBy: params.sortBy ?? [{ createdAt: "desc" }],
         skip: (params.page - 1) * params.pageSize,
         take: params.pageSize,
       }),

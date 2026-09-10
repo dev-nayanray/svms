@@ -28,7 +28,7 @@ export const studentService = {
     appStage?: string;
     createdFrom?: Date;
     createdTo?: Date;
-    sortBy?: Record<string, string>;
+    sortBy?: Record<string, "asc" | "desc">[];
   }) {
     const where = {
       deletedAt: null,
@@ -60,7 +60,7 @@ export const studentService = {
       prisma.student.findMany({
         where,
         include: { employee: { include: { user: true } } },
-        orderBy: params.sortBy ?? { createdAt: "desc" },
+        orderBy: params.sortBy ?? [{ createdAt: "desc" }],
         skip: (params.page - 1) * params.pageSize,
         take: params.pageSize,
       }),

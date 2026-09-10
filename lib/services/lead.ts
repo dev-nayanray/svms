@@ -16,7 +16,7 @@ export type LeadListParams = {
   createdFrom?: Date;
   createdTo?: Date;
   archived?: boolean;
-  sortBy?: Record<string, string>;
+  sortBy?: Record<string, "asc" | "desc">[];
 };
 
 export const leadService = {
@@ -51,7 +51,7 @@ export const leadService = {
       prisma.lead.findMany({
         where,
         include: { employee: { include: { user: true } } },
-        orderBy: params.sortBy ?? { createdAt: "desc" },
+        orderBy: params.sortBy ?? [{ createdAt: "desc" }],
         skip: (params.page - 1) * params.pageSize,
         take: params.pageSize,
       }),

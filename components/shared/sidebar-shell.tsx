@@ -5,9 +5,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui";
+import { NavIcon, type NavIconName } from "@/components/shared/nav-icons";
+
 
 export type NavItem = { href: string; label: string; icon: React.ElementType };
 export type NavGroup = { label: string; items: NavItem[] };
+ 
+export type NavItem = { href: string; label: string; icon: NavIconName };
+
 
 export function SidebarShell({
   items,
@@ -48,7 +53,7 @@ export function SidebarShell({
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
-                <item.icon className="h-4 w-4" aria-hidden />
+                <NavIcon name={item.icon} className="h-4 w-4" />
                 {item.label}
               </Link>
             );
@@ -103,7 +108,7 @@ function MobileNav({ items }: { items: NavItem[] }) {
               active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
             )}
           >
-            <item.icon className="h-4 w-4" aria-hidden />
+            <NavIcon name={item.icon} className="h-4 w-4" />
           </Link>
         );
       })}

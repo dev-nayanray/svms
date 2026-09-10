@@ -7,7 +7,11 @@ import { useQuery } from "@tanstack/react-query";
 import { signOut } from "next-auth/react";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+
 import type { NavItem, NavGroup } from "@/components/shared/sidebar-shell";
+
+import type { NavItem } from "@/components/shared/sidebar-shell";
+import { NavIcon } from "@/components/shared/nav-icons";
 import { Button } from "@/components/ui";
 import {
   Dialog,
@@ -145,6 +149,30 @@ export function AdminShell({
       </nav>
     );
   };
+
+  const nav = (
+    <nav className="flex-1 space-y-0.5 overflow-y-auto p-2" aria-label="Admin navigation">
+      {items.map((item) => {
+        const active = pathname === item.href || pathname.startsWith(item.href + "/");
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            title={item.label}
+            onClick={() => setMobileOpen(false)}
+            className={cn(
+              "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              collapsed && "justify-center px-2",
+              active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            <NavIcon name={item.icon} className="h-4 w-4 shrink-0" />
+            {!collapsed && <span className="truncate">{item.label}</span>}
+          </Link>
+        );
+      })}
+    </nav>
+  );
 
   return (
     <div className="flex min-h-screen bg-background">

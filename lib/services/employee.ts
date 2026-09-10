@@ -10,7 +10,7 @@ export const employeeService = {
     pageSize: number;
     search?: string;
     branchId?: string;
-    sortBy?: Record<string, string>;
+    sortBy?: Record<string, "asc" | "desc">[];
   }) {
     const where = {
       deletedAt: null,
@@ -34,9 +34,9 @@ export const employeeService = {
           branch: true,
           _count: { select: { students: true, leads: true } },
         },
-        orderBy: params.sortBy?.name
-          ? { user: { [params.sortBy.name]: Object.values(params.sortBy)[0] } }
-          : { createdAt: "desc" },
+        orderBy: params.sortBy?.[0]?.name
+          ? [{ user: { name: params.sortBy[0].name } }]
+          : [{ createdAt: "desc" }],
         skip: (params.page - 1) * params.pageSize,
         take: params.pageSize,
       }),

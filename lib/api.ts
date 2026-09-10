@@ -74,9 +74,10 @@ export function sortFrom(
   sp: URLSearchParams,
   allowed: readonly string[],
   fallback: Record<string, string> = { createdAt: "desc" }
-): Record<string, string> {
+): Record<string, "asc" | "desc">[] {
   const sortBy = sp.get("sortBy");
-  const sortOrder = sp.get("sortOrder") === "asc" ? "asc" : "desc";
-  if (sortBy && allowed.includes(sortBy)) return { [sortBy]: sortOrder };
-  return fallback;
+  const sortOrder: "asc" | "desc" = sp.get("sortOrder") === "asc" ? "asc" : "desc";
+  // Prisma requires the array form when sorting by multiple fields.
+  if (sortBy && allowed.includes(sortBy)) return [{ [sortBy]: sortOrder }];
+  return Object.entries(fallback).map(([key, order]) => ({ [key]: order as "asc" | "desc" }));
 }

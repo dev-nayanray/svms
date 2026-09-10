@@ -235,6 +235,127 @@ async function main() {
     });
   }
 
+
+  console.log("Seeding intakes…");
+  const courses = await prisma.course.findMany();
+  const intakePlan = [
+    { name: "January 2027", month: 1, year: 2027 },
+    { name: "May 2027", month: 5, year: 2027 },
+    { name: "September 2026", month: 9, year: 2026 },
+    { name: "September 2027", month: 9, year: 2027 },
+    { name: "January 2026", month: 1, year: 2026 },
+    { name: "May 2026", month: 5, year: 2026 },
+  ];
+  const intakes: Record<string, string> = {};
+  for (let i = 0; i < intakePlan.length; i++) {
+    const course = courses[i % courses.length];
+    const existingIntake = await prisma.intake.findFirst({ where: { courseId: course.id, name: intakePlan[i].name } });
+    const rec = existingIntake ?? await prisma.intake.create({
+      data: {
+        courseId: course.id,
+        name: intakePlan[i].name,
+        month: intakePlan[i].month,
+        year: intakePlan[i].year,
+        deadline: new Date(intakePlan[i].year, intakePlan[i].month - 1, 1),
+        status: "ACTIVE",
+      },
+    });
+    intakes[intakePlan[i].name] = rec.id;
+  }
+
+  console.log("Seeding demo students, applications, invoices and payments…");
+  const year = new Date().getFullYear();
+  const demo = [
+    { first: "Ayesha", last: "Rahman", country: "Canada", uni: "University of Toronto", stage: "APPLICATION_SUBMITTED", intake: "January 2027", status: "ACTIVE", fee: 1250, paid: 1250 },
+    { first: "Tanvir", last: "Hossain", country: "Australia", uni: "University of Melbourne", stage: "CONDITIONAL_OFFER", intake: "May 2027", status: "ACTIVE", fee: 2000, paid: 1000 },
+    { first: "Nusrat", last: "Jahan", country: "United Kingdom", uni: "University of Manchester", stage: "VISA_SUBMITTED", intake: "September 2026", status: "ACTIVE", fee: 1500, paid: 1500 },
+    { first: "Rafiul", last: "Islam", country: "Canada", uni: "University of Toronto", stage: "COMPLETED", intake: "January 2026", status: "COMPLETED", fee: 900, paid: 900 },
+    { first: "Sadia", last: "Akter", country: "USA", uni: "University of Melbourne", stage: "UNIVERSITY_SELECTION", intake: "September 2027", status: "ACTIVE", fee: 800, paid: 0 },
+  ];
+  for (let i = 0; i < demo.length; i++) {
+    const d = demo[i];
+    const email = `${d.first.toLowerCase()}.${d.last.toLowerCase()}@example.com`;
+    const seq = String(101 + i).padStart(6, "0");
+    const user = await prisma.user.upsert({
+      where: { email },
+      update: {},
+      create: {
+        name: `${d.first} ${d.last}`, email, passwordHash: studentHash,
+        roleName: "STUDENT", status: "ACTIVE", emailVerifiedAt: new Date(),
+      },
+    });
+    const stu = await prisma.student.upsert({
+      where: { userId: user.id },
+      update: {},
+      create: {
+        userId: user.id,
+        studentId: `STD-${year}-${seq}`,
+        firstName: d.first, lastName: d.last, email,
+        phone: `+88017000000${10 + i}`,
+        nationality: "Bangladeshi", city: "Dhaka", country: "Bangladesh",
+        assignedEmployeeId: employee.id, branchId: branch.id,
+      },
+    });
+    const app = await prisma.application.findUnique({ where: { applicationNumber: `SV-${year}-${seq}` } });
+    if (!app) {
+      await prisma.application.create({
+        data: {
+          applicationNumber: `SV-${year}-${seq}`,
+          studentId: stu.id,
+          employeeId: employee.id,
+          countryId: countries[d.country],
+          universityId: universities[d.uni],
+          intakeId: intakes[d.intake],
+          stageKey: d.stage,
+          status: d.status,
+          priority: i % 2 === 0 ? "MEDIUM" : "HIGH",
+          submissionDate: d.stage === "LEAD" || d.stage === "UNIVERSITY_SELECTION" ? null : new Date(Date.now() - (i + 1) * 10 * 86400_000),
+          statusHistory: {
+            create: { fromStage: null, toStage: d.stage, changedById: adminUser.id, note: "Seeded demo application" },
+          },
+        },
+      });
+    }
+    if (d.fee > 0) {
+      const existingInvoice = await prisma.invoice.findUnique({ where: { invoiceNumber: `INV-${year}-${seq}` } });
+      if (!existingInvoice) {
+        const inv = await prisma.invoice.create({
+          data: {
+            invoiceNumber: `INV-${year}-${seq}`,
+            studentId: stu.id,
+            items: [{ description: "Consultancy & processing service", quantity: 1, unitPrice: d.fee }],
+            subtotal: d.fee, total: d.fee, dueAmount: d.fee - d.paid,
+            paidAmount: d.paid,
+            status: d.paid >= d.fee ? "PAID" : d.paid > 0 ? "PARTIAL" : "ISSUED",
+            issueDate: new Date(Date.now() - (i + 1) * 15 * 86400_000),
+            dueDate: new Date(Date.now() + 30 * 86400_000),
+          },
+        });
+        if (d.paid > 0) {
+          await prisma.payment.create({
+            data: {
+              studentId: stu.id,
+              invoiceId: inv.id,
+              amount: d.paid,
+              currency: "BDT",
+              paymentMethod: i % 2 === 0 ? "BKASH" : "BANK_TRANSFER",
+              transactionReference: `TXN-DEMO-${seq}`,
+              status: "PAID",
+              paymentDate: new Date(Date.now() - (i + 1) * 12 * 86400_000),
+              createdById: adminUser.id,
+            },
+          });
+        }
+      }
+    }
+  }
+
+  // MongoDB: ensure the deletedAt key exists so `where: { deletedAt: null }` matches.
+  for (const m of ["application","branch","country","course","document","employee","intake","invoice","lead","payment","student","task","university","user","visaApplication"] as const) {
+    // @ts-expect-error dynamic model access
+    await prisma[m].updateMany({ data: { deletedAt: null } });
+  }
+
   console.log("Seed complete ✔");
   console.log("  admin@example.com    / SEED_ADMIN_PASSWORD");
   console.log("  employee@example.com / SEED_EMPLOYEE_PASSWORD");

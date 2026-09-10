@@ -1,3 +1,4 @@
+
 import {
   LayoutDashboard,
   Users,
@@ -88,30 +89,56 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
       { href: "/admin/audit", label: "Audit Logs", icon: ScrollText },
     ],
   },
+=======
+import type { NavItem } from "@/components/shared/sidebar-shell";
+
+export const ADMIN_NAV: NavItem[] = [
+  { href: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
+  { href: "/admin/leads", label: "Leads", icon: "Target" },
+  { href: "/admin/students", label: "Students", icon: "Users" },
+  { href: "/admin/employees", label: "Employees", icon: "GraduationCap" },
+  { href: "/admin/applications", label: "Applications", icon: "FolderKanban" },
+  { href: "/admin/documents", label: "Documents", icon: "FileText" },
+  { href: "/admin/countries", label: "Countries", icon: "Globe" },
+  { href: "/admin/universities", label: "Universities", icon: "Building2" },
+  { href: "/admin/courses", label: "Courses", icon: "BookOpen" },
+  { href: "/admin/intakes", label: "Intakes", icon: "CalendarClock" },
+  { href: "/admin/visa", label: "Visa Management", icon: "Stamp" },
+  { href: "/admin/tasks", label: "Tasks", icon: "CheckSquare" },
+  { href: "/admin/payments", label: "Payments", icon: "CreditCard" },
+  { href: "/admin/invoices", label: "Invoices", icon: "Receipt" },
+  { href: "/admin/messages", label: "Messages", icon: "MessageSquare" },
+  { href: "/admin/reports", label: "Reports", icon: "BarChart3" },
+  { href: "/admin/branches", label: "Branches", icon: "GitBranch" },
+  { href: "/admin/notifications", label: "Notifications", icon: "Bell" },
+  { href: "/admin/roles-permissions", label: "Roles & Permissions", icon: "ShieldCheck" },
+  { href: "/admin/settings", label: "Settings", icon: "Settings" },
+  { href: "/admin/audit", label: "Audit Logs", icon: "ScrollText" },
+ 
 ];
 
 // Flatten for backwards compatibility with sidebar-shell
 export const ADMIN_NAV: NavItem[] = ADMIN_NAV_GROUPS.flatMap((g) => g.items);
 
 export const EMPLOYEE_NAV: NavItem[] = [
-  { href: "/employee", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/employee/students", label: "My Students", icon: Users },
-  { href: "/employee/leads", label: "Leads", icon: Target },
-  { href: "/employee/applications", label: "Applications", icon: FolderKanban },
-  { href: "/employee/documents", label: "Documents", icon: FileText },
-  { href: "/employee/universities", label: "Universities", icon: Building2 },
-  { href: "/employee/courses", label: "Courses", icon: BookOpen },
-  { href: "/employee/tasks", label: "Tasks", icon: CheckSquare },
-  { href: "/employee/notifications", label: "Notifications", icon: Bell },
+  { href: "/employee", label: "Dashboard", icon: "LayoutDashboard" },
+  { href: "/employee/students", label: "My Students", icon: "Users" },
+  { href: "/employee/leads", label: "Leads", icon: "Target" },
+  { href: "/employee/applications", label: "Applications", icon: "FolderKanban" },
+  { href: "/employee/documents", label: "Documents", icon: "FileText" },
+  { href: "/employee/universities", label: "Universities", icon: "Building2" },
+  { href: "/employee/courses", label: "Courses", icon: "BookOpen" },
+  { href: "/employee/tasks", label: "Tasks", icon: "CheckSquare" },
+  { href: "/employee/notifications", label: "Notifications", icon: "Bell" },
 ];
 
 export const STUDENT_NAV: NavItem[] = [
-  { href: "/student", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/student/universities", label: "Universities", icon: Building2 },
-  { href: "/student/courses", label: "Courses", icon: BookOpen },
-  { href: "/student/applications", label: "Applications", icon: FolderKanban },
-  { href: "/student/documents", label: "Documents", icon: FileText },
-  { href: "/student/tasks", label: "Tasks", icon: CheckSquare },
-  { href: "/student/invoices", label: "Invoices", icon: Receipt },
-  { href: "/student/notifications", label: "Notifications", icon: Bell },
+  { href: "/student", label: "Dashboard", icon: "LayoutDashboard" },
+  { href: "/student/universities", label: "Universities", icon: "Building2" },
+  { href: "/student/courses", label: "Courses", icon: "BookOpen" },
+  { href: "/student/applications", label: "Applications", icon: "FolderKanban" },
+  { href: "/student/documents", label: "Documents", icon: "FileText" },
+  { href: "/student/tasks", label: "Tasks", icon: "CheckSquare" },
+  { href: "/student/invoices", label: "Invoices", icon: "Receipt" },
+  { href: "/student/notifications", label: "Notifications", icon: "Bell" },
 ];
