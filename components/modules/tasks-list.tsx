@@ -13,7 +13,10 @@ export async function TasksList({
   assignedToUserId?: string;
 }) {
   const pageSize = 20;
-  const where = assignedToUserId ? { assignedToId: assignedToUserId } : {};
+  const where = {
+    deletedAt: null,
+    ...(assignedToUserId ? { assignedToId: assignedToUserId } : {}),
+  };
   const [tasks, total] = await Promise.all([
     prisma.task.findMany({
       where,
@@ -26,6 +29,7 @@ export async function TasksList({
   ]);
   const totalPages = Math.max(Math.ceil(total / pageSize), 1);
   const now = new Date();
+  const isAdmin = basePath.startsWith("/admin");
 
   return (
     <>
@@ -48,7 +52,7 @@ export async function TasksList({
                   {formatDate(t.dueDate)}
                 </td>
                 <td className="px-4 py-2.5">
-                  {t.application && (
+                  {t.application && isAdmin && (
                     <Link
                       href={`/admin/applications/${t.application.id}`}
                       className="text-xs text-primary hover:underline"

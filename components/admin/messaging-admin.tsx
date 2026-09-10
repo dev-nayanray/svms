@@ -72,7 +72,7 @@ export function MessagingAdmin() {
   const conversations = listData?.data ?? [];
 
   // Selected conversation detail
-  const { data: detail, isPending: detailPending } = useQuery({
+  const { data: detail } = useQuery({
     queryKey: ["/api/conversations", selectedId],
     queryFn: () => apiFetch<ConversationDetail>(`/api/conversations/${selectedId}`),
     enabled: !!selectedId,
@@ -111,7 +111,7 @@ export function MessagingAdmin() {
 
   // Conversation detail view
   if (selectedId && detail) {
-    const currentUserId = ""; // will be replaced by the actual user ID from session
+    
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2">

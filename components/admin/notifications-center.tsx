@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui";
 import { Button } from "@/components/ui";
 import { EmptyState } from "@/components/shared";
 import { apiFetch } from "@/lib/api-client";

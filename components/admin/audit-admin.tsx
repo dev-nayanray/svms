@@ -26,13 +26,6 @@ type AuditLog = {
   user: { name: string; email: string } | null;
 };
 
-type EntityOption = { value: string; label: string };
-
-type AuditData = {
-  data: AuditLog[];
-  entityTypes: EntityOption[];
-  pagination?: { page: number; pageSize: number; total: number; totalPages: number };
-};
 
 /**
  * Admin Audit Log — immutable record of every important administrative

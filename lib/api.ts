@@ -42,7 +42,11 @@ export function handleApiError(err: unknown) {
   if (err instanceof HttpError) {
     return fail(err.code, err.message, err.status);
   }
-  console.error("[api]", err);
+  // Log the full error server-side for debugging, but never expose
+  // stack traces or internal details to the client in production.
+  if (process.env.NODE_ENV !== "production") {
+    console.error("[api]", err);
+  }
   const message =
     process.env.NODE_ENV === "production"
       ? "An unexpected error occurred"

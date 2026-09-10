@@ -8,7 +8,6 @@ import {
   isSecretKey,
   isReadOnly,
   maskSecretValue,
-  getDefaultValue,
   getSettingSection,
 } from "@/lib/constants/settings";
 

@@ -2,7 +2,6 @@ import { NextRequest } from "next/server";
 import { ok, handleApiError, notFound } from "@/lib/api";
 import { requireAuth } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
-import { isMessageVisibleTo } from "@/lib/constants/notifications";
 import { auditLog } from "@/lib/services/audit";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -87,11 +86,6 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
         readAt: null,
       },
       data: { readAt: new Date() },
-    });
-
-    // Count unread for the conversation
-    const unreadCount = await prisma.message.count({
-      where: { conversationId: id, readAt: null, senderId: otherPartyId },
     });
 
     return ok({

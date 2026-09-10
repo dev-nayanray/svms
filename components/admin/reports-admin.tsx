@@ -25,14 +25,6 @@ type ReportData = {
   };
 };
 
-type Meta = {
-  branches: { id: string; name: string }[];
-  employees: { id: string; user: { name: string } }[];
-  countries: { id: string; name: string; flag: string | null }[];
-  universities: { id: string; name: string }[];
-  courses: { id: string; name: string }[];
-  intakes: { id: string; name: string }[];
-};
 
 /**
  * Admin Reports & Analytics — server-side aggregated analytics with
