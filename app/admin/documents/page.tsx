@@ -1,6 +1,7 @@
-import { DocumentsList } from "@/components/modules/documents-list";
+import { DocumentsAdmin } from "@/components/admin/documents-admin";
+
 export const dynamic = "force-dynamic";
-export default async function Page({ searchParams }: { searchParams: Promise<{ page?: string; status?: string }> }) {
-  const sp = await searchParams;
-  return (<><h1 className="text-xl font-semibold">Documents</h1><DocumentsList page={Number(sp.page ?? 1)} status={sp.status} basePath="/admin/documents" canReview /></>);
+
+export default function Page() {
+  return <DocumentsAdmin />;
 }

@@ -6,6 +6,13 @@ import { documentReviewSchema } from "@/lib/validations";
 
 type Ctx = { params: Promise<{ id: string }> };
 
+/**
+ * Review a document — approve, reject, or put under review.
+ *
+ * The `documentReviewSchema` enforces that rejection requires a
+ * `reviewNote` (reason). The service layer additionally enforces that
+ * APPROVED documents cannot be rejected without first being revoked.
+ */
 export async function PATCH(req: NextRequest, { params }: Ctx) {
   try {
     const g = await guard("documents.review");

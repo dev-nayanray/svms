@@ -215,8 +215,9 @@ message. `GET /api/notifications` returns latest 50 + unread count; `PATCH` mark
 
 `auditLog.record({ userId, action, entity, entityId, oldValue, newValue, ipAddress, userAgent })`.
 Logged actions include: user.registered, student.created/soft_deleted, lead.converted,
-application.created/stage_changed, document.uploaded/approved/rejected/under_review,
-invoice.created, payment.recorded, university.created/updated/status_changed/archived/unarchived,
+application.created/stage_changed, document.uploaded/approved/rejected/under_review/reupload_requested/
+archived/unarchived, invoice.created, payment.recorded,
+university.created/updated/status_changed/archived/unarchived,
 course.created/updated/status_changed/archived/unarchived,
 intake.created/updated/status_changed/archived/unarchived,
 country.created/updated/status_changed/archived/unarchived, visa_requirement.created/updated/deleted,
@@ -1545,3 +1546,156 @@ with a null `tuitionFee` (intentional — admins filtering by tuition
 want concrete numbers); the course detail page's "View" action
 navigates to `/admin/courses/[id]` but there's no equivalent intake
 detail page (intakes are managed inline from the list).
+
+## 40. Admin Document Management (v2)
+
+**Routes**: `/admin/documents` (list). APIs: `GET/POST /api/documents`,
+`GET/PATCH/DELETE /api/documents/[id]`, `PATCH /api/documents/[id]/review`,
+`POST /api/documents/[id]/reupload`, `GET /api/documents/meta`.
+
+**Statuses**: REQUESTED → UPLOADED → UNDER_REVIEW → APPROVED | REJECTED
+→ (re-upload) ↘ EXPIRED.
+
+**Document list features** (all server-side via the shared `DataTable`):
+- search across document name, file name, and student name
+- **6 filters**: Status, Country, Application, Student, Employee, Date
+  range (uploadedFrom / uploadedTo)
+- sortable columns: name, status, uploadedAt, reviewedAt, expiresAt,
+  createdAt
+- archived toggle to view soft-deleted documents
+- row actions: Approve, Reject, Re-upload, Archive
+- per-row columns: Document (name + file name + file size), Student
+  (name + ID), Application (number + country), Status badge, Uploaded
+  date, Reviewed date, Expiry date (red if past)
+
+**Document review workflow**:
+- **Approve**: sets status to APPROVED, records reviewer + timestamp,
+  optional note. Notifies the student. Audit-logged as
+  `document.approved`.
+- **Reject**: REQUIRES a reason (enforced by `documentReviewSchema` Zod
+  refine). Sets status to REJECTED, records reviewer + timestamp + note.
+  Notifies the student with the rejection reason so they can fix and
+  re-upload. Audit-logged as `document.rejected`.
+- **Request Re-upload**: REQUIRES a reason (enforced by
+  `documentReuploadSchema`). Resets status to REQUESTED, records the
+  admin's reason as the reviewNote. Notifies the student. Can be used
+  on any non-archived, non-REQUESTED, non-EXPIRED document — including
+  APPROVED documents (implicitly revokes the approval). Audit-logged
+  as `document.reupload_requested`.
+- **Archive**: soft-deletes the document (sets `deletedAt` + `deletedBy`).
+  Archived documents retain their data for audit trails. Audit-logged
+  as `document.archived` / `document.unarchived`.
+
+**Business rules** (enforced server-side in `documentService`):
+- Only REVIEWABLE statuses (UPLOADED, UNDER_REVIEW, REJECTED) can be
+  approved/rejected. APPROVED documents cannot be rejected — they must
+  first be revoked via "Request Re-upload" which resets the status to
+  REQUESTED. This prevents approved documents from being silently
+  replaced.
+- Rejection always requires a reason — the student must be told why
+  their document was rejected.
+- File type validation: only PDF, JPEG, PNG, WebP are allowed
+  (`ALLOWED_MIME_TYPES` in `lib/constants/documents.ts`).
+- File size validation: max 10 MB (`MAX_FILE_SIZE`).
+- Authorization: students can only see and upload their own documents.
+  The `GET /api/documents` endpoint auto-scopes to the student's own
+  ID when the caller is a STUDENT.
+- Private documents: the `fileUrl` is NEVER returned in the `GET
+  /api/documents/[id]` response. The admin UI uses the metadata
+  endpoint for the review panel; actual file serving goes through a
+  separate secure-file endpoint (TODO — production should use signed
+  URLs with expiry).
+
+**Pure helpers** (`lib/constants/documents.ts`, unit-tested):
+- `DOCUMENT_STATUSES`, `DOCUMENT_STATUS_LABELS` — canonical enums +
+  labels shared by validation, UI filters, and tests.
+- `ALLOWED_MIME_TYPES` — PDF, JPEG, PNG, WebP.
+- `MAX_FILE_SIZE` — 10 MB (10 × 1024 × 1024 bytes).
+- `REVIEWABLE_STATUSES` — `["UPLOADED", "UNDER_REVIEW", "REJECTED"]`.
+- `DOCUMENT_SORT_KEYS` — sort allow-list for the admin list.
+- `isReviewable(status)` — true for UPLOADED / UNDER_REVIEW / REJECTED.
+- `canRequestReupload(status)` — true for any non-REQUESTED, non-EXPIRED
+  status (including APPROVED).
+- `canReject(status)` — false for APPROVED and EXPIRED.
+- `validateFileMeta(mimeType, fileSize)` — returns an error message
+  string when invalid, null when valid. Used by both the service layer
+  and the upload schema.
+- `formatFileSize(bytes)` — human-readable B / KB / MB.
+- `buildAdminDocumentWhere(filters)` — Prisma `where` fragment with
+  archived toggle + AND-combined search/status/country/application/
+  student/employee/date-range filters.
+
+**Validation** (`lib/validations/index.ts`):
+- `documentUploadSchema` — requires studentId, name, fileUrl, fileName,
+  mimeType, fileSize. Max 10MB.
+- `documentReviewSchema` — decision enum (APPROVED / REJECTED /
+  UNDER_REVIEW) + optional reviewNote. Uses `.refine()` to enforce
+  that REJECTED requires a non-empty reviewNote.
+- `documentReuploadSchema` — requires a `reason` (min 1, max 2000 chars).
+- `documentArchiveSchema` — requires a boolean `archived`.
+
+**API improvements**:
+- `GET /api/documents` — full filter set (search, status, countryId,
+  applicationId, studentId, employeeId, uploadedFrom/uploadedTo date
+  range, archived toggle). Uses `buildAdminDocumentWhere` so the filter
+  logic lives in one place. Students are auto-scoped to their own
+  documents.
+- `GET /api/documents/[id]` (new) — returns document metadata with
+  student, application, and requirement joins. The `fileUrl` is stripped
+  from the response so private documents are never publicly accessible.
+  Students can only access their own documents.
+- `PATCH /api/documents/[id]` (new) — archive/unarchive toggle via the
+  `archived` boolean in the body.
+- `DELETE /api/documents/[id]` — archive (soft delete). Same as
+  `PATCH { archived: true }`. Retains data for audit trails.
+- `PATCH /api/documents/[id]/review` — uses the new
+  `documentReviewSchema` which enforces rejection reason. Delegates to
+  `documentService.review` which enforces the APPROVED-can't-be-rejected
+  rule.
+- `POST /api/documents/[id]/reupload` (new) — request re-upload with a
+  required reason. Delegates to `documentService.requestReupload` which
+  resets status to REQUESTED, notifies the student, and audit-logs.
+- `GET /api/documents/meta` (new) — returns filter options (countries,
+  students, applications, employees) that have at least one document.
+  Aggregate-only — no document records are leaked.
+
+**Audit coverage added**: `document.uploaded` (existing, now via
+service), `document.approved` / `document.rejected` /
+`document.under_review` (existing, now with status guards),
+`document.reupload_requested` (new), `document.archived` /
+`document.unarchived` (new).
+
+**Tests**: `tests/documents.test.ts` — 51 tests covering:
+- Document status + MIME type + sort enum stability + labels
+- `isReviewable` (UPLOADED/UNDER_REVIEW/REJECTED = true; REQUESTED/
+  APPROVED/EXPIRED = false)
+- `canRequestReupload` (all non-REQUESTED/EXPIRED = true, including
+  APPROVED)
+- `canReject` (false for APPROVED and EXPIRED)
+- `validateFileMeta` (valid PDF/image, disallowed MIME types, file
+  exceeding 10MB, file at exactly 10MB)
+- `formatFileSize` (nullish, B, KB, MB boundaries)
+- `buildAdminDocumentWhere` (archived toggle, status/country/application/
+  student/employee filters, search OR clause, date range with both
+  bounds and single-sided, full AND-chain combination)
+- `documentUploadSchema` (required fields, 10MB limit, negative file
+  size, optional applicationId/requirementId)
+- `documentReviewSchema` (APPROVED without note, REJECTED without/with
+  empty/whitespace reason = rejected, REJECTED with reason = accepted,
+  unknown decision, optional note for APPROVED, 2000-char cap)
+- `documentReuploadSchema` (requires reason, empty rejected, 2000-char
+  cap)
+- `documentArchiveSchema` (requires boolean, rejects non-boolean)
+
+387 tests total via `npm run test` (14 files).
+
+**Known limitations**: the `fileUrl` is currently stored as a plain
+string in the DB and is NOT exposed in the `GET /api/documents/[id]`
+response (stripped for security). Production file serving should use
+signed URLs with expiry — this is a TODO pending object-storage
+integration (`STORAGE_*` env vars are reserved). The document detail
+page (`/admin/documents/[id]`) is not yet built — the admin reviews
+documents inline from the list view's row actions + dialogs. The
+document upload endpoint (`POST /api/documents`) still accepts a
+pre-uploaded `fileUrl` — actual file upload handling (multipart form
+data → object storage) is a separate TODO.

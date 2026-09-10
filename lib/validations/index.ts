@@ -81,9 +81,39 @@ export const documentUploadSchema = z.object({
   fileSize: z.number().int().positive().max(10 * 1024 * 1024, "Max file size is 10MB"),
 });
 
-export const documentReviewSchema = z.object({
-  decision: z.enum(["APPROVED", "REJECTED", "UNDER_REVIEW"]),
-  reviewNote: z.string().optional(),
+/**
+ * Review decision schema. Rejection REQUIRES a reason (reviewNote) —
+ * the student must be told why their document was rejected so they can
+ * fix and re-upload. Approval and under-review notes are optional.
+ */
+export const documentReviewSchema = z
+  .object({
+    decision: z.enum(["APPROVED", "REJECTED", "UNDER_REVIEW"]),
+    reviewNote: z.string().max(2000).optional(),
+  })
+  .refine(
+    (data) => data.decision !== "REJECTED" || (!!data.reviewNote && data.reviewNote.trim().length > 0),
+    {
+      message: "A rejection reason is required",
+      path: ["reviewNote"],
+    },
+  );
+
+/**
+ * Request re-upload schema. The admin provides a reason explaining why
+ * the student needs to re-upload the document. The document's status is
+ * reset to REQUESTED and the note is stored as the reviewNote.
+ */
+export const documentReuploadSchema = z.object({
+  reason: z.string().min(1, "A reason is required").max(2000, "Reason is too long"),
+});
+
+/**
+ * Archive toggle schema. `archived: true` soft-deletes the document
+ * (sets deletedAt + deletedBy); `archived: false` restores it.
+ */
+export const documentArchiveSchema = z.object({
+  archived: z.boolean(),
 });
 
 export const paymentSchema = z.object({
