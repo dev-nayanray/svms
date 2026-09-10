@@ -338,12 +338,27 @@ export const employeeUpdateSchema = z.object({
 });
 
 export const branchSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  code: z.string().min(1).min(2, "Code is required").max(10),
-  address: z.string().optional(),
-  phone: z.string().optional(),
+  name: z.string().min(1, "Name is required").max(120, "Name is too long"),
+  code: z
+    .string()
+    .min(2, "Code must be at least 2 characters")
+    .max(10, "Code must be at most 10 characters")
+    .regex(/^[A-Za-z0-9_-]+$/, "Code must be alphanumeric, dashes, or underscores"),
+  address: z.string().max(500).optional(),
+  phone: z.string().max(50).optional(),
   email: z.string().email("Enter a valid email").optional().or(z.literal("")),
+  managerId: z.string().optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
+});
+
+/**
+ * Update schema for branches. Mirrors the create schema as a partial,
+ * plus an `archived` boolean that toggles the soft-delete tombstone
+ * (separate from `status` so the audit trail can record lifecycle
+ * events distinctly from activate/deactivate).
+ */
+export const branchUpdateSchema = branchSchema.partial().extend({
+  archived: z.boolean().optional(),
 });
 
 export const intakeSchema = z.object({

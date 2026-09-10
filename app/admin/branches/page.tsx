@@ -1,4 +1,4 @@
-import { BranchesAdmin } from "@/components/admin/catalog-admin";
+import { BranchesAdmin } from "@/components/admin/branches-admin";
 
 export const dynamic = "force-dynamic";
 

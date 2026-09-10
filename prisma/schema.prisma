@@ -29,19 +29,25 @@ model Permission {
 }
 
 model Branch {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  code      String    @unique
-  address   String?
-  phone     String?
-  email     String?
-  status    String    @default("ACTIVE") // ACTIVE | INACTIVE
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  code       String    @unique
+  address    String?
+  phone      String?
+  email      String?
+  managerId  String?   @db.ObjectId // Employee who manages this branch
+  manager    Employee? @relation("BranchManager", fields: [managerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  status     String    @default("ACTIVE") // ACTIVE | INACTIVE
+  deletedAt  DateTime?
+  deletedBy  String?   @db.ObjectId
   // organizationId reserved for future multi-tenancy
-  users     User[]
-  students  Student[]
-  employees Employee[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  users      User[]
+  students   Student[]
+  employees  Employee[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([status])
 }
 
 model User {
@@ -131,6 +137,7 @@ model Employee {
   students  Student[] @relation("AssignedStudents")
   leads     Lead[]
   conversations Conversation[]
+  managedBranches Branch[] @relation("BranchManager")
   deletedAt DateTime?
   deletedBy String?   @db.ObjectId
   createdAt DateTime  @default(now())

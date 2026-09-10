@@ -2254,3 +2254,112 @@ for typical agency volumes; larger exports would need streaming). The
 printable layout relies on the browser's print dialog — server-side PDF
 generation is a TODO. The finance report's "monthly revenue" only
 includes PAID payments (not PARTIAL/PENDING) — this is intentional.
+
+## 45. Admin Branch Management (v2)
+
+**Routes**: `/admin/branches` (list), `/admin/branches/[id]` (detail).
+APIs: `GET/POST /api/branches`, `GET/PATCH/DELETE /api/branches/[id]`.
+
+**Branch fields**: Branch Name, Branch Code (unique, alphanumeric +
+dash/underscore), Address, Phone, Email, Manager (Employee reference),
+Status (ACTIVE/INACTIVE).
+
+**List features** (all server-side via the shared `DataTable`):
+- search across name, code, and address
+- filter by Status (ACTIVE/INACTIVE)
+- archived toggle to view soft-deleted branches
+- sortable columns (name, code, status, createdAt)
+- row actions: View (detail page), Edit, Status (activate/deactivate),
+  Archive
+- per-row counts: employees, students
+
+**Row actions** (all RBAC'd via `branches.manage` — admin only):
+- **View**: link to the branch detail page
+- **Edit**: FormDialog with name/code/address/phone/email/manager/status
+- **Status**: activate ↔ deactivate via confirm dialog
+- **Archive**: confirm dialog — blocked when employees or students are
+  assigned (409 CONFLICT). The admin must reassign them or deactivate
+  the branch instead.
+
+**Branch detail page** (`/admin/branches/[id]`, tabbed):
+- **Overview**: stat strip (employees, students, revenue, outstanding),
+  branch details card (name, code, address, phone, email, manager link,
+  status, created/updated/archived timestamps), performance summary
+  card (total employees/students, active applications, open tasks,
+  total revenue, outstanding)
+- **Employees**: table of all employees assigned to this branch (name
+  link, title, email)
+- **Students**: table of students at this branch (name link, student ID,
+  email, status badge, joined date)
+- **Applications**: table of applications from this branch's students
+  (application number link, student link, country, stage badge, priority)
+- **Tasks**: table of tasks assigned to this branch's employees (title,
+  status badge, priority badge, due date)
+- **Revenue**: revenue summary (total revenue, payment count,
+  outstanding, outstanding invoice count) + a "Multi-branch access
+  control" callout explaining the architecture for future multi-tenancy
+
+**Multi-branch access control architecture**:
+The Branch model has an `organizationId` comment reserved for future
+multi-tenancy. The current implementation is single-org but the branch
+scoping is modeled via `branchId` on User/Student/Employee. When
+multi-tenancy lands:
+1. `organizationId` will be added to Branch and all business entities.
+2. `buildAdminBranchWhere` (in `lib/constants/branches.ts`) will filter
+   by `organizationId`.
+3. The middleware will verify the user's `organizationId` matches the
+   requested branch's `organizationId`.
+4. Branch-level access control will filter all queries by the user's
+   `branchId` (already on the session via the JWT callback).
+
+**Database change** (run `npx prisma db push` after pulling): added
+`managerId` (Employee reference via "BranchManager" named relation),
+`deletedAt`/`deletedBy` (soft-delete support), and `@@index([status])`
+to the `Branch` model. Added `managedBranches Branch[]` back-relation
+to `Employee`. The "BranchManager" relation uses `onDelete: NoAction,
+onUpdate: NoAction` to break the cyclic referential action cycle
+(Branch.manager → Employee.user → User.branch). Non-destructive.
+
+**Pure helpers** (`lib/constants/branches.ts`, unit-tested):
+- `BRANCH_STATUSES`, `BRANCH_STATUS_LABELS` — canonical enums + labels
+- `BRANCH_SORT_KEYS` — sort allow-list for the `sortFrom` helper
+- `buildAdminBranchWhere(filters)` — Prisma `where` fragment with
+  archived toggle + search + status filter
+- `branchArchiveBlockReason(branch)` — pure pre-flight guard: blocks
+  archiving when employees/students are assigned; blocks when already
+  archived (with priority)
+
+**Validation**:
+- `branchSchema` — name (1-120 chars), code (2-10 chars, alphanumeric +
+  dash/underscore regex), optional address/phone/email/managerId, status
+  defaults to ACTIVE
+- `branchUpdateSchema` — partial + `archived` boolean flag
+
+**Audit coverage added**: `branch.created` (now with managerId),
+`branch.updated` (structured old→new diff with all fields),
+`branch.status_changed` (distinct activate/deactivate event),
+`branch.archived` / `branch.unarchived`.
+
+**Tests**: `tests/branches.test.ts` — 32 tests covering:
+- Status + sort enum stability + labels
+- `buildAdminBranchWhere` (archived toggle, status filter, search OR
+  clause across name/code/address, whitespace trimming, status clause
+  omission, AND-chain combination)
+- `branchArchiveBlockReason` (no employees/students, employees only,
+  students only, both, already archived with priority)
+- `branchSchema` (required fields, default status, optional managerId/
+  address/phone/email, code length 2-10, code regex, invalid status,
+  invalid email, empty email, name length cap)
+- `branchUpdateSchema` (partial acceptance, archived flag, code
+  validation, multi-field updates, nullable email/address)
+
+613 tests total via `npm run test` (19 files).
+
+**Known limitations**: the `managerId` relation uses `onDelete: NoAction`
+which means deleting an employee who is a branch manager won't
+automatically null the `managerId` — the admin must explicitly unassign
+the manager first. The branch detail page's revenue aggregation only
+includes PAID payments (not PARTIAL/PENDING) — this is intentional for
+revenue reporting. The "Assign Employees" action mentioned in the brief
+is handled through the Employee admin (each employee has a `branchId`
+field), not from the Branch detail page directly — this is a TODO.
