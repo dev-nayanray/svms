@@ -2154,3 +2154,103 @@ browser's print dialog — server-side PDF generation is a TODO. The
 existing `tests/invoice-totals.test.ts` file still runs alongside the
 new `tests/finance.test.ts` (the `computeInvoiceTotals` tests are
 duplicated — the old file can be removed once confirmed redundant).
+
+## 44. Admin Reports & Analytics (v2)
+
+**Routes**: `/admin/reports` (list). APIs: `GET /api/reports`,
+`GET /api/reports/export`.
+
+**7 Report types** (toggle chips):
+- **Student Reports**: counts by country + status, monthly registrations
+  (last 12 months), KPIs (total students)
+- **Lead Reports**: counts by status + source, conversion rate,
+  KPIs (total leads, converted, conversion rate)
+- **Application Reports**: counts by country, stage, employee, KPIs
+  (total applications)
+- **Visa Reports**: approval rate, refusal rate, by stage, KPIs
+  (total, approved, refused, approval/refusal rate)
+- **Employee Reports**: task stats per employee (pending, overdue,
+  completed), KPIs (total employees, total pending/overdue/completed)
+- **Finance Reports** *(sensitive — requires `finance.read`)*: monthly
+  revenue (last 12 months), by payment method, KPIs (total revenue,
+  outstanding payments)
+- **Document Reports**: completion rate, by status, KPIs (total,
+  approved, rejected, pending, completion rate)
+
+**Charts** (10 total across report types): Students by Country, Lead
+by Status, Lead by Source, Applications by Country, Applications by
+Stage, Applications by Employee, Visa by Stage, Approval vs Refusal,
+Monthly Revenue, Revenue by Method, Documents by Status, Document
+Completion, Monthly Registrations, Employee Task Performance, Overdue
+by Employee. Pie charts for categorical breakdowns (country, source,
+method, approval/refusal, completion); bar charts for counts/stages/
+monthly data.
+
+**Filters**: dateFrom, dateTo, branchId, employeeId, countryId,
+universityId, courseId, intakeId, status. All applied server-side.
+
+**All aggregation is done server-side** via Prisma's `aggregate` and
+`groupBy` — the browser never receives raw records, only computed
+summaries (KPIs + chart data points + table rows).
+
+**CSV export** (`GET /api/reports/export?type=X`):
+- Returns `text/csv` with `Content-Disposition: attachment` header
+- UTF-8 BOM prefix for Excel compatibility
+- RFC 4180 compliant escaping (commas, quotes, newlines)
+- CRLF line endings
+- Headers row + data rows (up to 1000 records per export)
+- File filename: `{type}-report-{date}.csv`
+
+**Printable report**: the admin UI has a "Print" button that triggers
+`window.print()`. The layout is print-friendly (cards, charts, tables
+all render cleanly when printed).
+
+**PDF-ready layout**: the printable layout is structured so a future
+server-side PDF generator (puppeteer/playwright) can snapshot the page
+directly — no layout changes needed.
+
+**RBAC**: all reports require `reports.read` (admin + employee).
+Sensitive reports (finance, employees) additionally require
+`finance.read` (admin only). Enforced server-side in both the main
+report endpoint and the CSV export endpoint via `guard("finance.read")`.
+
+**Pure helpers** (`lib/constants/reports.ts`, unit-tested):
+- `REPORT_TYPES`, `REPORT_TYPE_LABELS` — canonical enums + labels
+- `SENSITIVE_REPORTS` — `["finance", "employees"]`
+- `isSensitiveReport(type)` — RBAC check for sensitive report access
+- `REPORT_FILTER_KEYS` — the 9 filter keys
+- `parseReportFilters(raw)` — parses + trims + drops empty values
+- `filtersToQueryString(filters)` — URL query string builder for export
+- `rowsToCsv(headers, rows)` — RFC 4180 compliant CSV generator
+- `resolveDateRange(filters)` — Date pair or null for no date filtering
+- `dateRangeLabel(filters)` — human-readable date range label
+
+**Tabular data service** (`lib/services/reports-table.ts`):
+- `runReportTable(type, filters)` — returns `{ headers, rows }` for the
+  CSV export endpoint. Each report type has a dedicated function that
+  queries the DB with the same filters as the main report but returns
+  flat tabular data instead of chart/KPI summaries.
+
+**Tests**: `tests/reports.test.ts` — 32 tests covering:
+- Report type enum stability + labels
+- Sensitive report detection (finance/employees = sensitive, others not,
+  unknown = not sensitive)
+- `parseReportFilters` (all keys, whitespace trimming, empty dropping,
+  unknown key ignoring, empty input)
+- `filtersToQueryString` (value inclusion, empty omission, empty input)
+- `rowsToCsv` (simple table, comma escaping, quote doubling, newline
+  escaping, null/undefined handling, number/boolean, empty rows)
+- `resolveDateRange` (both null, valid dates, invalid dates, partial
+  ranges)
+- `dateRangeLabel` (all time, from only, to only, full range, invalid)
+
+581 tests total via `npm run test` (18 files).
+
+**Known limitations**: the filter UI uses free-text inputs for status
+and date — dropdown filters for branch/employee/country/university/
+course/intake are TODO (the meta endpoint to populate them isn't built
+yet). The CSV export is limited to 1000 rows per report type (adequate
+for typical agency volumes; larger exports would need streaming). The
+printable layout relies on the browser's print dialog — server-side PDF
+generation is a TODO. The finance report's "monthly revenue" only
+includes PAID payments (not PARTIAL/PENDING) — this is intentional.
