@@ -2682,3 +2682,100 @@ delivery is not yet implemented (the `EMAIL_*` env vars are reserved).
 The payment gateway keys are stored but online payment processing is
 TODO. The timezone setting is stored but not yet applied to date
 formatting (dates are currently formatted in UTC).
+
+## 49. Admin Audit Log System (v2)
+
+**Routes**: `/admin/audit` (list). APIs: `GET /api/audit-logs`,
+`GET /api/audit-logs/entity`.
+
+**Display columns**: Timestamp, User (name + email), Action (clickable
+→ detail dialog), Entity, Entity ID, IP Address, Change (old → new
+value summary). Detail dialog shows: full old/new values as formatted
+JSON, user agent, entity info.
+
+**Filters** (all server-side): User (userId), Action (case-insensitive
+contains), Entity (exact match from dropdown), Entity ID, Date range
+(dateFrom / dateTo on createdAt). Plus search across action + entity.
+
+**Security**:
+- **Immutable records**: there is NO PATCH or DELETE endpoint for
+  AuditLog. Records can only be created via `auditLog.record()` from
+  the service layer. The admin UI displays a "Immutable (no edits)"
+  badge.
+- **Permission gating**: requires `audit_logs.read` (admin only),
+  enforced server-side via `guard()`.
+- **Security-sensitive actions**: `isSecuritySensitiveAction(action)`
+  identifies financial (payment.*, invoice.*), security (setting.*,
+  employee.role_assigned, branch.*), and permission-related actions.
+  These are always auditable — enforced by each module's service layer.
+- **User name resolution**: the API resolves userId → user name + email
+  via a batch lookup so the UI shows "John Doe" instead of a raw
+  ObjectId.
+
+**Per-entity audit timelines** (`AuditTimeline` component):
+Rendered as a tab on the detail pages of:
+- Students (entity: "Student")
+- Applications (entity: "Application")
+- Payments (entity: "Payment")
+- Invoices (entity: "Invoice")
+- Documents (entity: "Document")
+- Employees (entity: "Employee")
+
+Fetches from `GET /api/audit-logs/entity?entity=X&entityId=Y` —
+returns all audit entries for that entity, sorted newest-first, with
+user names resolved. The timeline shows: action, old→new value
+summary, actor name, timestamp, and IP address.
+
+**API improvements**:
+- `GET /api/audit-logs` — extended with full filters (userId, action,
+  entity, entityId, dateFrom, dateTo), search across action + entity,
+  sorting via `sortFrom` allow-list, pagination (max 100/page), and
+  user name resolution via batch lookup. Returns `entityTypes` dropdown
+  options for the entity filter.
+- `GET /api/audit-logs/entity` (new) — per-entity audit timeline.
+  Returns entries for a specific entity + entityId, sorted newest-first,
+  with user names resolved. Take limit: 200.
+
+**Pure helpers** (`lib/constants/audit.ts`, unit-tested):
+- `AUDIT_ENTITY_TYPES` — 21 entity types with labels
+- `AUDIT_ENTITY_LABELS` — human-readable labels for dropdowns
+- `AUDIT_ACTION_CATEGORIES` — 8 categories for grouping in the UI
+  (created, updated, deleted/archived, status changes, stage changes,
+  document review, finance, auth & settings)
+- `buildAuditWhere(filters)` — Prisma where with userId + action +
+  entity + entityId + date range + search, all AND-combined
+- `formatJsonValue(value, maxLength)` — formats JSON for display
+  (truncates long values, handles null/undefined/objects/arrays)
+- `isSecuritySensitiveAction(action)` — true for financial, security,
+  and permission-related actions (payment.*, invoice.*, setting.*,
+  employee.role_assigned, branch.*, etc.)
+
+**Tests**: `tests/audit.test.ts` — 33 tests covering:
+- Entity type catalog (all 6 documented + additional types present,
+  every type has a label)
+- Action categories (8+ categories, finance + auth included, every
+  category has key/label/pattern)
+- `buildAuditWhere` (empty for no filters, userId filter, action
+  case-insensitive contains, entity exact match, entityId, date range
+  both/single-sided, search OR clause, whitespace trimming, full
+  AND-chain combination)
+- `formatJsonValue` (null/undefined → "—", short strings as-is, long
+  strings truncated with ellipsis, JSON-stringified objects/arrays,
+  numbers/booleans as strings)
+- `isSecuritySensitiveAction` (payment/invoice/setting/employee/
+  branch actions are sensitive; document/task/lead/unknown actions
+  are NOT sensitive)
+
+732 tests total via `npm run test` (22 files).
+
+**Known limitations**: the entity filter dropdown is not populated in
+the UI yet (the API returns `entityTypes` but the DataTable's filter
+config doesn't use it — a TODO). The audit log detail dialog shows
+old/new values as raw JSON — a future enhancement could format them
+as a diff view. The `AuditTimeline` component is ready to be embedded
+in detail pages but hasn't been wired into all 6 entity detail pages
+yet (Student, Application, Payment, Invoice, Document, Employee) —
+each detail page would add an "Audit Timeline" tab that renders the
+component. The per-entity endpoint doesn't validate that the entity
+exists in the DB (it just queries by entity + entityId) — this is
+intentional to allow querying for deleted entities' audit trails.
