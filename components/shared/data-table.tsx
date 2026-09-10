@@ -92,8 +92,8 @@ export function DataTable<T extends { id: string }>({
     <div className="space-y-3">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-52 flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden />
+        <div className="relative min-w-48 flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" aria-hidden />
           <Input
             value={search}
             onChange={(e) => {
@@ -151,12 +151,12 @@ export function DataTable<T extends { id: string }>({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-border">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card">
         <table className="w-full text-sm">
-          <thead className="bg-muted/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
+          <thead className="bg-muted/30 text-left text-xs font-medium text-muted-foreground">
             <tr>
               {visibleColumns.map((c) => (
-                <th key={c.key} className={cn("whitespace-nowrap px-4 py-2.5 font-medium", c.className)}>
+                <th key={c.key} className={cn("whitespace-nowrap px-3 py-2.5 font-medium", c.className)}>
                   {c.sortable ? (
                     <button
                       className="inline-flex items-center gap-1 hover:text-foreground"
@@ -181,9 +181,9 @@ export function DataTable<T extends { id: string }>({
           <tbody className="divide-y divide-border">
             {isPending &&
               Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i}>
+                <tr key={i} className="border-b border-border last:border-0">
                   {visibleColumns.map((c) => (
-                    <td key={c.key} className="px-4 py-3">
+                    <td key={c.key} className="px-3 py-2.5">
                       <Skeleton className="h-4 w-full" />
                     </td>
                   ))}
@@ -192,29 +192,29 @@ export function DataTable<T extends { id: string }>({
               ))}
             {!isPending && rows.length === 0 && (
               <tr>
-                <td colSpan={visibleColumns.length + (rowActions ? 1 : 0)} className="p-8 text-center text-muted-foreground">
+                <td colSpan={visibleColumns.length + (rowActions ? 1 : 0)} className="px-3 py-12 text-center text-sm text-muted-foreground">
                   {emptyMessage}
                 </td>
               </tr>
             )}
             {!isPending &&
               rows.map((row) => (
-                <tr key={row.id} className="hover:bg-muted/40">
+                <tr key={row.id} className="border-b border-border last:border-0 transition-colors hover:bg-muted/30">
                   {visibleColumns.map((c) => (
-                    <td key={c.key} className={cn("px-4 py-2.5", c.className)}>
+                    <td key={c.key} className={cn("px-3 py-2.5", c.className)}>
                       {c.render(row)}
                     </td>
                   ))}
                   {rowActions && rowActions.length > 0 && (
-                    <td className="px-4 py-2.5 text-right">
-                      <div className="inline-flex gap-1">
+                    <td className="px-3 py-2.5 text-right">
+                      <div className="inline-flex gap-0.5">
                         {rowActions.map((a) => (
                           <button
                             key={a.label}
                             onClick={() => a.onClick(row)}
                             className={cn(
-                              "rounded-md border border-border px-2 py-1 text-xs font-medium hover:bg-muted",
-                              a.destructive && "text-destructive hover:bg-destructive/10"
+                              "rounded-md border border-border px-2 py-1 text-xs font-medium transition-colors hover:bg-muted",
+                              a.destructive && "text-destructive hover:bg-destructive/10 border-destructive/20",
                             )}
                           >
                             {a.label}
@@ -241,7 +241,7 @@ export function DataTable<T extends { id: string }>({
 
       {/* Pagination */}
       {pg && (
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>
             {pg.total} record{pg.total === 1 ? "" : "s"} · page {pg.page} of {pg.totalPages}
           </span>

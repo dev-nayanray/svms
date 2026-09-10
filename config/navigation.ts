@@ -21,31 +21,77 @@ import {
   GitBranch,
   ShieldCheck,
 } from "lucide-react";
-import type { NavItem } from "@/components/shared/sidebar-shell";
+import type { LucideIcon } from "lucide-react";
 
-export const ADMIN_NAV: NavItem[] = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/leads", label: "Leads", icon: Target },
-  { href: "/admin/students", label: "Students", icon: Users },
-  { href: "/admin/employees", label: "Employees", icon: GraduationCap },
-  { href: "/admin/applications", label: "Applications", icon: FolderKanban },
-  { href: "/admin/documents", label: "Documents", icon: FileText },
-  { href: "/admin/countries", label: "Countries", icon: Globe },
-  { href: "/admin/universities", label: "Universities", icon: Building2 },
-  { href: "/admin/courses", label: "Courses", icon: BookOpen },
-  { href: "/admin/intakes", label: "Intakes", icon: CalendarClock },
-  { href: "/admin/visa", label: "Visa Management", icon: Stamp },
-  { href: "/admin/tasks", label: "Tasks", icon: CheckSquare },
-  { href: "/admin/payments", label: "Payments", icon: CreditCard },
-  { href: "/admin/invoices", label: "Invoices", icon: Receipt },
-  { href: "/admin/messages", label: "Messages", icon: MessageSquare },
-  { href: "/admin/reports", label: "Reports", icon: BarChart3 },
-  { href: "/admin/branches", label: "Branches", icon: GitBranch },
-  { href: "/admin/notifications", label: "Notifications", icon: Bell },
-  { href: "/admin/roles-permissions", label: "Roles & Permissions", icon: ShieldCheck },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
-  { href: "/admin/audit", label: "Audit Logs", icon: ScrollText },
+export type NavItem = { href: string; label: string; icon: LucideIcon };
+export type NavGroup = { label: string; items: NavItem[] };
+
+export const ADMIN_NAV_GROUPS: NavGroup[] = [
+  {
+    label: "Main",
+    items: [
+      { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: "Sales & Admissions",
+    items: [
+      { href: "/admin/leads", label: "Leads", icon: Target },
+      { href: "/admin/students", label: "Students", icon: Users },
+      { href: "/admin/applications", label: "Applications", icon: FolderKanban },
+    ],
+  },
+  {
+    label: "Academic",
+    items: [
+      { href: "/admin/countries", label: "Countries", icon: Globe },
+      { href: "/admin/universities", label: "Universities", icon: Building2 },
+      { href: "/admin/courses", label: "Courses", icon: BookOpen },
+      { href: "/admin/intakes", label: "Intakes", icon: CalendarClock },
+    ],
+  },
+  {
+    label: "Documents & Visa",
+    items: [
+      { href: "/admin/documents", label: "Documents", icon: FileText },
+      { href: "/admin/visa", label: "Visa Management", icon: Stamp },
+    ],
+  },
+  {
+    label: "Operations",
+    items: [
+      { href: "/admin/tasks", label: "Tasks", icon: CheckSquare },
+      { href: "/admin/messages", label: "Messages", icon: MessageSquare },
+      { href: "/admin/notifications", label: "Notifications", icon: Bell },
+    ],
+  },
+  {
+    label: "Finance",
+    items: [
+      { href: "/admin/payments", label: "Payments", icon: CreditCard },
+      { href: "/admin/invoices", label: "Invoices", icon: Receipt },
+      { href: "/admin/reports", label: "Reports", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Organization",
+    items: [
+      { href: "/admin/employees", label: "Employees", icon: GraduationCap },
+      { href: "/admin/branches", label: "Branches", icon: GitBranch },
+      { href: "/admin/roles-permissions", label: "Roles & Permissions", icon: ShieldCheck },
+    ],
+  },
+  {
+    label: "System",
+    items: [
+      { href: "/admin/settings", label: "Settings", icon: Settings },
+      { href: "/admin/audit", label: "Audit Logs", icon: ScrollText },
+    ],
+  },
 ];
+
+// Flatten for backwards compatibility with sidebar-shell
+export const ADMIN_NAV: NavItem[] = ADMIN_NAV_GROUPS.flatMap((g) => g.items);
 
 export const EMPLOYEE_NAV: NavItem[] = [
   { href: "/employee", label: "Dashboard", icon: LayoutDashboard },

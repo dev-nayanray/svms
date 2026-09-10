@@ -1,51 +1,46 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui";
-import { Skeleton } from "@/components/ui/overlays";
-import { EmptyState } from "@/components/shared";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/overlays";
 
-/** Grid of KPI cards with a skeleton loading state. */
-export function KpiGrid({
-  kpis,
-  isPending,
-}: {
-  kpis: { label: string; value: string | number; tone?: "default" | "warning" | "danger" | "success" }[];
-  isPending: boolean;
-}) {
+type Kpi = {
+  label: string;
+  value: string | number;
+  hint?: string;
+  tone?: "default" | "warning" | "danger" | "success";
+};
+
+export function KpiGrid({ kpis, isPending }: { kpis: Kpi[]; isPending: boolean }) {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5">
       {isPending
         ? Array.from({ length: kpis.length || 10 }).map((_, i) => (
-            <Card key={i}>
-              <CardContent className="space-y-2 p-4">
-                <Skeleton className="h-3 w-24" />
-                <Skeleton className="h-7 w-16" />
-              </CardContent>
-            </Card>
+            <div key={i} className="rounded-lg border border-border bg-card p-3.5">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="mt-2 h-7 w-14" />
+              <Skeleton className="mt-1 h-2 w-16" />
+            </div>
           ))
         : kpis.map((k) => (
-            <Card key={k.label}>
-              <CardContent className="p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{k.label}</p>
-                <p
-                  className={cn(
-                    "mt-1 text-2xl font-semibold",
-                    k.tone === "warning" && "text-warning",
-                    k.tone === "danger" && "text-destructive",
-                    k.tone === "success" && "text-success"
-                  )}
-                >
-                  {k.value}
-                </p>
-              </CardContent>
-            </Card>
+            <div key={k.label} className="rounded-lg border border-border bg-card p-3.5">
+              <p className="text-[11px] font-medium text-muted-foreground">{k.label}</p>
+              <p
+                className={cn(
+                  "mt-1.5 text-xl font-bold tracking-tight",
+                  k.tone === "warning" && "text-warning",
+                  k.tone === "danger" && "text-destructive",
+                  k.tone === "success" && "text-success",
+                )}
+              >
+                {k.value}
+              </p>
+              {k.hint && <p className="mt-0.5 text-[11px] text-muted-foreground">{k.hint}</p>}
+            </div>
           ))}
     </div>
   );
 }
 
-/** Chart card with loading skeleton, empty state, and error state baked in. */
 export function ChartCard({
   title,
   isPending,
@@ -53,7 +48,7 @@ export function ChartCard({
   hasData,
   onRetry,
   children,
-  height = 260,
+  height = 240,
 }: {
   title: string;
   isPending: boolean;
@@ -64,35 +59,48 @@ export function ChartCard({
   height?: number;
 }) {
   return (
-    <Card>
-      <div className="p-4 pb-2 text-base font-semibold">{title}</div>
-      <div className="p-4 pt-2" style={{ minHeight: height }}>
+    <div className="rounded-lg border border-border bg-card">
+      <div className="px-4 py-3 border-b border-border">
+        <p className="text-sm font-semibold">{title}</p>
+      </div>
+      <div className="p-4" style={{ minHeight: height }}>
         {isPending ? (
-          <div className="flex h-full items-end gap-2" aria-busy="true" aria-label={`${title} loading`}>
+          <div
+            className="flex h-full items-end gap-2"
+            aria-busy="true"
+            aria-label={`${title} loading`}
+          >
             {[40, 70, 55, 85, 60, 75, 50].map((h, i) => (
               <Skeleton key={i} className="flex-1" style={{ height: `${h}%` }} />
             ))}
           </div>
         ) : isError ? (
-          <div role="alert" className="flex h-full flex-col items-center justify-center gap-2 text-sm text-destructive">
+          <div
+            role="alert"
+            className="flex h-full flex-col items-center justify-center gap-2 text-sm text-destructive"
+          >
             Failed to load chart.
             {onRetry && (
-              <button onClick={onRetry} className="rounded-md border border-border px-3 py-1 text-foreground hover:bg-muted">
+              <button
+                onClick={onRetry}
+                className="rounded-md border border-border px-3 py-1 text-foreground hover:bg-muted"
+              >
                 Retry
               </button>
             )}
           </div>
         ) : !hasData ? (
-          <EmptyState title="No data yet" description="This chart fills in as records accumulate." />
+          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+            No data yet
+          </div>
         ) : (
           children
         )}
       </div>
-    </Card>
+    </div>
   );
 }
 
-/** Compact operational widget card with title, optional count badge, and body. */
 export function WidgetCard({
   title,
   count,
@@ -105,16 +113,16 @@ export function WidgetCard({
   children: React.ReactNode;
 }) {
   return (
-    <Card>
-      <div className="flex items-center justify-between p-4 pb-2">
-        <span className="text-base font-semibold">{title}</span>
+    <div className="rounded-lg border border-border bg-card">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <span className="text-sm font-semibold">{title}</span>
         {count !== undefined && (
           <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
             {isPending ? "…" : count}
           </span>
         )}
       </div>
-      <div className="p-4 pt-2 text-sm">
+      <div className="p-4 text-sm">
         {isPending ? (
           <div className="space-y-2" aria-busy="true">
             <Skeleton className="h-4 w-full" />
@@ -125,13 +133,12 @@ export function WidgetCard({
           children
         )}
       </div>
-    </Card>
+    </div>
   );
 }
 
 export type RangeValue = { range: string; from?: string; to?: string };
 
-/** Preset + custom date-range filter bar. */
 export function DateRangeFilter({
   value,
   onChange,
@@ -143,15 +150,15 @@ export function DateRangeFilter({
 }) {
   const presets = [
     { value: "today", label: "Today" },
-    { value: "7d", label: "7 Days" },
-    { value: "30d", label: "30 Days" },
-    { value: "90d", label: "90 Days" },
-    { value: "year", label: "This Year" },
+    { value: "7d", label: "7D" },
+    { value: "30d", label: "30D" },
+    { value: "90d", label: "90D" },
+    { value: "year", label: "Year" },
   ];
   const isCustom = value.range === "custom";
 
   return (
-    <div className="flex flex-wrap items-end gap-2" role="group" aria-label="Date range filter">
+    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Date range filter">
       {presets.map((p) => (
         <button
           key={p.value}
@@ -159,40 +166,34 @@ export function DateRangeFilter({
           aria-pressed={value.range === p.value}
           disabled={isPending}
           className={cn(
-            "h-9 rounded-md border px-3 text-sm font-medium transition-colors",
+            "h-8 rounded-md border px-2.5 text-xs font-medium transition-colors",
             value.range === p.value
               ? "border-primary bg-primary text-primary-foreground"
-              : "border-border hover:bg-muted"
+              : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
           )}
         >
           {p.label}
         </button>
       ))}
-      <div className={cn("flex items-end gap-1.5", isCustom ? "" : "opacity-70")}>
-        <div className="space-y-1">
-          <label htmlFor="range-from" className="block text-xs text-muted-foreground">From</label>
-          <input
-            id="range-from"
-            type="date"
-            value={value.from ?? ""}
-            onChange={(e) => onChange({ range: "custom", from: e.target.value, to: value.to })}
-            className="h-9 rounded-md border border-border bg-card px-2 text-sm"
-          />
-        </div>
-        <div className="space-y-1">
-          <label htmlFor="range-to" className="block text-xs text-muted-foreground">To</label>
-          <input
-            id="range-to"
-            type="date"
-            value={value.to ?? ""}
-            onChange={(e) => onChange({ range: "custom", from: value.from, to: e.target.value })}
-            className="h-9 rounded-md border border-border bg-card px-2 text-sm"
-          />
-        </div>
+      <div className={cn("flex items-center gap-1", isCustom ? "" : "opacity-60")}>
+        <input
+          type="date"
+          value={value.from ?? ""}
+          onChange={(e) => onChange({ range: "custom", from: e.target.value, to: value.to })}
+          className="h-8 rounded-md border border-border bg-card px-2 text-xs"
+          aria-label="From date"
+        />
+        <input
+          type="date"
+          value={value.to ?? ""}
+          onChange={(e) => onChange({ range: "custom", from: value.from, to: e.target.value })}
+          className="h-8 rounded-md border border-border bg-card px-2 text-xs"
+          aria-label="To date"
+        />
         {isCustom && (
           <button
             onClick={() => onChange({ range: "30d" })}
-            className="h-9 rounded-md border border-border px-3 text-sm hover:bg-muted"
+            className="h-8 rounded-md border border-border px-2 text-xs hover:bg-muted"
           >
             Reset
           </button>

@@ -2,25 +2,50 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { signOut } from "next-auth/react";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
-import type { NavItem } from "@/components/shared/sidebar-shell";
+import type { NavItem, NavGroup } from "@/components/shared/sidebar-shell";
 import { Button } from "@/components/ui";
-import { Dialog, DialogContent, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/overlays";
-import { Bell, ChevronsLeft, ChevronsRight, LogOut, Menu, PanelLeft, Search, Settings, User } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/overlays";
+import {
+  Bell,
+  ChevronsLeft,
+  ChevronsRight,
+  LogOut,
+  Menu,
+  Search,
+  Settings,
+  Sun,
+  Moon,
+} from "lucide-react";
 
-type SearchResult = { type: string; id: string; title: string; subtitle?: string; href: string };
+type SearchResult = {
+  type: string;
+  id: string;
+  title: string;
+  subtitle?: string;
+  href: string;
+};
 
 export function AdminShell({
   items,
+  navGroups,
   userName,
   userEmail,
   children,
 }: {
   items: NavItem[];
+  navGroups?: NavGroup[];
   userName: string;
   userEmail: string;
   children: React.ReactNode;
@@ -31,6 +56,21 @@ export function AdminShell({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  // Detect theme on mount — use useState initializer to avoid the
+  // set-state-in-effect lint rule.
+  const [isDark, setIsDark] = useState(false);
+
+  // ⌘K / Ctrl+K shortcut for global search
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   const { data: notif } = useQuery({
     queryKey: ["notifications", "count"],
@@ -40,110 +80,209 @@ export function AdminShell({
 
   const { data: results } = useQuery({
     queryKey: ["search", query],
-    queryFn: () => apiFetch<{ data: SearchResult[] }>(`/api/search?q=${encodeURIComponent(query)}`),
+    queryFn: () =>
+      apiFetch<{ data: SearchResult[] }>(`/api/search?q=${encodeURIComponent(query)}`),
     enabled: searchOpen && query.trim().length >= 2,
   });
 
   const crumbs = pathname.split("/").filter(Boolean);
 
-  const nav = (
-    <nav className="flex-1 space-y-0.5 overflow-y-auto p-2" aria-label="Admin navigation">
-      {items.map((item) => {
-        const active = pathname === item.href || pathname.startsWith(item.href + "/");
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            title={item.label}
-            onClick={() => setMobileOpen(false)}
-            className={cn(
-              "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              collapsed && "justify-center px-2",
-              active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            <item.icon className="h-4 w-4 shrink-0" aria-hidden />
-            {!collapsed && <span className="truncate">{item.label}</span>}
-          </Link>
-        );
-      })}
-    </nav>
-  );
+  const toggleTheme = () => {
+    const newDark = !isDark;
+    setIsDark(newDark);
+    document.documentElement.classList.toggle("dark", newDark);
+    localStorage.setItem("svms-theme", newDark ? "dark" : "light");
+  };
+
+  const renderItem = (item: NavItem) => {
+    const active = pathname === item.href || pathname.startsWith(item.href + "/");
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        title={collapsed ? item.label : undefined}
+        onClick={() => setMobileOpen(false)}
+        className={cn(
+          "group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors",
+          collapsed && "justify-center",
+          active
+            ? "bg-primary/10 text-primary"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+        )}
+      >
+        <item.icon
+          className={cn(
+            "h-4 w-4 shrink-0 transition-colors",
+            active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+          )}
+          aria-hidden
+        />
+        {!collapsed && <span className="truncate">{item.label}</span>}
+      </Link>
+    );
+  };
+
+  const renderNav = () => {
+    // If grouped nav is provided, render with section labels
+    if (navGroups && !collapsed) {
+      return (
+        <nav className="flex-1 overflow-y-auto px-2 py-2" aria-label="Admin navigation">
+          {navGroups.map((group) => (
+            <div key={group.label} className="mb-3">
+              <p className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                {group.label}
+              </p>
+              <div className="space-y-0.5">{group.items.map(renderItem)}</div>
+            </div>
+          ))}
+        </nav>
+      );
+    }
+    // Flat nav (for collapsed mode or employee/student shells)
+    return (
+      <nav className="flex-1 space-y-0.5 overflow-y-auto p-2" aria-label="Admin navigation">
+        {items.map(renderItem)}
+      </nav>
+    );
+  };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-background">
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "hidden shrink-0 flex-col border-r border-border bg-card transition-all md:flex",
-          collapsed ? "w-16" : "w-60"
+          "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-border bg-card transition-all md:flex",
+          collapsed ? "w-16" : "w-56",
         )}
       >
-        <div className={cn("flex h-14 items-center gap-2 border-b border-border px-4 font-semibold", collapsed && "justify-center px-2")}>
-          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-primary text-sm text-primary-foreground">SV</span>
-          {!collapsed && <span className="truncate">SVMS Admin</span>}
+        {/* Logo */}
+        <div
+          className={cn(
+            "flex h-14 items-center gap-2.5 border-b border-border px-3",
+            collapsed && "justify-center px-0",
+          )}
+        >
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
+            SV
+          </span>
+          {!collapsed && (
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold tracking-tight">SVMS</p>
+              <p className="truncate text-[10px] text-muted-foreground">Admin Console</p>
+            </div>
+          )}
         </div>
-        {nav}
+
+        {renderNav()}
+
+        {/* Collapse toggle */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="flex items-center gap-2 border-t border-border p-3 text-xs font-medium text-muted-foreground hover:text-foreground"
+          className="flex items-center gap-2 border-t border-border px-3 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {collapsed ? <ChevronsRight className="h-4 w-4 mx-auto" /> : <><ChevronsLeft className="h-4 w-4" /> Collapse</>}
+          {collapsed ? (
+            <ChevronsRight className="h-4 w-4 mx-auto" />
+          ) : (
+            <>
+              <ChevronsLeft className="h-4 w-4" />
+              Collapse
+            </>
+          )}
         </button>
       </aside>
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
+        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
           <aside className="absolute left-0 top-0 h-full w-64 border-r border-border bg-card">
-            <div className="flex h-14 items-center gap-2 border-b border-border px-4 font-semibold">
-              <span className="grid h-7 w-7 place-items-center rounded-md bg-primary text-sm text-primary-foreground">SV</span>
-              SVMS Admin
+            <div className="flex h-14 items-center gap-2.5 border-b border-border px-3">
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
+                SV
+              </span>
+              <div>
+                <p className="text-sm font-bold">SVMS</p>
+                <p className="text-[10px] text-muted-foreground">Admin Console</p>
+              </div>
             </div>
-            {nav}
+            {renderNav()}
           </aside>
         </div>
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Header */}
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-card px-4">
-          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileOpen(true)} aria-label="Open navigation" aria-expanded={mobileOpen}>
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur-md">
+          {/* Mobile menu */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open navigation"
+            aria-expanded={mobileOpen}
+          >
             <Menu className="h-5 w-5" />
           </Button>
 
           {/* Breadcrumbs */}
-          <nav aria-label="Breadcrumb" className="hidden min-w-0 text-xs text-muted-foreground sm:block">
-            <ol className="flex items-center gap-1">
-              {crumbs.map((c, i) => (
-                <li key={i} className="flex items-center gap-1">
-                  {i > 0 && <span aria-hidden>/</span>}
-                  <span className={cn("capitalize", i === crumbs.length - 1 && "font-medium text-foreground")}>
-                    {decodeURIComponent(c).replace(/-/g, " ")}
-                  </span>
-                </li>
-              ))}
-            </ol>
+          <nav
+            aria-label="Breadcrumb"
+            className="hidden min-w-0 items-center gap-1.5 text-xs text-muted-foreground sm:flex"
+          >
+            {crumbs.map((c, i) => (
+              <span key={i} className="flex items-center gap-1.5">
+                {i > 0 && <span className="text-muted-foreground/40">/</span>}
+                <span
+                  className={cn(
+                    "capitalize",
+                    i === crumbs.length - 1 && "font-medium text-foreground",
+                  )}
+                >
+                  {decodeURIComponent(c).replace(/-/g, " ")}
+                </span>
+              </span>
+            ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-1.5">
-            {/* Global search */}
-            <Button variant="outline" size="sm" onClick={() => setSearchOpen(true)} className="gap-2">
-              <Search className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">Search…</span>
+          <div className="ml-auto flex items-center gap-1">
+            {/* Global search trigger */}
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="flex h-9 items-center gap-2 rounded-md border border-border bg-muted/50 px-3 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label="Search"
+            >
+              <Search className="h-3.5 w-3.5" aria-hidden />
+              <span className="hidden md:inline">Search…</span>
+              <kbd className="hidden items-center gap-0.5 rounded border border-border bg-card px-1 py-0.5 text-[10px] font-medium md:flex">
+                ⌘K
+              </kbd>
+            </button>
+
+            {/* Theme toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              aria-label="Toggle dark mode"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {isDark ? <Sun className="h-4 w-4" aria-hidden /> : <Moon className="h-4 w-4" aria-hidden />}
             </Button>
 
             {/* Notifications */}
             <Link
               href="/admin/notifications"
-              className="relative grid h-9 w-9 place-items-center rounded-md hover:bg-muted"
+              className="relative grid h-9 w-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               aria-label={`Notifications${notif?.unreadCount ? ` (${notif.unreadCount} unread)` : ""}`}
             >
               <Bell className="h-4 w-4" aria-hidden />
               {!!notif?.unreadCount && (
-                <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold text-white">
+                <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
                   {notif.unreadCount > 9 ? "9+" : notif.unreadCount}
                 </span>
               )}
@@ -152,11 +291,16 @@ export function AdminShell({
             {/* User menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted" aria-label="User menu">
-                  <span className="grid h-7 w-7 place-items-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                <button
+                  className="flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors hover:bg-muted"
+                  aria-label="User menu"
+                >
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                     {userName.slice(0, 2).toUpperCase()}
                   </span>
-                  <span className="hidden max-w-32 truncate text-sm font-medium lg:inline">{userName}</span>
+                  <span className="hidden max-w-32 truncate text-sm font-medium lg:inline">
+                    {userName}
+                  </span>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -167,7 +311,10 @@ export function AdminShell({
                 <DropdownMenuItem onSelect={() => router.push("/admin/settings")}>
                   <Settings className="h-4 w-4" aria-hidden /> Settings
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => signOut({ callbackUrl: "/login" })} className="text-destructive">
+                <DropdownMenuItem
+                  onSelect={() => signOut({ callbackUrl: "/login" })}
+                  className="text-destructive"
+                >
                   <LogOut className="h-4 w-4" aria-hidden /> Sign out
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -175,49 +322,71 @@ export function AdminShell({
           </div>
         </header>
 
+        {/* Main content */}
         <main className="flex-1 p-4 md:p-6">
-          <div className="mx-auto w-full max-w-7xl space-y-6">{children}</div>
+          <div className="mx-auto w-full max-w-[1400px] space-y-6">{children}</div>
         </main>
       </div>
 
       {/* Global search dialog */}
       <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <DialogContent title="Global search" className="max-w-xl">
-          <input
-            autoFocus
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search students, applications, universities, leads, invoices…"
-            className="h-10 w-full rounded-md border border-border bg-card px-3 text-sm"
-            aria-label="Search query"
-          />
-          <ul className="mt-3 max-h-80 divide-y divide-border overflow-y-auto rounded-md border border-border">
+        <DialogContent title="" className="max-w-xl p-0">
+          {/* Search input */}
+          <div className="border-b border-border">
+            <div className="flex items-center gap-2 px-4 py-3">
+              <Search className="h-4 w-4 text-muted-foreground" aria-hidden />
+              <input
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search students, applications, universities, leads, invoices…"
+                className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+                aria-label="Search query"
+              />
+              <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                ESC
+              </kbd>
+            </div>
+          </div>
+
+          {/* Results */}
+          <div className="max-h-96 overflow-y-auto">
+            {query.trim().length < 2 && (
+              <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+                Type at least 2 characters to search.
+              </p>
+            )}
             {query.trim().length >= 2 &&
               (results?.data ?? []).map((r) => (
-                <li key={`${r.type}-${r.id}`}>
-                  <button
-                    className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-muted"
-                    onClick={() => {
-                      setSearchOpen(false);
-                      router.push(r.href);
-                    }}
-                  >
-                    <span>
-                      <span className="font-medium">{r.title}</span>
-                      {r.subtitle && <span className="text-muted-foreground"> · {r.subtitle}</span>}
-                    </span>
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{r.type}</span>
-                  </button>
-                </li>
+                <button
+                  key={`${r.type}-${r.id}`}
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-muted"
+                  onClick={() => {
+                    setSearchOpen(false);
+                    router.push(r.href);
+                  }}
+                >
+                  <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                    {r.type}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">{r.title}</span>
+                    {r.subtitle && (
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {r.subtitle}
+                      </span>
+                    )}
+                  </span>
+                </button>
               ))}
             {query.trim().length >= 2 && (results?.data ?? []).length === 0 && (
-              <li className="px-3 py-4 text-center text-sm text-muted-foreground">No results for “{query}”.</li>
+              <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+                No results for &ldquo;{query}&rdquo;.
+              </p>
             )}
-          </ul>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
-
-export { PanelLeft, User };

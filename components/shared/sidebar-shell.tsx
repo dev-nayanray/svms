@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui";
 
 export type NavItem = { href: string; label: string; icon: React.ElementType };
+export type NavGroup = { label: string; items: NavItem[] };
 
 export function SidebarShell({
   items,

@@ -20,7 +20,7 @@ export function DialogContent({
       <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/50" />
       <DialogPrimitive.Content
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 w-[95vw] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-card p-6 shadow-xl focus:outline-none",
+          "fixed left-1/2 top-1/2 z-50 w-[95vw] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-card p-6 shadow-lg focus:outline-none",
           className
         )}
         {...props}
@@ -58,7 +58,7 @@ export function Drawer({
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/50" />
-        <DialogPrimitive.Content className="fixed right-0 top-0 z-50 flex h-full w-[95vw] max-w-xl flex-col border-l border-border bg-card shadow-xl focus:outline-none">
+        <DialogPrimitive.Content className="fixed right-0 top-0 z-50 flex h-full w-[95vw] max-w-xl flex-col border-l border-border bg-card shadow-lg focus:outline-none">
           <div className="flex items-center justify-between border-b border-border p-4">
             <DialogPrimitive.Title className="text-base font-semibold">{title}</DialogPrimitive.Title>
             <DialogPrimitive.Close aria-label="Close" className="text-muted-foreground hover:text-foreground">
@@ -84,7 +84,7 @@ export function DropdownMenuContent({
     <DropdownPrimitive.Portal>
       <DropdownPrimitive.Content
         className={cn(
-          "z-50 min-w-40 rounded-md border border-border bg-card p-1 shadow-lg",
+          "z-50 min-w-48 rounded-md border border-border bg-card p-1 shadow-md",
           className
         )}
         sideOffset={4}
@@ -127,7 +127,7 @@ export function Tabs({
           <TabsPrimitive.Trigger
             key={t.value}
             value={t.value}
-            className="rounded-t-md border-b-2 border-transparent px-3 py-2 text-sm font-medium text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground"
+            className="relative rounded-t-md border-b-2 border-transparent px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground"
           >
             {t.label}
           </TabsPrimitive.Trigger>

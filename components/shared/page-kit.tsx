@@ -6,6 +6,7 @@ import { Dialog, DialogContent } from "@/components/ui/overlays";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 
 export function PageHeader({
   title,
@@ -19,23 +20,23 @@ export function PageHeader({
   breadcrumbs?: string[];
 }) {
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground">
           <ol className="flex flex-wrap items-center gap-1">
             {breadcrumbs.map((b, i) => (
               <li key={b} className="flex items-center gap-1">
-                {i > 0 && <span aria-hidden>/</span>}
-                <span className={i === breadcrumbs.length - 1 ? "text-foreground" : undefined}>{b}</span>
+                {i > 0 && <span className="text-muted-foreground/40" aria-hidden>/</span>}
+                <span className={cn(i === breadcrumbs.length - 1 && "font-medium text-foreground")}>{b}</span>
               </li>
             ))}
           </ol>
         </nav>
       )}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold">{title}</h1>
-          {description && <p className="text-sm text-muted-foreground">{description}</p>}
+          <h1 className="text-lg font-bold tracking-tight">{title}</h1>
+          {description && <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>}
         </div>
         {actions && <div className="flex gap-2">{actions}</div>}
       </div>
