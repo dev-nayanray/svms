@@ -138,16 +138,52 @@ export const courseSchema = z.object({
 });
 
 export const countrySchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  code: z.string().min(2).max(3, "Code must be 2-3 characters"),
-  currency: z.string().optional(),
-  description: z.string().optional(),
+  name: z.string().min(1, "Name is required").max(120, "Name is too long"),
+  code: z
+    .string()
+    .min(2, "Code must be at least 2 characters")
+    .max(3, "Code must be 2-3 characters")
+    .regex(/^[A-Za-z]{2,3}$/, "Code must be 2-3 letters (A-Z)"),
+  flag: z.string().max(16, "Flag is too long").optional(),
+  currency: z.string().max(8, "Currency code is too long").optional(),
+  description: z.string().max(2000, "Description is too long").optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
 });
 
 export const countryUpdateSchema = countrySchema.partial().extend({
   archived: z.boolean().optional(),
 });
+
+export const visaRequirementCreateSchema = z.object({
+  countryId: z.string().min(1, "Country is required"),
+  name: z.string().min(1, "Name is required").max(160),
+  description: z.string().max(2000).optional(),
+  required: z.coerce.boolean().default(true),
+  sortOrder: z.coerce.number().int().min(0).default(0),
+  status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
+});
+
+export const visaRequirementUpdateSchema = visaRequirementCreateSchema
+  .partial()
+  .omit({ countryId: true });
+
+export const documentRequirementSchema = z.object({
+  name: z.string().min(1, "Name is required").max(160),
+  code: z
+    .string()
+    .min(1, "Code is required")
+    .max(64)
+    .regex(/^[a-z0-9_]+$/, "Code must be lowercase, digits, or underscores"),
+  description: z.string().max(2000).optional(),
+  countryId: z.string().optional(),
+  required: z.coerce.boolean().default(true),
+  appliesTo: z.enum(["APPLICATION", "VISA", "PROFILE"]).default("APPLICATION"),
+  status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
+});
+
+export const documentRequirementUpdateSchema = documentRequirementSchema
+  .partial()
+  .omit({ code: true });
 
 export const noteSchema = z.object({
   studentId: z.string().min(1),
@@ -192,13 +228,7 @@ export const intakeSchema = z.object({
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
 });
 
-export const visaRequirementSchema = z.object({
-  countryId: z.string().min(1, "Country is required"),
-  name: z.string().min(1, "Name is required"),
-  description: z.string().optional(),
-  required: z.coerce.boolean().default(true),
-  sortOrder: z.coerce.number().int().default(0),
-});
+export const visaRequirementSchema = visaRequirementCreateSchema;
 
 export const settingSchema = z.object({
   key: z.string().min(1),

@@ -167,7 +167,8 @@ Server-side pagination everywhere (`?page=&pageSize=&search=&status=`).
 Endpoints: `auth/[...nextauth]`, `auth/register`, `students`, `students/[id]`, `leads`,
 `leads/[id]`, `leads/[id]/convert`, `applications`, `applications/[id]`, `applications/[id]/status`,
 `applications/[id]/timeline`, `documents`, `documents/[id]/review`, `universities(+/[id])`,
-`courses(+/[id])`, `countries`, `visa/requirements`, `tasks(+/[id])`, `payments`, `invoices(+/[id])`,
+`courses(+/[id])`, `countries`, `countries/[id]`, `visa/requirements(+/[id])`,
+`document-requirements(+/[id])`, `tasks(+/[id])`, `payments`, `invoices(+/[id])`,
 `notifications`, `reports`.
 
 ## 14. Application Workflow
@@ -208,8 +209,9 @@ message. `GET /api/notifications` returns latest 50 + unread count; `PATCH` mark
 `auditLog.record({ userId, action, entity, entityId, oldValue, newValue, ipAddress, userAgent })`.
 Logged actions include: user.registered, student.created/soft_deleted, lead.converted,
 application.created/stage_changed, document.uploaded/approved/rejected/under_review,
-invoice.created, payment.recorded, university.created, country.created, task.created.
-Viewable at `/admin/audit`.
+invoice.created, payment.recorded, university.created, country.created/updated/status_changed/
+archived/unarchived, visa_requirement.created/updated/deleted, document_requirement.created/
+updated/deleted, task.created. Viewable at `/admin/audit`.
 
 ## 19. UI/UX Standards
 
@@ -589,3 +591,160 @@ priority enum/default). 61 tests total.
 **Known limitations**: Kanban loads up to 100 applications per query (pagination
 on scroll is TODO); Kanban stage-move uses a select rather than drag-and-drop;
 course selection on create is inferred via the university later.
+
+## 35. Countries Management (Admin, v2)
+
+**Routes**: `/admin/countries` (list) and `/admin/countries/[id]` (detail).
+APIs: `GET/POST /api/countries`, `GET/PATCH/DELETE /api/countries/[id]`,
+`GET/POST /api/visa/requirements` (with `?countryId=` filter),
+`GET/PATCH/DELETE /api/visa/requirements/[id]`,
+`GET/POST /api/document-requirements` (with `?countryId=` and `?appliesTo=` filters),
+`GET/PATCH/DELETE /api/document-requirements/[id]`.
+
+**List features** (all server-side via the shared `DataTable`): server-side
+pagination, search (name/code/currency), filter by status (ACTIVE/INACTIVE),
+archived toggle, sortable columns (name/code/status/createdAt via the `sortFrom`
+allow-list), column visibility, row actions (**View, Edit, Status, Archive**),
+loading skeletons, empty and error states, count columns (universities, active
+applications, visa requirements).
+
+**Row actions** (all RBAC'd server-side via `countries.manage` / `visa.manage` /
+`documents.review`): View (link to detail), Edit (full form), Status
+(activate ↔ deactivate via confirm dialog), Archive/Unarchive (confirm dialog
+with active-application guard).
+
+**Country detail page** sections (Radix `Tabs`):
+
+- **Overview**: stat strip (universities, courses, active applications, visa
+  requirements), about card (name/code/currency/status/timestamps/archived),
+  description card, and an activity timeline rendered from the country's audit
+  trail.
+- **Universities**: server-rendered table of all universities in this country
+  (links to each university detail page; shows ranking, course count, app count).
+- **Courses**: server-rendered table of all courses across all universities in
+  this country (degree level, tuition, English requirement).
+- **Visa Requirements**: full CRUD via the `CountryVisaRequirements` client
+  component (DataTable + FormDialog + ConfirmDialog). Admin can add, edit,
+  delete visa requirements scoped to this country — name, description, required
+  flag, sort order, status. The post goes to `/api/visa/requirements` with the
+  `countryId` pre-set.
+- **Document Requirements**: full CRUD via the `CountryDocumentRequirements`
+  client component. Lists both country-scoped requirements and global
+  requirements (no `countryId`) so the admin sees the complete effective rule
+  set at a glance. Each requirement has a stable lowercase `code` (immutable
+  on update), `appliesTo` (APPLICATION/VISA/PROFILE), `required`, and
+  `status`. Hard-delete is blocked when documents reference the requirement —
+  the API returns 409 with a clear message prompting the admin to deactivate
+  instead.
+- **Active Applications**: server-rendered table of in-flight applications
+  (status=ACTIVE) targeting this country, with deep links into the application
+  detail page and the owning student's record.
+
+**Reusable CRUD components** (no per-page reimplementations): every list /
+form / dialog / confirm / status pill goes through the shared `DataTable`,
+`FormDialog`, `ConfirmDialog`, `PageHeader`, `StatusBadge`, `EmptyState`,
+`TableShell`, and Radix `Tabs` primitives in `components/shared/` and
+`components/ui/overlays.tsx`. The visa/document requirement CRUD components
+follow the exact same shape as the existing `RequirementsAdmin` — only the
+endpoint, country pre-scope, and column list differ.
+
+**Pure helpers** (`lib/constants/countries.ts`, unit-tested):
+
+- `COUNTRY_STATUSES`, `COUNTRY_STATUS_LABELS` — canonical enums + labels
+  shared by validation, UI filters, and tests.
+- `DOC_REQUIREMENT_SCOPES`, `DOC_REQUIREMENT_SCOPE_LABELS` — document
+  requirement scope enums (APPLICATION / VISA / PROFILE).
+- `normalizeCountryCode(code)` — trims and uppercases; safe for nullish input.
+- `resolveCountryFlag(code, override)` — prefers an explicit `flag` override,
+  falls back to the alpha-2 emoji via `countryFlag()`, returns null for
+  alpha-3 codes with no override.
+- `archiveBlockReason(country)` — pure pre-flight guard mirroring the
+  server-side check: blocks archiving when active applications reference the
+  country.
+- `countrySlug(name)` — URL-friendly slug for deep-link anchors.
+
+`countryFlag()` already existed in `lib/utils/country.ts` and remains the
+low-level regional-indicator helper; `resolveCountryFlag()` is the higher-level
+resolver that also honours the `Country.flag` override column.
+
+**Validation** (`lib/validations/index.ts`):
+
+- `countrySchema` now requires `code` to be 2-3 letters (regex `/^[A-Za-z]{2,3}$/`),
+  caps name at 120 chars and description at 2000 chars, and accepts an optional
+  `flag` override (max 16 chars).
+- `countryUpdateSchema` is partial and accepts the `archived` boolean.
+- `visaRequirementCreateSchema` / `visaRequirementUpdateSchema` — separated
+  create vs update shapes. Update omits `countryId` (immutable on update).
+  `sortOrder` is constrained to `>= 0` (was unconstrained before).
+- `documentRequirementSchema` — `code` must be lowercase/digits/underscores
+  (matches the existing seed convention), `appliesTo` defaults to APPLICATION.
+- `documentRequirementUpdateSchema` — partial, omits `code` (immutable).
+- The legacy `visaRequirementSchema` is kept as an alias of
+  `visaRequirementCreateSchema` for backwards-compat with any external callers.
+
+**API improvements**:
+
+- `GET /api/countries` now supports `?archived=true` (was implicit), `?status=`
+  filter, `?currency=` filter, and includes `_count` for universities,
+  active applications, and visa requirements per row.
+- `GET /api/countries/[id]` returns the full detail payload: universities (with
+  course/app counts), visa requirements, document requirements (with country
+  relation), and the latest 25 active applications (with student/university/
+  course joins) — all in a single DB round-trip so the detail page renders
+  without N+1 queries.
+- `POST /api/countries` normalizes the code to uppercase + dedupe-checks name
+  and code against active (non-archived) countries. Audit log entry records
+  the new country's name/code/currency/status.
+- `PATCH /api/countries/[id]` now writes a structured audit log entry comparing
+  old vs new values (name/code/flag/currency/description/status). Status
+  changes emit a *separate* `country.status_changed` audit entry so the
+  timeline can surface activate/deactivate events distinctly from generic
+  edits. Archive/unarchive is a separate code path with its own audit entry.
+- `POST /api/visa/requirements` now uses `visaRequirementCreateSchema` (was
+  raw body) and writes a `visa_requirement.created` audit log entry. Country
+  existence is validated server-side (404 if missing).
+- `PATCH /api/visa/requirements/[id]` uses `visaRequirementUpdateSchema`
+  (countryId is now immutable on update).
+- New `GET/POST /api/document-requirements` and `GET/PATCH/DELETE
+  /api/document-requirements/[id]` routes — full CRUD with the
+  `documents.read` / `documents.review` permissions, `?countryId=` /
+  `?appliesTo=` / `?status=` filters on GET, audit logging on every mutation,
+  and a 409 guard on DELETE when uploaded documents reference the requirement.
+
+**RBAC**: reads need `countries.read` (admin + employee) / `visa.read` /
+`documents.read`; mutations need `countries.manage` (admin) / `visa.manage`
+(admin) / `documents.review` (admin + employee) — all enforced server-side in
+every handler via `guard()`, never only by hiding buttons. The existing
+`documents.review` permission was reused for document-requirement mutations
+because managing the requirement catalog is a document-review responsibility
+and avoids inventing a new permission key mid-release.
+
+**Audit coverage added**: `country.created` (now records name/code/currency/
+status), `country.updated` (structured old→new diff), `country.status_changed`
+(distinct activate/deactivate event), `country.archived` / `country.unarchived`,
+`visa_requirement.created` (new — was missing), `visa_requirement.updated`
+(now with old/new diff), `document_requirement.created` / `.updated` /
+`.deleted`.
+
+**Database change**: added the back-relation `Country.documentRequirements` ↔
+`DocumentRequirement.country` (plus `@@index([countryId])` and
+`@@index([appliesTo])` on `DocumentRequirement`) — run `npx prisma db push`
+after pulling. Non-destructive; scalar `countryId` column unchanged.
+
+**Tests**: `tests/countries.test.ts` — 35 tests covering: country/doc-req
+enum stability + labels, `normalizeCountryCode` (uppercasing, whitespace,
+nullish), `countryFlag` (alpha-2 emoji, alpha-3 null), `resolveCountryFlag`
+(override priority, fallback, trim), `archiveBlockReason` (no apps / N apps /
+already archived), `countrySlug` (lowercase, dash trim, non-alphanumeric
+replacement), and all five Zod schemas (required fields, code regex, status
+enum, partial updates, immutability of `countryId` on visa update and `code`
+on document-requirement update). 96 tests total via `npm run test`.
+
+**Known limitations**: document-requirement `code` is immutable on update
+(by design — codes are referenced by uploaded documents and audit logs); the
+list page count of "Visa Reqs" only counts ACTIVE visa requirements (matches
+the detail page's tab label); archived countries are still selectable by
+existing in-flight applications but cannot be selected for new applications
+(the catalog filters exclude `deletedAt != null`); hard-delete of a
+document-requirement with uploaded documents is blocked — admins must
+deactivate instead, preserving the historical join.

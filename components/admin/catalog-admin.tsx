@@ -180,58 +180,6 @@ export function CoursesAdmin() {
   );
 }
 
-type Country = { id: string; name: string; code: string; currency: string | null; status: string; _count?: { universities: number } };
-
-export function CountriesAdmin() {
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editCountry, setEditCountry] = useState<Country | null>(null);
-
-  const fields: FormField[] = [
-    { type: "text", name: "name", label: "Country name", required: true },
-    { type: "text", name: "code", label: "ISO code (2-3)", required: true, placeholder: "GB" },
-    { type: "text", name: "currency", label: "Currency", placeholder: "GBP" },
-    { type: "textarea", name: "description", label: "Description" },
-  ];
-
-  const columns: Column<Country>[] = [
-    { key: "name", header: "Name", sortable: true, render: (c) => <span className="font-medium">{c.name}</span> },
-    { key: "code", header: "Code", render: (c) => <span className="font-mono text-xs">{c.code}</span> },
-    { key: "currency", header: "Currency", render: (c) => c.currency ?? "—" },
-    { key: "universities", header: "Universities", render: (c) => c._count?.universities ?? 0 },
-    { key: "status", header: "Status", render: (c) => <StatusBadge status={c.status} /> },
-  ];
-
-  return (
-    <>
-      <PageHeader
-        title="Countries"
-        description="Destination countries."
-        breadcrumbs={["Admin", "Countries"]}
-        actions={<Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4" aria-hidden /> New Country</Button>}
-      />
-      <DataTable
-        endpoint="/api/countries"
-        columns={columns}
-        emptyMessage="No countries yet."
-        rowActions={[{ label: "Edit", onClick: (c) => setEditCountry(c) }]}
-      />
-      <FormDialog
-        open={createOpen} onOpenChange={setCreateOpen}
-        title="New Country" fields={fields}
-        endpoint="/api/countries" invalidateKey="/api/countries" successMessage="Country created"
-      />
-      {editCountry && (
-        <FormDialog
-          key={editCountry.id} open={!!editCountry} onOpenChange={(v) => !v && setEditCountry(null)}
-          title={`Edit ${editCountry.name}`} fields={fields}
-          endpoint="/api/countries" entityId={editCountry.id}
-          invalidateKey="/api/countries" successMessage="Country updated"
-        />
-      )}
-    </>
-  );
-}
-
 type Intake = {
   id: string;
   name: string;

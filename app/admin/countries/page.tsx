@@ -1,4 +1,4 @@
-import { CountriesAdmin } from "@/components/admin/catalog-admin";
+import { CountriesAdmin } from "@/components/admin/countries-admin";
 
 export const dynamic = "force-dynamic";
 

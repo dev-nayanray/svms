@@ -13,8 +13,8 @@ export function PageHeader({
   actions,
   breadcrumbs,
 }: {
-  title: string;
-  description?: string;
+  title: React.ReactNode;
+  description?: React.ReactNode;
   actions?: React.ReactNode;
   breadcrumbs?: string[];
 }) {

@@ -215,6 +215,7 @@ model Country {
   universities University[]
   applications Application[]
   visaRequirements VisaRequirement[]
+  documentRequirements DocumentRequirement[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 }
@@ -362,12 +363,16 @@ model DocumentRequirement {
   code        String   @unique
   description String?
   countryId   String?  @db.ObjectId // optional scoping
+  country     Country? @relation(fields: [countryId], references: [id])
   required    Boolean  @default(true)
   appliesTo   String   @default("APPLICATION") // APPLICATION | VISA | PROFILE
   status      String   @default("ACTIVE")
   documents   Document[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([countryId])
+  @@index([appliesTo])
 }
 
 model Document {

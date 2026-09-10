@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { ok, handleApiError, notFound } from "@/lib/api";
 import { guard } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
-import { visaRequirementSchema } from "@/lib/validations";
+import { visaRequirementUpdateSchema } from "@/lib/validations";
 import { auditLog } from "@/lib/services/audit";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -12,7 +12,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     const g = await guard("visa.manage");
     if (g.error) return g.error;
     const { id } = await params;
-    const body = visaRequirementSchema.partial().parse(await req.json());
+    const body = visaRequirementUpdateSchema.parse(await req.json());
     const item = await prisma.visaRequirement.findUnique({ where: { id } });
     if (!item) throw notFound("Visa requirement");
     const updated = await prisma.visaRequirement.update({ where: { id }, data: body });
@@ -21,8 +21,20 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       action: "visa_requirement.updated",
       entity: "VisaRequirement",
       entityId: id,
-      oldValue: { name: item.name, required: item.required, sortOrder: item.sortOrder },
-      newValue: { name: body.name, required: body.required, sortOrder: body.sortOrder },
+      oldValue: {
+        name: item.name,
+        description: item.description,
+        required: item.required,
+        sortOrder: item.sortOrder,
+        status: item.status,
+      },
+      newValue: {
+        name: body.name,
+        description: body.description,
+        required: body.required,
+        sortOrder: body.sortOrder,
+        status: body.status,
+      },
     });
     return ok(updated);
   } catch (err) {

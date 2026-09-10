@@ -4,6 +4,7 @@ import { guard } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { countrySchema, paginationSchema } from "@/lib/validations";
 import { auditLog } from "@/lib/services/audit";
+import { normalizeCountryCode } from "@/lib/constants/countries";
 
 export async function GET(req: NextRequest) {
   try {
@@ -17,14 +18,18 @@ export async function GET(req: NextRequest) {
       status: sp.get("status") ?? undefined,
     });
     const archived = sp.get("archived") === "true";
+    const currency = sp.get("currency") ?? undefined;
+
     const where = {
       deletedAt: archived ? { not: null } : null,
       ...(params.status ? { status: params.status } : {}),
+      ...(currency ? { currency: { equals: currency } } : {}),
       ...(params.search
         ? {
             OR: [
               { name: { contains: params.search, mode: "insensitive" as const } },
               { code: { contains: params.search, mode: "insensitive" as const } },
+              { currency: { contains: params.search, mode: "insensitive" as const } },
             ],
           }
         : {}),
@@ -32,8 +37,18 @@ export async function GET(req: NextRequest) {
     const [data, total] = await Promise.all([
       prisma.country.findMany({
         where,
-        include: { _count: { select: { universities: true, applications: true } } },
-        orderBy: sortFrom(sp, ["name", "code", "status", "createdAt"], { name: "asc" }),
+        include: {
+          _count: {
+            select: {
+              universities: { where: { deletedAt: null } },
+              applications: { where: { deletedAt: null, status: "ACTIVE" } },
+              visaRequirements: { where: { status: "ACTIVE" } },
+            },
+          },
+        },
+        orderBy: sortFrom(sp, ["name", "code", "currency", "status", "createdAt"], {
+          name: "asc",
+        }),
         skip: (params.page - 1) * params.pageSize,
         take: params.pageSize,
       }),
@@ -58,17 +73,28 @@ export async function POST(req: NextRequest) {
     const g = await guard("countries.manage");
     if (g.error) return g.error;
     const body = countrySchema.parse(await req.json());
-    const dupName = await prisma.country.findFirst({ where: { name: body.name, deletedAt: null } });
+    // Normalize the code to uppercase so lookups and uniqueness checks are stable.
+    const code = normalizeCountryCode(body.code);
+    const name = body.name.trim();
+
+    const dupName = await prisma.country.findFirst({
+      where: { name, deletedAt: null },
+    });
     if (dupName) return fail("CONFLICT", "A country with this name already exists", 409);
-    const dupCode = await prisma.country.findFirst({ where: { code: body.code, deletedAt: null } });
+    const dupCode = await prisma.country.findFirst({
+      where: { code, deletedAt: null },
+    });
     if (dupCode) return fail("CONFLICT", "Another country uses this code", 409);
-    const country = await prisma.country.create({ data: body });
+
+    const country = await prisma.country.create({
+      data: { ...body, name, code },
+    });
     await auditLog.record({
       userId: g.user.id,
       action: "country.created",
       entity: "Country",
       entityId: country.id,
-      newValue: { name: body.name, code: body.code },
+      newValue: { name, code, currency: body.currency, status: body.status },
     });
     return ok(country, { status: 201 });
   } catch (err) {
