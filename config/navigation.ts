@@ -42,7 +42,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin/reports", label: "Reports", icon: BarChart3 },
   { href: "/admin/branches", label: "Branches", icon: GitBranch },
   { href: "/admin/notifications", label: "Notifications", icon: Bell },
-  { href: "/admin/roles", label: "Roles & Permissions", icon: ShieldCheck },
+  { href: "/admin/roles-permissions", label: "Roles & Permissions", icon: ShieldCheck },
   { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/audit", label: "Audit Logs", icon: ScrollText },
 ];

@@ -2363,3 +2363,107 @@ includes PAID payments (not PARTIAL/PENDING) — this is intentional for
 revenue reporting. The "Assign Employees" action mentioned in the brief
 is handled through the Employee admin (each employee has a `branchId`
 field), not from the Branch detail page directly — this is a TODO.
+
+## 46. Roles & Permissions Module (v2)
+
+**Routes**: `/admin/roles-permissions` (primary),
+`/admin/roles` (redirects to `/admin/roles-permissions`). APIs:
+`GET /api/roles`, `GET /api/permissions`.
+
+**Permission system architecture**: the permission map is a static
+code constant in `lib/permissions/index.ts` — the single source of
+truth for all RBAC checks. It is intentionally NOT stored in the
+database (the `Permission` Prisma model exists but is unused). This
+prevents privilege escalation via the database: an attacker who gains
+DB write access cannot grant themselves new permissions because the
+enforcement layer reads from the code constant, not from the DB.
+
+**14 Permission groups** (from `lib/constants/permissions-meta.ts`):
+Students, Employees, Leads, Applications, Documents, Universities &
+Courses, Visa, Tasks, Finance, Reports, Branches, Student Portal,
+Settings & Audit.
+
+**Granular permissions** (40 total): students.read/create/update/delete,
+employees.read/create/update/delete, leads.read/manage, applications.
+read/manage/delete, documents.read/upload/review, universities.read/
+manage, courses.read/manage, countries.read/manage, stages.manage,
+intakes.manage, visa.read/manage, tasks.read/manage, notes.internal,
+finance.read/manage, reports.read, branches.manage, student.favorites,
+student.counseling, settings.manage, audit.read, audit_logs.read,
+roles.read, dashboard.read, search.read.
+
+**Admin UI** (`/admin/roles-permissions`):
+- **Security notice banner**: explains that permissions are enforced
+  server-side via `guard(permission)` on every API request, and that
+  frontend visibility is a UX convenience only.
+- **Role list** (3 cards): ADMIN, EMPLOYEE, STUDENT — each showing the
+  role label, description, user count, and a "View permissions" button
+  that expands a per-role permission breakdown.
+- **Permission matrix** (grouped by category): a table per permission
+  group with permission key, human-readable description, and a ✓/✗
+  column per role. 14 group sections, 40 permission rows.
+- **Code-controlled notice**: a footer explaining that the matrix lives
+  in `lib/permissions/index.ts` and editing it requires a code change +
+  code review + redeploy by design.
+
+**Server-side enforcement**: every API route calls
+`guard(permission)` which checks `hasPermission(role, permission)`
+against the static map. The `guard()` function returns a 401 for
+unauthenticated requests and a 403 for insufficient permissions.
+Frontend components use `hasPermission()` to conditionally render UI
+elements (buttons, links, tabs) — but this is UX convenience only.
+The server never trusts the frontend.
+
+**API improvements**:
+- `GET /api/roles` — returns roles with user counts, the full permission
+  matrix (permissionKey → roleName → boolean), role names, and the
+  permission group metadata for rendering.
+- `GET /api/permissions` — returns the full permission catalog: all
+  keys, grouped by category, with descriptions and per-role booleans.
+
+**Pure helpers** (`lib/constants/permissions-meta.ts`):
+- `PERMISSION_GROUPS` — 14 groups with key, label, icon, and permission
+  keys
+- `PERMISSION_DESCRIPTIONS` — human-readable description for every
+  permission key
+- `ROLE_METADATA` — label + description for each role (ADMIN, EMPLOYEE,
+  STUDENT)
+- `getPermissionGroup(key)` — returns the group a permission belongs to
+- `getAllPermissionKeys()` — returns all keys in group order
+
+**Tests**: `tests/permissions.test.ts` — 31 tests covering:
+- **Existing RBAC tests** (preserved): dashboard/finance/student/employee
+  access, deny-by-default, assertPermission throws
+- **Privilege escalation prevention** (new — 15 tests):
+  - STUDENT cannot access any admin-only permission (12 sampled)
+  - EMPLOYEE cannot access any admin-only permission (19 sampled)
+  - STUDENT cannot delete/create/update students
+  - STUDENT cannot manage applications
+  - EMPLOYEE cannot access finance, audit logs, branches, roles, settings,
+    catalog management, or application deletion
+  - STUDENT can only access student-portal + document upload + catalog read
+  - assertPermission throws for every admin-only permission when role is
+    STUDENT or EMPLOYEE
+  - Unknown roles cannot access any permission (deny-by-default)
+  - null/undefined roles cannot access any permission
+- **Permission group metadata** (new — 8 tests): every key belongs to a
+  group, every key has a description, every role has metadata,
+  getPermissionGroup returns correct group, getAllPermissionKeys in
+  group order, unique group keys, non-empty permission arrays, all 14
+  documented groups present
+- **Boundary tests** (new — 6 tests): ADMIN has every non-student-portal
+  permission, documents.review/upload boundaries, finance.manage is
+  admin-only, leads.manage shared between admin+employee,
+  student.favorites/counseling are student-only
+
+644 tests total via `npm run test` (19 files).
+
+**Known limitations**: the permission map is code-controlled (not
+runtime-editable) — this is intentional for security but means adding a
+new permission requires a code change + redeploy. The `Permission`
+Prisma model exists but is unused (a future "custom roles" feature
+could use it, but the current 3-role system is sufficient). There is
+no "create custom role" UI — only the 3 built-in roles (ADMIN,
+EMPLOYEE, STUDENT) are supported. Role assignment is done via the
+Employee admin's "Assign Role" action (which calls `roleAssignmentError`
+to prevent self-lock-out and student-role escalation).
