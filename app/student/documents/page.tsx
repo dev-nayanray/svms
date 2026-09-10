@@ -1,0 +1,21 @@
+import { getSession } from "@/lib/auth/session";
+import { DocumentsList } from "@/components/modules/documents-list";
+
+export const dynamic = "force-dynamic";
+
+export default async function Page({ searchParams }: { searchParams: Promise<{ page?: string; status?: string }> }) {
+  const sp = await searchParams;
+  const session = await getSession();
+  return (
+    <>
+      <h1 className="text-xl font-semibold">My Documents</h1>
+      <DocumentsList
+        page={Number(sp.page ?? 1)}
+        status={sp.status}
+        basePath="/student/documents"
+        studentUserId={session.user.id}
+        canReview={false}
+      />
+    </>
+  );
+}
