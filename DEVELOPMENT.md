@@ -101,6 +101,11 @@ API guards: `guard(permission)` (returns 401/403 responses) and `requirePermissi
 (throws, for use with `handleApiError`). Pages: `RoleLayout` redirects disallowed roles to
 `/403`. Never scatter role-string checks in components.
 
+Student role permissions include `universities.read`, `courses.read`, `countries.read`,
+`visa.read` (catalog browsing), `documents.upload`, plus the student-only
+`student.favorites` and `student.counseling` keys (no admin or employee mutations
+are exposed under `/api/student/*`).
+
 ## 11. Folder Architecture
 
 ```text
@@ -169,7 +174,8 @@ Endpoints: `auth/[...nextauth]`, `auth/register`, `students`, `students/[id]`, `
 `applications/[id]/timeline`, `documents`, `documents/[id]/review`, `universities(+/[id])`,
 `courses(+/[id])`, `countries`, `countries/[id]`, `visa/requirements(+/[id])`,
 `document-requirements(+/[id])`, `tasks(+/[id])`, `payments`, `invoices(+/[id])`,
-`notifications`, `reports`.
+`notifications`, `reports`, `student/universities`, `student/universities/[id]`,
+`student/universities/meta`, `student/favorites`, `student/counseling-requests`.
 
 ## 14. Application Workflow
 
@@ -209,9 +215,10 @@ message. `GET /api/notifications` returns latest 50 + unread count; `PATCH` mark
 `auditLog.record({ userId, action, entity, entityId, oldValue, newValue, ipAddress, userAgent })`.
 Logged actions include: user.registered, student.created/soft_deleted, lead.converted,
 application.created/stage_changed, document.uploaded/approved/rejected/under_review,
-invoice.created, payment.recorded, university.created, country.created/updated/status_changed/
+invoice.created, payment.recorded, university.created/updated, country.created/updated/status_changed/
 archived/unarchived, visa_requirement.created/updated/deleted, document_requirement.created/
-updated/deleted, task.created. Viewable at `/admin/audit`.
+updated/deleted, university.favorited/unfavorited, counseling_request.created, task.created.
+Viewable at `/admin/audit`.
 
 ## 19. UI/UX Standards
 
@@ -748,3 +755,234 @@ existing in-flight applications but cannot be selected for new applications
 (the catalog filters exclude `deletedAt != null`); hard-delete of a
 document-requirement with uploaded documents is blocked — admins must
 deactivate instead, preserving the historical join.
+
+## 36. Student Universities Discovery (Module 07, v2)
+
+**Goal**: a modern mobile-first university discovery and viewing experience
+for students. Students browse universities curated by the agency — this is
+NOT an unrestricted public marketplace. The agency controls which
+universities are visible via the existing admin catalog (`status: ACTIVE`,
+non-archived, parent country also ACTIVE).
+
+**Routes**:
+- `/student/universities` (list — mobile-first card UI)
+- `/student/universities/[id]` (detail — tabbed sections)
+
+**Student-facing APIs**:
+- `GET /api/student/universities` — server-side search + filters, paginated
+- `GET /api/student/universities/[id]` — full detail, internal admin
+  fields stripped
+- `GET /api/student/universities/meta` — filter option lists (countries,
+  cities, max-ranking ceiling) for the filter sheet
+- `GET/POST /api/student/favorites` — list + toggle favorites
+- `POST /api/student/counseling-requests` — request counseling for a
+  university (notifies the assigned counselor)
+
+**Visibility rule** (single source of truth in
+`lib/constants/universities.ts`): a university is student-visible only if
+`status === "ACTIVE"`, `deletedAt === null`, AND its parent country has
+`status === "ACTIVE"` and `deletedAt === null`. The rule is enforced at
+the DB level in every student-facing query via `buildStudentUniversityWhere`
+so deleted/archived/inactive universities never reach the response — even
+cached client responses are safe. The pure `isUniversityVisibleToStudent`
+helper is also exposed for UI pre-flight checks and is unit-tested
+independently.
+
+**University card** (mobile-optimized, reusable component):
+- Logo (resolved via `resolveUniversityLogo`; falls back to a 2-letter
+  initials avatar derived from `universityInitials` which strips corporate
+  suffixes like "University", "of", "the")
+- Name (links to detail)
+- Country + city with globe icon
+- Ranking chip with tier badge (Top 50 / Top 200 / Established via
+  `rankingTier`)
+- Course count chip
+- Application fee chip (formatted via `formatApplicationFee` with
+  `Intl.NumberFormat`)
+- 3-line description excerpt
+- Favorite heart toggle (optimistic UI via queryClient)
+- "View details" + "Request counseling" action buttons
+- Website link (truncated, external)
+
+**Filters** (mobile bottom sheet via Radix `Drawer`):
+- Country (dropdown — only countries with at least one visible university)
+- City (dropdown — distinct cities across visible universities)
+- Ranking ceiling (numeric input — `rankingMax`)
+- Status filter intentionally NOT exposed to students (visibility is
+  always ACTIVE-only)
+- Course + Intake filters supported at the API level via `courseId` and
+  `intakeId` query params (Prisma `some` joins on `courses` and
+  `courses.intakes`) — UI hooks for these are TODO
+- "Favorites only" toggle (shows only the student's saved universities)
+
+Active filter chips render in a horizontally-scrollable row above the
+list, each removable inline. Active count badge appears on the filter
+trigger button. A "Clear all" link resets everything in one click.
+
+**Search** (server-side): case-insensitive `contains` across name, city,
+and country name — OR-combined in a single Prisma `OR` clause so a student
+searching "Toronto" matches both universities named "Toronto" and
+universities located in the city of Toronto. Whitespace is trimmed before
+query.
+
+**Sort**: dropdown inline with the search bar. Options: Name (A→Z),
+Top ranked (asc), Highest fee (desc), Newest (desc). Default = name asc.
+
+**Detail page** (`/student/universities/[id]`, server component with
+embedded client action bar):
+
+- Header card: logo + name + location + ranking chip + ACTIVE badge
+- Action bar (client component): Save/Unsave heart, Request counseling
+  button (disabled + status pill if already requested), Visit website link
+- Tabs (Radix `Tabs`):
+  - **Overview**: description card + quick-facts card (country, city,
+    ranking, application fee, local currency, website link)
+  - **Courses**: server-rendered table of active courses (name, level,
+    duration, tuition, English requirements)
+  - **Intakes**: server-rendered table of upcoming active intakes across
+    all courses (intake name, course name, level, deadline)
+  - **Requirements**: two side-by-side cards — document requirements
+    (country-scoped + global) and visa requirements for the country.
+    Each requirement shows scope (APPLICATION/VISA/PROFILE), required
+    flag, and description.
+  - **Application Info**: application fee, currency, course count, open
+    intake count, and a "How to apply" callout explaining that students
+    don't apply directly — they request counseling.
+
+Internal administrative fields (`deletedAt`, `deletedBy`, internal
+`_count`) are stripped from the API response so they never reach the
+client.
+
+**Student actions**:
+- **View** — link to detail page
+- **Save / Favorite** — POST `/api/student/favorites` toggles. Idempotent
+  (unique constraint on `studentId_universityId`). Audit-logged as
+  `university.favorited` / `university.unfavorited`. UI updates
+  optimistically via `queryClient.setQueryData` and rolls back on error.
+- **Request Counseling** — POST `/api/student/counseling-requests` creates
+  a `CounselingRequest` row in `PENDING` status. Server-side guards:
+  - student profile must exist
+  - target university must be student-visible
+  - if `courseId` is provided, it must belong to the target university
+  - duplicate open requests (status PENDING or CONTACTED) for the same
+    student+university are blocked with a 409 — the student must wait
+    for their counselor to resolve or archive the existing request
+  - the assigned counselor (if any) receives a `COUNSELING_REQUEST`
+    notification with a deep link
+- **View Courses** — same as "View" (the Courses tab is on the detail
+  page)
+- **No direct university database modification** — there is no admin
+  mutation endpoint exposed under `/api/student/*`. The student role
+  only has `universities.read`, `student.favorites`, and
+  `student.counseling` permissions.
+
+**Database changes** (run `npx prisma db push` after pulling):
+- `University.city` (optional string) + `@@index([city])`
+- `University.logo` (already existed; now exposed in the admin form)
+- `UniversityFavorite` model — `@@unique([studentId, universityId])` so
+  the toggle is idempotent
+- `CounselingRequest` model — status PENDING → CONTACTED → RESOLVED |
+  ARCHIVED lifecycle; indexed on studentId, universityId, status
+- Back-relations added to `Student.universityFavorites` and
+  `Student.counselingRequests`
+- Back-relations added to `University.favorites` and
+  `University.counselingRequests`
+
+**New permissions** (`lib/permissions/index.ts`):
+- `universities.read`, `courses.read`, `countries.read`, `visa.read` now
+  include `STUDENT` (was ADMIN+EMPLOYEE only)
+- New `student.favorites` (STUDENT-only) — gates favorite toggle + list
+- New `student.counseling` (STUDENT-only) — gates counseling request
+  creation
+
+**Pure helpers** (`lib/constants/universities.ts`, unit-tested):
+- `UNIVERSITY_VISIBILITY_STATUSES` — `["ACTIVE"]`
+- `STUDENT_UNIVERSITY_SORTS` — allow-list for the `sortBy` query param
+- `isUniversityVisibleToStudent(uni)` — pure visibility check
+- `buildStudentUniversityWhere(filters)` — builds the Prisma `where`
+  fragment enforcing visibility + AND-combining all optional filters
+- `resolveUniversityOrderBy(sort)` — maps the sort key to a Prisma
+  orderBy, with ranking ascending (lower = better) and everything else
+  descending
+- `formatApplicationFee(fee, currency)` — `Intl.NumberFormat` with safe
+  fallback for invalid currency codes
+- `rankingTier(ranking)` — categorizes into "top" (≤50) / "leading"
+  (≤200) / "established" (>200) / null
+- `resolveUniversityLogo(logo)` — URL validation with relative-path
+  passthrough
+- `universityInitials(name)` — strips corporate suffixes ("University",
+  "Institute", "College", "School", "of", "the") and takes the first 2
+  surviving words' initials
+
+**Validation** (`lib/validations/index.ts`):
+- `universitySchema` now accepts `city`, `logo`, and caps `description`
+  at 5000 chars (was unbounded)
+- `studentUniversityQuerySchema` — extends `paginationSchema` with
+  countryId, city, rankingMax, courseId, intakeId, favoriteOnly, and
+  sortBy. `pageSize` capped at 100 (rejects, not clamps).
+- `counselingRequestSchema` — universityId required, courseId optional,
+  message optional (max 2000 chars)
+- `favoriteToggleSchema` — universityId required
+
+**Audit coverage added**: `university.favorited`, `university.unfavorited`,
+`counseling_request.created`. The admin-side `university.updated` audit
+entry now records `city` in the old/new value diff.
+
+**Mobile UX patterns** (per the brief):
+- **Cards**: 1-column on mobile, 2-column on `sm+` screens. Each card is
+  a self-contained unit with avatar, name, location, chips, description
+  excerpt, and actions.
+- **Horizontal chips**: filter chips scroll horizontally on mobile,
+  removable inline. Sort dropdown is inline (not hidden in the filter
+  sheet) because students change sort often.
+- **Filter bottom sheet**: Radix `Drawer` slides in from the right.
+  Applies on "Show results" button; pending filters are staged locally
+  so closing without applying doesn't change the active filters.
+- **Image/logo support**: `<img>` with `loading="lazy"` and an
+  initials-avatar fallback when the logo URL is missing or invalid.
+- **Expandable details**: description uses `line-clamp-3` on cards (CSS
+  line clamp) and the detail page's Overview tab shows the full
+  description with `whitespace-pre-wrap`.
+- **Sticky search**: the search bar sticks to the top on mobile so it
+  survives scroll (`sticky top-0 z-20` with backdrop blur).
+
+**Responsive layout**: 1-col on mobile (`grid gap-4`), 2-col on `sm+`
+(`sm:grid-cols-2`). Detail page uses `lg:grid-cols-2` / `lg:grid-cols-3`
+grids for side-by-side card layouts on desktop. All interactive elements
+meet the 44px tap-target minimum on mobile.
+
+**Tests**: `tests/universities.test.ts` — 53 tests covering:
+- Visibility enums + sort allow-list stability
+- `isUniversityVisibleToStudent` (active/inactive/deleted/missing
+  country/all combinations)
+- `buildStudentUniversityWhere` (visibility predicates always present,
+  search OR clause, country+city+ranking AND clauses, course + intake
+  join filters, favorite-only with and without favorites, whitespace
+  trimming)
+- `resolveUniversityOrderBy` (every sort key + default + unknown fallback)
+- `formatApplicationFee` (null/undefined, USD formatting, invalid
+  currency fallback)
+- `rankingTier` (null/0/negative, top/leading/established boundaries)
+- `resolveUniversityLogo` (null, absolute URL, relative path, malformed,
+  non-http schemes)
+- `universityInitials` (suffix stripping, fallback to original, 2-char
+  cap, multi-word handling)
+- All four Zod schemas (required fields, optional fields, length caps,
+  enum validation, coercion behavior)
+
+149 tests total via `npm run test` (10 files).
+
+**RBAC enforcement**: every student-facing API route uses `guard()` with
+the appropriate permission key. The student layout (`app/student/layout.tsx`)
+already restricts to ADMIN + STUDENT roles via `RoleLayout` — admins can
+preview the student experience but employees are redirected to `/403`.
+
+**Known limitations**: the city filter lists every distinct city across
+all visible universities (not per-selected-country); the `courseId` and
+`intakeId` filters are exposed at the API but not yet surfaced in the UI
+filter sheet (deferred until a course-browser module lands); counseling
+requests are visible to the assigned counselor via notification but
+there's no employee-side inbox yet — they currently land in
+`/employee/notifications`; the favorites list endpoint exists but the
+"favorites only" filter is the only UI surface for it (a dedicated
+"Saved Universities" page is TODO).

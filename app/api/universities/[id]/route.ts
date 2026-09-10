@@ -3,6 +3,7 @@ import { ok, handleApiError, notFound } from "@/lib/api";
 import { guard } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { universitySchema } from "@/lib/validations";
+import { auditLog } from "@/lib/services/audit";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -16,7 +17,20 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     if (!uni) throw notFound("University");
     const updated = await prisma.university.update({
       where: { id },
-      data: { ...body, website: body.website || undefined },
+      data: {
+        ...body,
+        website: body.website || undefined,
+        logo: body.logo || undefined,
+        city: body.city || undefined,
+      },
+    });
+    await auditLog.record({
+      userId: g.user.id,
+      action: "university.updated",
+      entity: "University",
+      entityId: id,
+      oldValue: { name: uni.name, city: uni.city, status: uni.status },
+      newValue: { name: body.name, city: body.city, status: body.status },
     });
     return ok(updated);
   } catch (err) {

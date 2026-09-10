@@ -61,6 +61,7 @@ export const EMPLOYEE_NAV: NavItem[] = [
 
 export const STUDENT_NAV: NavItem[] = [
   { href: "/student", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/student/universities", label: "Universities", icon: Building2 },
   { href: "/student/applications", label: "Applications", icon: FolderKanban },
   { href: "/student/documents", label: "Documents", icon: FileText },
   { href: "/student/tasks", label: "Tasks", icon: CheckSquare },

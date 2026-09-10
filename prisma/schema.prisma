@@ -109,6 +109,8 @@ model Student {
   tasks                 Task[]
   notes                 Note[]
   conversations         Conversation[]
+  universityFavorites   UniversityFavorite[]
+  counselingRequests    CounselingRequest[]
   deletedAt             DateTime?
   deletedBy             String?            @db.ObjectId
   createdAt             DateTime           @default(now())
@@ -228,19 +230,23 @@ model University {
   country        Country   @relation(fields: [countryId], references: [id])
   logo           String?
   website        String?
+  city           String?
   description    String?
   ranking        Int?
   applicationFee Float?
   status         String    @default("ACTIVE")
   courses        Course[]
   applications   Application[]
+  favorites      UniversityFavorite[]
+  counselingRequests CounselingRequest[]
   deletedAt      DateTime?
   deletedBy      String?   @db.ObjectId
-  createdAt      DateTime  @default(now())
+  createdAt       DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
   @@index([countryId])
   @@index([status])
+  @@index([city])
 }
 
 model Course {
@@ -520,6 +526,51 @@ model Notification {
   @@index([userId])
   @@index([createdAt])
 }
+
+// ─────────────────────────────────────────────
+// Student Discovery
+// ─────────────────────────────────────────────
+
+/**
+ * Bookmark for a university a student wants to keep track of.
+ * Unique on (studentId, universityId) so toggling is idempotent.
+ */
+model UniversityFavorite {
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
+  studentId    String      @db.ObjectId
+  student      Student     @relation(fields: [studentId], references: [id])
+  universityId String      @db.ObjectId
+  university   University  @relation(fields: [universityId], references: [id])
+  createdAt     DateTime    @default(now())
+
+  @@unique([studentId, universityId])
+  @@index([universityId])
+}
+
+/**
+ * Student-initiated counseling request tied to a university. Surfaces to
+ * the assigned counselor (or admin if none) for follow-up. Status moves
+ * PENDING → CONTACTED → RESOLVED | ARCHIVED.
+ */
+model CounselingRequest {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  studentId     String      @db.ObjectId
+  student       Student     @relation(fields: [studentId], references: [id])
+  universityId  String      @db.ObjectId
+  university    University  @relation(fields: [universityId], references: [id])
+  courseId      String?     @db.ObjectId
+  message       String?
+  status        String      @default("PENDING") // PENDING | CONTACTED | RESOLVED | ARCHIVED
+  resolvedById  String?     @db.ObjectId
+  resolvedAt    DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([studentId])
+  @@index([universityId])
+  @@index([status])
+}
+
 
 // ─────────────────────────────────────────────
 // Finance

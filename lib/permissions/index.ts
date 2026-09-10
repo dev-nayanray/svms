@@ -22,15 +22,18 @@ export const PERMISSIONS = {
   "applications.manage": ["ADMIN", "EMPLOYEE"],
   "applications.delete": ["ADMIN"],
   // Catalog
-  "universities.read": ["ADMIN", "EMPLOYEE"],
+  "universities.read": ["ADMIN", "EMPLOYEE", "STUDENT"],
   "universities.manage": ["ADMIN"],
-  "courses.read": ["ADMIN", "EMPLOYEE"],
+  "courses.read": ["ADMIN", "EMPLOYEE", "STUDENT"],
   "courses.manage": ["ADMIN"],
-  "countries.read": ["ADMIN", "EMPLOYEE"],
+  "countries.read": ["ADMIN", "EMPLOYEE", "STUDENT"],
   "countries.manage": ["ADMIN"],
-  "visa.read": ["ADMIN", "EMPLOYEE"],
+  "visa.read": ["ADMIN", "EMPLOYEE", "STUDENT"],
   "visa.manage": ["ADMIN"],
   "stages.manage": ["ADMIN"],
+  // Student discovery
+  "student.favorites": ["STUDENT"],
+  "student.counseling": ["STUDENT"],
   // Documents
   "documents.read": ["ADMIN", "EMPLOYEE"],
   "documents.upload": ["ADMIN", "EMPLOYEE", "STUDENT"],

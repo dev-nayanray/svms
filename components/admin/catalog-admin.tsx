@@ -14,7 +14,9 @@ import { Plus } from "lucide-react";
 type University = {
   id: string;
   name: string;
+  city: string | null;
   website: string | null;
+  logo: string | null;
   ranking: number | null;
   applicationFee: number | null;
   status: string;
@@ -39,15 +41,35 @@ export function UniversitiesAdmin() {
   const fields: FormField[] = [
     { type: "text", name: "name", label: "Name", required: true },
     { type: "select", name: "countryId", label: "Country", options: countryOptions, required: true },
+    { type: "text", name: "city", label: "City", placeholder: "Manchester" },
     { type: "text", name: "website", label: "Website", placeholder: "https://…" },
+    { type: "text", name: "logo", label: "Logo URL", placeholder: "https://…/logo.png" },
     { type: "number", name: "ranking", label: "Ranking" },
     { type: "number", name: "applicationFee", label: "Application fee (USD)" },
+    {
+      type: "select",
+      name: "status",
+      label: "Status",
+      options: [
+        { value: "ACTIVE", label: "Active" },
+        { value: "INACTIVE", label: "Inactive" },
+      ],
+    },
     { type: "textarea", name: "description", label: "Description" },
   ];
 
   const columns: Column<University>[] = [
-    { key: "name", header: "Name", sortable: true, render: (u) => <span className="font-medium">{u.name}</span> },
+    { key: "name", header: "Name", sortable: true, render: (u) => (
+      <span className="inline-flex items-center gap-2">
+        {u.logo && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={u.logo} alt="" className="h-6 w-6 rounded object-contain" />
+        )}
+        <span className="font-medium">{u.name}</span>
+      </span>
+    ) },
     { key: "country", header: "Country", render: (u) => u.country.name },
+    { key: "city", header: "City", render: (u) => u.city ?? "—" },
     { key: "ranking", header: "Ranking", render: (u) => u.ranking ?? "—" },
     { key: "courses", header: "Courses", render: (u) => u._count?.courses ?? 0 },
     { key: "applicationFee", header: "App Fee", render: (u) => (u.applicationFee ? `$${u.applicationFee}` : "—") },

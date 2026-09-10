@@ -54,14 +54,20 @@ export async function POST(req: NextRequest) {
     const body = universitySchema.parse(await req.json());
     const slug = `${slugify(body.name)}-${Date.now().toString(36)}`;
     const uni = await prisma.university.create({
-      data: { ...body, website: body.website || undefined, slug },
+      data: {
+        ...body,
+        website: body.website || undefined,
+        logo: body.logo || undefined,
+        city: body.city || undefined,
+        slug,
+      },
     });
     await auditLog.record({
       userId: g.user.id,
       action: "university.created",
       entity: "University",
       entityId: uni.id,
-      newValue: { name: body.name },
+      newValue: { name: body.name, city: body.city },
     });
     return ok(uni, { status: 201 });
   } catch (err) {

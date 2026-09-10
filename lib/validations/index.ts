@@ -118,7 +118,9 @@ export const universitySchema = z.object({
   name: z.string().min(1, "Name is required"),
   countryId: z.string().min(1, "Country is required"),
   website: z.string().url().optional().or(z.literal("")),
-  description: z.string().optional(),
+  city: z.string().max(120).optional(),
+  logo: z.string().url().optional().or(z.literal("")),
+  description: z.string().max(5000).optional(),
   ranking: z.coerce.number().int().positive().optional(),
   applicationFee: z.coerce.number().nonnegative().optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
@@ -244,4 +246,34 @@ export const paginationSchema = z.object({
 
 export const leadUpdateSchema = leadSchema.partial().extend({
   archived: z.boolean().optional(),
+});
+
+// ─────────────────────────────────────────────
+// Student discovery — university browsing, favorites, counseling requests
+// ─────────────────────────────────────────────
+
+/**
+ * Parses the query-string of `/api/student/universities`. Extends the base
+ * pagination schema with the discovery filters (country, city, ranking,
+ * status, course, intake). All filter values are optional and coerce-safe
+ * so missing query params fall back to undefined.
+ */
+export const studentUniversityQuerySchema = paginationSchema.extend({
+  countryId: z.string().optional(),
+  city: z.string().optional(),
+  rankingMax: z.coerce.number().int().positive().optional(),
+  courseId: z.string().optional(),
+  intakeId: z.string().optional(),
+  favoriteOnly: z.coerce.boolean().optional(),
+  sortBy: z.enum(["name", "ranking", "applicationFee", "createdAt"]).optional(),
+});
+
+export const counselingRequestSchema = z.object({
+  universityId: z.string().min(1, "University is required"),
+  courseId: z.string().optional(),
+  message: z.string().max(2000, "Message is too long").optional(),
+});
+
+export const favoriteToggleSchema = z.object({
+  universityId: z.string().min(1, "University is required"),
 });
