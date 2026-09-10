@@ -2016,3 +2016,141 @@ confirm dialog) — this is intentional for speed but could be changed to
 a confirm dialog if misclicks become an issue. The task performance
 stats endpoint (`/api/tasks/stats`) is not yet wired into the admin
 dashboard UI — it's ready for the dashboard widget to consume.
+
+## 43. Admin Finance Management (v2)
+
+**Routes**: `/admin/payments` (list), `/admin/invoices` (list),
+`/admin/invoices/[id]` (detail + printable view). APIs: `GET/POST
+/api/payments`, `GET/PATCH/DELETE /api/payments/[id]`,
+`POST /api/payments/[id]/refund`, `GET/POST /api/invoices`,
+`GET/PATCH/DELETE /api/invoices/[id]`.
+
+**Payments**: Amount, Currency, Student, Application (optional),
+Invoice (optional), Payment Method (CASH/BANK_TRANSFER/BKASH/NAGAD/
+CARD/OTHER), Transaction Reference, Payment Date, Status (PENDING/PAID/
+PARTIAL/REFUNDED/CANCELLED), Created By.
+
+**Invoices**: Invoice Number (auto-generated INV-YYYY-NNNNN), Student,
+Application (optional), Items (JSON array of {description, quantity,
+unitPrice}), Subtotal, Discount, Total, Paid Amount, Due Amount, Status
+(DRAFT/ISSUED/PARTIAL/PAID/OVERDUE/CANCELLED), Issue Date, Due Date.
+
+**Financial rules** (enforced server-side in `invoiceService`):
+- **Totals are always computed server-side** via `computeInvoiceTotals`
+  — client-sent totals are never trusted.
+- **Payments cannot exceed the invoice's due amount** — validated at
+  `recordPayment` and `updatePayment` time.
+- **Financial records are never hard-deleted** — only soft-deleted
+  (archived) for audit trails. The `DELETE` endpoints set `deletedAt`
+  + `deletedBy` rather than removing the record.
+- **Refunds reverse the payment** (status → REFUNDED) and adjust the
+  linked invoice's paid/due/status accordingly. Refunded payments cannot
+  be edited.
+- **Overpayment prevention**: `recordPayment` checks `amount > dueAmount`
+  and throws a 400 BAD_REQUEST.
+- **Invoice recalculation**: when invoice items or discount are edited,
+  the subtotal/total/paidAmount/dueAmount/status are recomputed
+  server-side, keeping paid/due consistent with the new total.
+
+**Payments list** (DataTable):
+- search by transaction reference
+- filters: Status, Method, Student, date range (paymentFrom/paymentTo)
+- sortable columns: amount, paymentMethod, paymentDate, status, createdAt
+- row actions: Edit, Refund, Archive
+- record payment dialog with student/amount/method/reference/date
+
+**Invoices list** (DataTable):
+- search by invoice number
+- filters: Status, Student
+- sortable columns: invoiceNumber, total, paidAmount, dueAmount, status,
+  issueDate, dueDate, createdAt
+- row actions: View (detail page), Print (opens printable view in new tab),
+  Archive
+- create invoice dialog with student/items/discount/dueDate
+
+**Invoice detail page** (`/admin/invoices/[id]`):
+- Normal view: header with print button + status badge, payment progress
+  bar (visual % paid), line items table, summary card (subtotal/discount/
+  total/paid/due + issue/due dates + application link), payments table
+- **Printable view** (`?print=1`): clean, print-friendly layout with
+  "Bill To" section, line items table, totals summary, status badge, and
+  a "Print Invoice" button that triggers `window.print()`. Opened in a
+  new tab so the admin can print without leaving the list.
+
+**Refund workflow**:
+- Refund dialog shows the payment amount + student name + warning that the
+  refund will reverse the payment and adjust the linked invoice.
+- Optional reason field (max 2000 chars) — audit-logged.
+- The refund sets payment status to REFUNDED, adjusts the invoice's
+  paidAmount (subtracts the payment amount) and dueAmount (adds it back),
+  and recomputes the invoice status (ISSUED if paidAmount reaches 0,
+  PARTIAL otherwise).
+- Refunded payments cannot be edited (409 CONFLICT).
+
+**Audit coverage added**: `invoice.created` (existing), `invoice.updated`
+(structured old→new diff), `invoice.archived`, `payment.recorded`
+(existing, now with invoiceId), `payment.updated` (structured diff),
+`payment.refunded` (with reason + old status), `payment.archived`.
+
+**Pure helpers** (`lib/constants/finance.ts`, unit-tested):
+- `PAYMENT_STATUSES`, `PAYMENT_STATUS_LABELS`, `PAYMENT_METHODS`,
+  `PAYMENT_METHOD_LABELS`
+- `INVOICE_STATUSES`, `INVOICE_STATUS_LABELS`
+- `PAYMENT_SORT_KEYS`, `INVOICE_SORT_KEYS`
+- `buildAdminPaymentWhere(filters)` — Prisma `where` with deletedAt +
+  search/status/student/application/invoice/method/date-range filters
+- `buildAdminInvoiceWhere(filters)` — Prisma `where` with deletedAt +
+  search/status/student/application/date-range filters
+- `formatMoney(amount, currency)` — `Intl.NumberFormat` with safe fallback
+- `paymentProgress(invoice)` — returns 0-100 percentage paid
+
+**Finance service** (`lib/services/finance.ts`):
+- `computeInvoiceTotals(items, discount)` — pure server-side math (clamps
+  discount to 0-subtotal, rejects negative discounts)
+- `create(input, actor)` — generates invoice number, computes totals,
+  audit-logs creation
+- `update(id, input, actor)` — recomputes totals when items/discount
+  change, recalculates paid/due/status, audit-logs update
+- `archive(id, actor)` — soft-deletes the invoice
+- `recordPayment(input, actor)` — validates against due amount, updates
+  linked invoice's paid/due/status, audit-logs recording
+- `updatePayment(id, input, actor)` — validates against adjusted due,
+  recalculates invoice totals, audit-logs update
+- `refund(id, reason, actor)` — reverses payment, adjusts invoice,
+  audit-logs refund with reason
+- `archivePayment(id, actor)` — soft-deletes the payment
+
+**Validation**:
+- `paymentSchema` — create: studentId + amount + paymentMethod required;
+  amount must be positive; currency defaults to BDT
+- `paymentUpdateSchema` — partial: amount/method/reference/date;
+  status NOT included (goes through refund)
+- `paymentRefundSchema` — optional reason (max 2000 chars)
+- `invoiceSchema` — create: studentId + items (min 1); discount defaults 0;
+  items require positive quantity + non-negative unitPrice
+- `invoiceUpdateSchema` — partial: items/discount/dates/status; empty
+  items array rejected
+
+**Tests**: `tests/finance.test.ts` — 61 tests covering payment/invoice
+enum stability + labels, sort allow-lists, `buildAdminPaymentWhere`
+(all filters + search + date range + AND-chain), `buildAdminInvoiceWhere`
+(all filters + search + date range), `formatMoney` (nullish/currency/
+fallback), `paymentProgress` (0/25/33/50/100/overpayment/zero-total),
+`computeInvoiceTotals` (subtotal/discount/clamp/negative/empty),
+`paymentSchema` (required fields, defaults, non-positive amount, invalid
+method, optional fields), `paymentUpdateSchema` (partial, non-positive
+rejection, nullable date), `paymentRefundSchema` (optional reason,
+length cap), `invoiceSchema` (required fields, default discount, negative
+discount, zero quantity, negative unitPrice), `invoiceUpdateSchema`
+(partial, empty items rejected, status enum, invalid status).
+
+549 tests total via `npm run test` (17 files).
+
+**Known limitations**: the invoice create dialog only supports a single
+line item (the FormDialog doesn't have a dynamic-items-adder yet —
+multi-item invoices require a future "items editor" component). The
+printable invoice view uses `window.print()` which relies on the
+browser's print dialog — server-side PDF generation is a TODO. The
+existing `tests/invoice-totals.test.ts` file still runs alongside the
+new `tests/finance.test.ts` (the `computeInvoiceTotals` tests are
+duplicated — the old file can be removed once confirmed redundant).

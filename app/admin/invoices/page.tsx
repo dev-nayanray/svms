@@ -1,4 +1,4 @@
-import { InvoicesAdmin } from "@/components/admin/finance-admin";
+import { InvoicesAdmin } from "@/components/admin/invoices-admin";
 
 export const dynamic = "force-dynamic";
 

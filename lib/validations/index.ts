@@ -151,6 +151,28 @@ export const paymentSchema = z.object({
   paymentDate: z.coerce.date().optional(),
 });
 
+/**
+ * Update schema for payments. Partial — admins can edit the amount,
+ * method, reference, and date. Status changes go through the dedicated
+ * refund/cancel endpoints so they can be audit-logged distinctly.
+ */
+export const paymentUpdateSchema = z.object({
+  amount: z.number().positive("Amount must be positive").optional(),
+  currency: z.string().optional(),
+  paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "BKASH", "NAGAD", "CARD", "OTHER"]).optional(),
+  transactionReference: z.string().optional(),
+  paymentDate: z.coerce.date().nullable().optional(),
+});
+
+/**
+ * Refund schema. The admin provides an optional reason which is stored
+ * in the audit log. The payment's status changes to REFUNDED and the
+ * linked invoice's paid/due amounts are adjusted accordingly.
+ */
+export const paymentRefundSchema = z.object({
+  reason: z.string().max(2000).optional(),
+});
+
 export const invoiceSchema = z.object({
   studentId: z.string().min(1, "Student is required"),
   applicationId: z.string().optional(),
@@ -166,6 +188,28 @@ export const invoiceSchema = z.object({
   discount: z.number().nonnegative().default(0),
   issueDate: z.coerce.date().optional(),
   dueDate: z.coerce.date().optional(),
+});
+
+/**
+ * Update schema for invoices. Partial — admins can edit items, discount,
+ * issue/due dates, and status. Totals are always recomputed server-side
+ * when items or discount change.
+ */
+export const invoiceUpdateSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        description: z.string().min(1),
+        quantity: z.number().int().positive(),
+        unitPrice: z.number().nonnegative(),
+      })
+    )
+    .min(1, "At least one item is required")
+    .optional(),
+  discount: z.number().nonnegative().optional(),
+  issueDate: z.coerce.date().nullable().optional(),
+  dueDate: z.coerce.date().nullable().optional(),
+  status: z.enum(["DRAFT", "ISSUED", "PARTIAL", "PAID", "OVERDUE", "CANCELLED"]).optional(),
 });
 
 export const universitySchema = z.object({
