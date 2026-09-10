@@ -2572,3 +2572,113 @@ attachment architecture stores `attachmentUrl` as a plain string —
 production should use signed URLs from object storage. There's no
 real-time message delivery (WebSocket/SSE) — the UI polls every 10s
 via React Query's `staleTime`.
+
+## 48. Admin Settings System (v2)
+
+**Routes**: `/admin/settings`. APIs: `GET/PUT /api/settings`,
+`GET /api/settings/sections`.
+
+**11 Setting sections** (tabbed UI with left sidebar):
+
+1. **Company** — name, logo URL, email, phone, address
+2. **Branches** — default branch code, multi-branch access control toggle
+3. **Application Workflow** — default application stage, auto-advance
+   stages toggle
+4. **Document Requirements** — expiry warning days, max document size
+   (MB), allowed document types
+5. **Visa Requirements** — processing buffer days, auto-create visa
+   record toggle
+6. **Countries** — default currency (dropdown), invoice prefix, timezone
+   (dropdown)
+7. **Notifications** — toggles for document/application/task/payment/
+   visa/message notification events
+8. **Email** — from address, from name, SMTP host/port/username/
+   password (password is a secret — masked in UI)
+9. **Payments** — enabled payment methods, bKash/Nagad/Stripe merchant
+   keys (secrets — masked), Stripe publishable key (non-secret)
+10. **Security** — session timeout (minutes), password policies (min
+    length, require uppercase/lowercase/number/special), max login
+    attempts, lockout duration (minutes)
+11. **System** — read-only: system version, database provider,
+    environment (NODE_ENV)
+
+**Database-driven**: all settings are stored in the `SystemSetting`
+model (key→JSON value pairs). Defaults are defined in the code constant
+(`lib/constants/settings.ts`) and used when no DB value exists.
+
+**Security** (enforced server-side):
+- **Secret masking**: secret settings (SMTP password, API keys, merchant
+  keys) are masked as `••••••••` in the GET response. The UI never sees
+  the full value. Submitting the mask value is treated as a no-op (the
+  PUT endpoint detects `••••••••` and skips the update).
+- **Audit log redaction**: secrets are stored as `[REDACTED]` in the
+  audit log's old/new value — the real value is never written to the
+  audit trail.
+- **Read-only settings**: the system section (version, database,
+  environment) is displayed but cannot be modified via PUT (403).
+- **Permission gating**: all settings require `settings.manage`
+  (admin only), enforced server-side via `guard()`.
+- **Key validation**: only known setting keys (from the constants
+  module) can be upserted — unknown keys return 400 BAD_REQUEST.
+
+**Every setting change is audit-logged** as `setting.updated` with:
+- `oldValue`: the previous value (secrets redacted as `[REDACTED]`)
+- `newValue`: the new value (secrets redacted as `[REDACTED]`)
+- `entity`: `SystemSetting`
+- `entityId`: the setting's DB ID
+
+**Pure helpers** (`lib/constants/settings.ts`, unit-tested):
+- `SETTING_SECTIONS` — 11 sections with key, label, icon, description,
+  and setting definitions (40+ settings total)
+- `SECRET_KEYS` — list of all secret setting keys
+- `SECRET_MASK` — `••••••••` (the mask shown in the UI)
+- `isSecretKey(key)` — true if the key is a secret
+- `maskSecretValue(key, value)` — returns the mask for secrets, original
+  for non-secrets, empty string for empty secrets
+- `getSettingSection(key)` — returns the section a key belongs to
+- `getAllSettingKeys()` — returns all keys in section order
+- `getDefaultValue(key)` — returns the default value for a key
+- `isReadOnly(key)` — true for system section keys
+
+**API improvements**:
+- `GET /api/settings` — returns all settings grouped by section, with
+  defaults applied for missing DB values, and secrets masked.
+- `PUT /api/settings` — upserts a setting. Validates the key belongs to
+  a known section. Rejects read-only keys (403). Skips secret-mask
+  no-ops. Audit-logs with redacted secrets.
+- `GET /api/settings/sections` — returns section metadata (key, label,
+  icon, description, setting count) for the UI's tab sidebar.
+
+**Tests**: `tests/settings.test.ts` — 32 tests covering:
+- Section count (11) + all documented section keys present
+- Every section has label/icon/description/non-empty settings
+- Unique setting keys across all sections
+- Company section has the 5 expected settings
+- Security section has session/password/lockout settings + sensible
+  defaults (password_min_length=8, session_timeout=60, etc.)
+- Secret key identification (SMTP password, bKash/Nagad/Stripe keys are
+  secrets; publishable key is NOT)
+- `maskSecretValue` (masks secrets with SECRET_MASK, returns empty for
+  empty secrets, returns original for non-secrets, returns numbers/
+  booleans unchanged)
+- `getSettingSection` (correct section for known keys, null for unknown)
+- `getAllSettingKeys` (in section order, no duplicates)
+- `getDefaultValue` (correct defaults for known keys, undefined for
+  unknown)
+- `isReadOnly` (true for system section, false for others, false for
+  unknown)
+- Notification settings (6 toggle categories, all default to true)
+- Payment settings (payment methods + secret merchant keys + non-secret
+  publishable key)
+
+699 tests total via `npm run test` (21 files).
+
+**Known limitations**: the security settings (password policies, session
+timeout, lockout) are stored in the DB but not yet wired into the auth
+system — the `authorize` function in `lib/auth/index.ts` still uses
+hardcoded values. Wiring them requires reading from the DB on each auth
+call (or caching). The email settings (SMTP config) are stored but email
+delivery is not yet implemented (the `EMAIL_*` env vars are reserved).
+The payment gateway keys are stored but online payment processing is
+TODO. The timezone setting is stored but not yet applied to date
+formatting (dates are currently formatted in UTC).
