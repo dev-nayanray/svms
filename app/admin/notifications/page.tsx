@@ -1,4 +1,4 @@
-import { NotificationsList } from "@/components/modules/notifications-list";
+import { NotificationsCenter } from "@/components/admin/notifications-center";
 import { PageHeader } from "@/components/shared/page-kit";
 
 export const dynamic = "force-dynamic";
@@ -8,10 +8,10 @@ export default function Page() {
     <>
       <PageHeader
         title="Notifications"
-        description="Your system notifications."
+        description="System notifications — document events, application changes, task assignments, payment alerts, and messages."
         breadcrumbs={["Admin", "Notifications"]}
       />
-      <NotificationsList />
+      <NotificationsCenter />
     </>
   );
 }

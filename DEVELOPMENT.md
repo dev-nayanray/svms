@@ -2467,3 +2467,108 @@ no "create custom role" UI — only the 3 built-in roles (ADMIN,
 EMPLOYEE, STUDENT) are supported. Role assignment is done via the
 Employee admin's "Assign Role" action (which calls `roleAssignmentError`
 to prevent self-lock-out and student-role escalation).
+
+## 47. Admin Notification & Messaging System (v2)
+
+**Routes**: `/admin/notifications` (notification center),
+`/admin/messages` (messaging). APIs: `GET/PATCH /api/notifications`,
+`GET/POST /api/conversations`, `GET/PATCH /api/conversations/[id]`.
+
+**Notifications** (13 types): DOCUMENT_UPLOADED, DOCUMENT_APPROVED,
+DOCUMENT_REJECTED, DOCUMENT_REUPLOAD_REQUESTED,
+APPLICATION_STAGE_CHANGED, TASK_ASSIGNED, TASK_COMPLETED,
+TASK_CANCELLED, PAYMENT_RECORDED, PAYMENT_DUE, VISA_STAGE_CHANGED,
+COUNSELING_REQUEST, NEW_MESSAGE.
+
+**Admin notification center** (`/admin/notifications`):
+- **All / Unread / Read** filter tabs with unread count badge
+- Search across title, message, and notification type
+- Mark single notification as read / mark all as read
+- Each notification shows: type badge, title, message body, timestamp,
+  optional deep link
+- Audit-logged: `notification.marked_all_read` records the count
+
+**Messaging** (`/admin/messages`):
+- **Conversation list** with search (student name, employee name,
+  student ID), sorted by last message time, showing latest message
+  preview + message count + counselor name
+- **Conversation detail**: full message thread with timestamps, read
+  status (Delivered/Read), attachment links, and compose form
+  (body + optional attachment URL)
+- **Compose**: sends a message to the student, creates or reuses the
+  conversation, notifies the student with a NEW_MESSAGE notification,
+  audit-logs as `message.sent`
+- **Supervisory visibility**: admins can see ALL conversations between
+  students and counselors. Employees see only their own conversations.
+  Students see only their own conversations. Enforced server-side.
+- **Attachments architecture**: `attachmentUrl` stored as a string on
+  the Message model. Future: object storage with signed URLs (the
+  architecture is ready — just swap the URL generation). Attachments
+  render as a "Paperclip" link in the message bubble.
+- **Internal notes**: the `isMessageVisibleTo(visibility, role)` helper
+  enforces that INTERNAL messages are never exposed to students. The
+  visibility field is defined in the constants module and enforced at
+  the API level — students never see internal notes.
+- **Read tracking**: messages have a `readAt` timestamp. When a user
+  opens a conversation, all messages from the other party are marked
+  as read automatically (PATCH /api/conversations/[id]).
+- **Audit logging**: `message.sent` (with conversation + student +
+  visibility + hasAttachment), `conversation.marked_read` (with count).
+
+**Pure helpers** (`lib/constants/notifications.ts`, unit-tested):
+- `NOTIFICATION_TYPES`, `NOTIFICATION_TYPE_LABELS`,
+  `NOTIFICATION_TYPE_ICONS` — 13 types with labels + icon names
+- `NOTIFICATION_READ_FILTERS`, `NOTIFICATION_READ_FILTER_LABELS` —
+  all/unread/read filter values
+- `MESSAGE_VISIBILITIES`, `MESSAGE_VISIBILITY_LABELS` — INTERNAL/STUDENT
+- `isMessageVisibleTo(visibility, role)` — enforces INTERNAL notes are
+  never visible to students (privilege escalation prevention)
+- `buildNotificationWhere(filters)` — Prisma where with userId +
+  readFilter + search
+- `buildConversationWhere(filters)` — Prisma where with search across
+  student name/ID + employee name + employeeId filter
+
+**API improvements**:
+- `GET /api/notifications` — extended with read-status filter
+  (all/unread/read), search across title/message/type, pagination
+  (max 100 per page), and unread count in every response.
+- `PATCH /api/notifications` — mark single or all as read. Audit-logged.
+- `GET /api/conversations` (new) — conversation list with student +
+  employee joins, latest message preview, message count, search,
+  employeeId filter. Employees auto-scoped to their own.
+- `POST /api/conversations` (new) — send a message. Creates or reuses
+  a conversation, creates the message, updates lastMessageAt, notifies
+  the student (if student-visible), audit-logs. Validates student
+  exists + employee exists.
+- `GET /api/conversations/[id]` (new) — full conversation thread with
+  messages, student + employee joins. Auto-marks messages from the
+  other party as read. Authorization: students/employees see only
+  their own conversations; admins see all.
+- `PATCH /api/conversations/[id]` (new) — mark all messages from the
+  other party as read. Audit-logged.
+
+**Tests**: `tests/notifications.test.ts` — 23 tests covering:
+- Notification type enum stability + labels + icons
+- Read filter enum stability + labels
+- Message visibility enum stability + labels
+- `isMessageVisibleTo` (INTERNAL visible to ADMIN/EMPLOYEE, NOT to
+  STUDENT — privilege escalation prevention; STUDENT visible to all;
+  unknown defaults to visible)
+- `buildNotificationWhere` (userId always present, readAt null for
+  unread, readAt not-null for read, no readAt for all, search OR
+  clause, whitespace trimming, AND-chain combination)
+- `buildConversationWhere` (empty for no filters, employeeId filter,
+  search OR clause across student name/ID + employee name, AND-chain
+  combination)
+
+667 tests total via `npm run test` (20 files).
+
+**Known limitations**: the Message model doesn't have a `visibility`
+field yet — all messages in a conversation are currently student-visible.
+The `isMessageVisibleTo()` helper and `MESSAGE_VISIBILITIES` enum are
+defined and tested, but the actual visibility filtering at the API level
+is a TODO (requires a schema migration to add the field). The
+attachment architecture stores `attachmentUrl` as a plain string —
+production should use signed URLs from object storage. There's no
+real-time message delivery (WebSocket/SSE) — the UI polls every 10s
+via React Query's `staleTime`.
