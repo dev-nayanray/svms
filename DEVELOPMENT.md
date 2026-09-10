@@ -175,7 +175,8 @@ Endpoints: `auth/[...nextauth]`, `auth/register`, `students`, `students/[id]`, `
 `courses(+/[id])`, `countries`, `countries/[id]`, `visa/requirements(+/[id])`,
 `document-requirements(+/[id])`, `tasks(+/[id])`, `payments`, `invoices(+/[id])`,
 `notifications`, `reports`, `student/universities`, `student/universities/[id]`,
-`student/universities/meta`, `student/favorites`, `student/counseling-requests`.
+`student/universities/meta`, `student/courses`, `student/courses/[id]`,
+`student/courses/meta`, `student/intakes`, `student/favorites`, `student/counseling-requests`.
 
 ## 14. Application Workflow
 
@@ -215,10 +216,10 @@ message. `GET /api/notifications` returns latest 50 + unread count; `PATCH` mark
 `auditLog.record({ userId, action, entity, entityId, oldValue, newValue, ipAddress, userAgent })`.
 Logged actions include: user.registered, student.created/soft_deleted, lead.converted,
 application.created/stage_changed, document.uploaded/approved/rejected/under_review,
-invoice.created, payment.recorded, university.created/updated, country.created/updated/status_changed/
-archived/unarchived, visa_requirement.created/updated/deleted, document_requirement.created/
-updated/deleted, university.favorited/unfavorited, counseling_request.created, task.created.
-Viewable at `/admin/audit`.
+invoice.created, payment.recorded, university.created/updated, course.created,
+country.created/updated/status_changed/archived/unarchived, visa_requirement.created/updated/deleted,
+document_requirement.created/updated/deleted, university.favorited/unfavorited,
+counseling_request.created, task.created. Viewable at `/admin/audit`.
 
 ## 19. UI/UX Standards
 
@@ -986,3 +987,221 @@ there's no employee-side inbox yet — they currently land in
 `/employee/notifications`; the favorites list endpoint exists but the
 "favorites only" filter is the only UI surface for it (a dedicated
 "Saved Universities" page is TODO).
+
+## 37. Student Courses & Intakes Discovery (Module 08, v2)
+
+**Goal**: a mobile-first course browsing experience that lets students
+explore programs across partner universities, see upcoming intakes with
+deadline urgency, and request counseling for a specific course — without
+ever exposing internal admin fields (no `deletedAt`, `deletedBy`, or
+internal `_count` reach the client).
+
+**Routes**:
+- `/student/courses` (list — mobile-first card UI with filters + sort)
+- `/student/courses/[id]` (detail — tabbed sections)
+
+**Student-facing APIs** (all RBAC'd via `courses.read`):
+- `GET /api/student/courses` — server-side search + filters + pagination
+- `GET /api/student/courses/[id]` — full detail, visibility-guarded
+- `GET /api/student/courses/meta` — filter option lists (countries,
+  universities, degree levels, active intakes, tuition range)
+- `GET /api/student/intakes` — intakes list with derived `startDate` and
+  `deadlineUrgency` flags for highlighting approaching deadlines
+
+**Visibility rule** (single source of truth in `lib/constants/courses.ts`):
+a course is student-visible only if `status === "ACTIVE"` AND
+`deletedAt === null` AND its parent university is ACTIVE + non-archived
+AND the university's parent country is ACTIVE + non-archived. The
+chained visibility (course → university → country) is enforced at the DB
+level via nested Prisma `where` fragments in `buildStudentCourseWhere`,
+so a single round-trip filters out invisible courses. The pure
+`isCourseVisibleToStudent` helper mirrors that check for UI pre-flight
+and unit tests.
+
+**Course information shown** (per the brief):
+- Course name
+- Degree level (FOUNDATION / BACHELOR / MASTER / PHD / DIPLOMA)
+- University + country + city
+- Duration
+- Tuition fee (with currency, formatted via `formatTuitionFee`)
+- Currency
+- Application fee
+- IELTS / TOEFL / PTE requirements (structured fields, displayed as
+  labeled rows via `collectEnglishRequirements`)
+- Academic requirements
+- Active intakes (count + "Open" / "Closed" status derived via
+  `hasOpenIntake`)
+- Application deadline (with urgency banner via
+  `intakeDeadlineUrgency`)
+
+**Database change** (run `npx prisma db push` after pulling): added three
+structured English-test requirement fields to `Course`:
+`ieltsRequirement`, `toeflRequirement`, `pteRequirement` (all optional
+strings, max 200 chars). The legacy `englishRequirements` free-text field
+is kept for backwards-compat — admin forms now expose all four fields, and
+the detail page surfaces the structured fields as labeled rows with the
+legacy note as a fallback. Non-destructive; existing courses continue to
+work.
+
+**Filters** (mobile bottom sheet via Radix `Drawer`):
+- Country (dropdown — only countries with at least one visible course)
+- University (dropdown — only universities with at least one visible
+  course)
+- Degree level (dropdown — FOUNDATION / BACHELOR / MASTER / PHD / DIPLOMA)
+- Tuition range (min + max numeric inputs; the meta endpoint returns the
+  available tuition range so the UI can show a hint)
+- Intake (dropdown — every active intake across visible courses,
+  formatted as "September 2026 — MSc CS (Manchester)")
+- English requirement (dropdown — IELTS / TOEFL / PTE / "Has any English
+  test" / Any)
+
+Active filter chips render in a horizontally-scrollable row above the
+list, each removable inline. A "Clear all" link resets everything.
+
+**Sort**: inline dropdown with the search bar. Options: Name (A→Z),
+Lowest tuition (asc), Degree level (asc), Newest (desc). Default = name asc.
+
+**Intake display**: each intake row shows name, derived start date (first
+day of the intake month in UTC, via `intakeStartDate`), application
+deadline, and a status badge. Deadlines are highlighted by urgency:
+- **urgent** (≤7 days) → red badge "Closes in ≤7 days"
+- **soon** (≤30 days) → amber badge "Closes in ≤30 days"
+- **past** → muted "Closed" badge
+- **none** (no deadline) → green "Open (no deadline)" badge
+- **normal** (>30 days) → muted "Open" badge
+
+The course detail page's Application Info tab also renders an
+`ApplicationDeadlineBanner` that mirrors the same urgency colour
+treatment for the course-level `applicationDeadline` field.
+
+**Mobile UX** (per the brief):
+- **Course cards** are easy to scan: degree chip + course name at top,
+  university + country line, chips for tuition / duration / intake
+  status, English-requirement preview (first 2 tests), and
+  "View details" + "Request counseling" actions at the bottom.
+- 1-column on mobile → 2-column on `sm+` screens.
+- Sticky search bar with backdrop blur on mobile.
+- Horizontal filter chips scroll on mobile, each removable inline.
+- Filter bottom sheet (Radix `Drawer`) stages pending filters locally so
+  closing without applying doesn't change the active filters.
+- Deadline urgency is surfaced both as a coloured badge on intake rows
+  and as a coloured banner on the course detail page.
+
+**Student actions** (no direct DB modification):
+- **View** — link to detail page
+- **View Courses** — same as "View" (the Courses tab is on the detail page)
+- **Request Counseling** — POST `/api/student/counseling-requests` with
+  both `universityId` and `courseId`. The endpoint is the same one used
+  by the universities module — the counselor sees exactly which course
+  the student is interested in. Duplicate-open-request guard returns 409.
+- The course detail page also links to the parent university's detail
+  page (`/student/universities/[id]`).
+
+**Pure helpers** (`lib/constants/courses.ts`, unit-tested):
+- `COURSE_DEGREE_LEVELS`, `COURSE_DEGREE_LABELS` — canonical enums
+- `STUDENT_COURSE_SORTS` — sort allow-list for the `sortBy` query param
+- `INTAKE_URGENCY_THRESHOLDS` — `urgentDays: 7`, `soonDays: 30`
+- `isCourseVisibleToStudent(course)` — pure visibility check mirroring
+  the DB-level rule (course + university + country all ACTIVE + non-
+  archived)
+- `buildStudentCourseWhere(filters)` — Prisma `where` fragment enforcing
+  the visibility chain + AND-combining all optional filters (search,
+  country, university, degree, tuition range, intake, englishTest)
+- `resolveCourseOrderBy(sort)` — sort key → orderBy (tuition asc, others
+  desc except name asc)
+- `intakeStartDate(month, year)` — derives a UTC midnight Date for the
+  first day of the intake month
+- `formatShortDate(d)` — locale-aware DD Mon YYYY formatter with safe
+  fallback for nullish/invalid input
+- `intakeDeadlineUrgency(deadline, now)` — returns "urgent" / "soon" /
+  "normal" / "past" / "none" based on the configured thresholds
+- `formatTuitionFee(fee, currency)` — `Intl.NumberFormat` with safe
+  fallback for invalid currency codes
+- `collectEnglishRequirements(course)` — returns a sorted array of
+  `{ test, label, value }` tuples for the populated English-test fields
+- `hasOpenIntake(intakes, now)` — true when at least one active intake
+  has a future deadline or no deadline (open)
+
+**Validation** (`lib/validations/index.ts`):
+- `courseSchema` now accepts `ieltsRequirement`, `toeflRequirement`,
+  `pteRequirement` (all optional, max 200 chars). The legacy
+  `englishRequirements` field is preserved.
+- `studentCourseQuerySchema` — extends `paginationSchema` with countryId,
+  universityId, degreeLevel, tuitionMin, tuitionMax, intakeId,
+  englishTest (enum: ielts/toefl/pte/any), and sortBy (enum).
+- `studentIntakeQuerySchema` — extends `paginationSchema` with
+  countryId, universityId, courseId, and upcomingOnly. Omits the `status`
+  field (intakes use their own ACTIVE filter).
+
+**API improvements**:
+- `GET /api/student/courses` — server-side search + 7 filters + pagination
+  (max 24 per page). Each row is enriched with `englishRequirementsList`
+  (via `collectEnglishRequirements`), `hasOpenIntake`, and
+  `activeIntakeCount` so the UI card renders without extra queries.
+- `GET /api/student/courses/[id]` — full detail with university, country,
+  intakes, and English-test requirements. Internal admin fields
+  (`deletedAt`, `deletedBy`) are stripped. The route also surfaces
+  `counselingRequested` and `counselingRequestStatus` for the requesting
+  student so the action bar can disable the duplicate-action button
+  without a second call.
+- `GET /api/student/courses/meta` — returns countries, universities,
+  degree levels, active intakes (with course + university names), and
+  the tuition-fee range (`_min.tuitionFee` / `_max.tuitionFee`) used to
+  set the tuition-filter hint. Aggregate-only — no course records leaked.
+- `GET /api/student/intakes` — paginated intakes across all student-
+  visible courses, enriched with derived `startDate` and
+  `deadlineUrgency`. Supports `upcomingOnly=true` to filter out past
+  intakes (intakes with no deadline are kept — they're treated as
+  "open").
+- Admin-side `POST /api/courses` now audit-logs `course.created`.
+
+**Audit coverage added**: `course.created` (new — admin course creation
+was previously unlogged). Counseling requests initiated from the courses
+module reuse the existing `counseling_request.created` audit action with
+both `universityId` and `courseId` in the newValue.
+
+**Tests**: `tests/courses.test.ts` — 74 tests covering:
+- Course degree + sort enum stability
+- `isCourseVisibleToStudent` (all combinations: course inactive, course
+  deleted, university inactive, university deleted, country inactive,
+  country deleted, missing university relation)
+- `buildStudentCourseWhere` (visibility chain always present, search OR
+  clause across course/university/country, country+university+degree AND
+  clauses, tuition range (both bounds inclusive, single-sided min/max),
+  intake join with active-intake guard, englishTest filter for each of
+  ielts/toefl/pte/any, no englishTest clause when filter missing)
+- `resolveCourseOrderBy` (every sort key + default + unknown fallback)
+- `intakeStartDate` (September, January, null month/year, out-of-range
+  month, out-of-range year)
+- `formatShortDate` (nullish, invalid, valid Date, ISO string)
+- `intakeDeadlineUrgency` (urgent ≤7d, soon ≤30d, normal >30d, past,
+  none, invalid date, default-now)
+- `formatTuitionFee` (nullish, USD formatting, invalid currency
+  fallback, default currency)
+- `collectEnglishRequirements` (empty, all three, mixed null/populated)
+- `hasOpenIntake` (empty/null, future deadline, no deadline = open,
+  all past, INACTIVE ignored)
+- `studentCourseQuerySchema` (full query, defaults, negative page,
+  negative tuition, unknown englishTest, unknown sortBy, "any"
+  meta-filter)
+- `studentIntakeQuerySchema` (full query, status field omitted,
+  defaults, boolean upcomingOnly)
+- `courseSchema` (new English-test fields, no requirements, 200-char
+  cap, invalid degreeLevel, default status)
+
+223 tests total via `npm run test` (11 files).
+
+**RBAC enforcement**: every student-facing API route uses `guard()` with
+`courses.read` (which now includes the STUDENT role — see Module 07's
+permissions change). The student layout restricts to ADMIN + STUDENT
+roles; employees are redirected to `/403` (they have their own course
+browser at `/employee/courses`).
+
+**Known limitations**: the intake `upcomingOnly` filter is applied
+client-side after the DB query (because a null deadline means "open" —
+a server-side `gte: now` would exclude those); the tuition range filter
+excludes courses with a null `tuitionFee` (intentional — students
+filtering by tuition want concrete numbers); the meta endpoint's
+intake list is capped at the default Prisma limit (no pagination) since
+the filter dropdown needs all active intakes at once — fine for the
+expected scale but worth revisiting if intake counts grow large.

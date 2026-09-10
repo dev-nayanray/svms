@@ -4,6 +4,7 @@ import { guard } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { courseSchema, paginationSchema } from "@/lib/validations";
 import { slugify } from "@/lib/utils/slug";
+import { auditLog } from "@/lib/services/audit";
 
 export async function GET(req: NextRequest) {
   try {
@@ -56,6 +57,17 @@ export async function POST(req: NextRequest) {
     const body = courseSchema.parse(await req.json());
     const slug = `${slugify(body.name)}-${Date.now().toString(36)}`;
     const course = await prisma.course.create({ data: { ...body, slug } });
+    await auditLog.record({
+      userId: g.user.id,
+      action: "course.created",
+      entity: "Course",
+      entityId: course.id,
+      newValue: {
+        name: body.name,
+        degreeLevel: body.degreeLevel,
+        universityId: body.universityId,
+      },
+    });
     return ok(course, { status: 201 });
   } catch (err) {
     return handleApiError(err);

@@ -261,7 +261,10 @@ model Course {
   currency              String      @default("USD")
   applicationFee        Float?
   academicRequirements  String?
-  englishRequirements   String? // e.g. "IELTS 6.5 overall, no band below 6.0"
+  englishRequirements   String? // legacy free-text (e.g. "IELTS 6.5 overall, no band below 6.0")
+  ieltsRequirement     String? // structured: "6.5 overall, no band below 6.0"
+  toeflRequirement      String? // structured: "90 iBT, no section below 20"
+  pteRequirement        String? // structured: "62 overall, no section below 59"
   applicationDeadline   DateTime?
   status                String      @default("ACTIVE")
   deletedAt             DateTime?

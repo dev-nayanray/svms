@@ -156,7 +156,11 @@ export function CoursesAdmin() {
     ]},
     { type: "text", name: "duration", label: "Duration", placeholder: "3 years" },
     { type: "number", name: "tuitionFee", label: "Tuition fee" },
-    { type: "text", name: "englishRequirements", label: "English requirements", placeholder: "IELTS 6.5 overall" },
+    { type: "text", name: "ieltsRequirement", label: "IELTS requirement", placeholder: "6.5 overall, no band below 6.0" },
+    { type: "text", name: "toeflRequirement", label: "TOEFL requirement", placeholder: "90 iBT, no section below 20" },
+    { type: "text", name: "pteRequirement", label: "PTE requirement", placeholder: "62 overall, no section below 59" },
+    { type: "text", name: "englishRequirements", label: "English requirements (legacy free-text)", placeholder: "IELTS 6.5 overall" },
+    { type: "textarea", name: "academicRequirements", label: "Academic requirements" },
   ];
 
   const columns: Column<Course>[] = [

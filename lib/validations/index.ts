@@ -136,6 +136,9 @@ export const courseSchema = z.object({
   applicationFee: z.coerce.number().nonnegative().optional(),
   academicRequirements: z.string().optional(),
   englishRequirements: z.string().optional(),
+  ieltsRequirement: z.string().max(200).optional(),
+  toeflRequirement: z.string().max(200).optional(),
+  pteRequirement: z.string().max(200).optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
 });
 
@@ -277,3 +280,37 @@ export const counselingRequestSchema = z.object({
 export const favoriteToggleSchema = z.object({
   universityId: z.string().min(1, "University is required"),
 });
+
+// ─────────────────────────────────────────────
+// Student discovery — courses & intakes (Module 08)
+// ─────────────────────────────────────────────
+
+/**
+ * Parses the query-string of `/api/student/courses`. Mirrors
+ * `studentUniversityQuerySchema` but with course-specific filters:
+ * degree level, tuition range, intake join, and English-test requirement.
+ */
+export const studentCourseQuerySchema = paginationSchema.extend({
+  countryId: z.string().optional(),
+  universityId: z.string().optional(),
+  degreeLevel: z.string().optional(),
+  tuitionMin: z.coerce.number().nonnegative().optional(),
+  tuitionMax: z.coerce.number().nonnegative().optional(),
+  intakeId: z.string().optional(),
+  englishTest: z.enum(["ielts", "toefl", "pte", "any"]).optional(),
+  sortBy: z.enum(["name", "tuitionFee", "degreeLevel", "createdAt"]).optional(),
+});
+
+/**
+ * Parses the query-string of `/api/student/intakes`. Used to browse
+ * upcoming intakes across all student-visible courses, optionally
+ * scoped to a country, university, or course.
+ */
+export const studentIntakeQuerySchema = paginationSchema
+  .extend({
+    countryId: z.string().optional(),
+    universityId: z.string().optional(),
+    courseId: z.string().optional(),
+    upcomingOnly: z.coerce.boolean().optional(),
+  })
+  .omit({ status: true }); // intakes use their own status filter
