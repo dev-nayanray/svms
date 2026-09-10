@@ -220,6 +220,7 @@ archived/unarchived, invoice.created, payment.recorded,
 university.created/updated/status_changed/archived/unarchived,
 course.created/updated/status_changed/archived/unarchived,
 intake.created/updated/status_changed/archived/unarchived,
+visa_application.created/stage_changed/updated/archived,
 country.created/updated/status_changed/archived/unarchived, visa_requirement.created/updated/deleted,
 document_requirement.created/updated/deleted, university.favorited/unfavorited,
 counseling_request.created, task.created. Viewable at `/admin/audit`.
@@ -1699,3 +1700,165 @@ documents inline from the list view's row actions + dialogs. The
 document upload endpoint (`POST /api/documents`) still accepts a
 pre-uploaded `fileUrl` — actual file upload handling (multipart form
 data → object storage) is a separate TODO.
+
+## 41. Admin Visa Management (v2)
+
+**Routes**: `/admin/visa` (list + requirements tabs),
+`/admin/visa/[id]` (detail). APIs: `GET/POST/PATCH /api/visa`,
+`GET/PATCH/DELETE /api/visa/[id]`, `GET /api/visa/meta`,
+`GET/POST /api/visa/requirements`,
+`GET/PATCH/DELETE /api/visa/requirements/[id]`.
+
+**Visa statuses** (9 total): `PREPARATION → SUBMITTED → BIOMETRICS →
+INTERVIEW → PROCESSING → APPROVED → COMPLETED`, plus `REFUSED` and
+`WITHDRAWN` as terminal decision points. `APPROVED` is intentionally
+NOT terminal — it can transition to `COMPLETED` (the final "visa
+received, travel booked" step). Terminal statuses (`REFUSED`,
+`WITHDRAWN`, `COMPLETED`) cannot transition out.
+
+**Database change** (run `npx prisma db push` after pulling): the
+`VisaApplication` model was extended with:
+- `visaType` (optional string) — e.g. "Student Visa (Tier 4)"
+- `biometricsAt` (optional DateTime) — biometrics appointment date
+- `interviewAt` (optional DateTime) — visa interview date
+- `deletedAt` / `deletedBy` — soft-delete support for archive
+- The `stage` default changed from `VISA_PREPARATION` to `PREPARATION`
+  (the `VISA_` prefix was dropped for consistency with the new status
+  set; existing records will need a data migration).
+Non-destructive for existing fields.
+
+**Visa Applications list** (DataTable):
+- search across application number + student name
+- filters: Stage, Country, Student, University
+- sortable columns: stage, submittedAt, biometricsAt, interviewAt,
+  decisionAt, createdAt, updatedAt
+- row actions: View (detail page), Change Stage (dialog)
+- columns: Application (link), Student, Country, University, Visa Type,
+  Stage badge, Submitted date, Decision date
+
+**Change Stage dialog**: shows the current stage + a dropdown of allowed
+transitions (filtered by `canTransition`), plus an optional note. The
+dialog blocks submission when the visa is in a terminal status. Every
+status change is audit-logged + written to `ApplicationStatusHistory` +
+syncs the linked application's `stageKey` + notifies the student.
+
+**Visa Application detail page** (`/admin/visa/[id]`, tabbed):
+- **Overview**: stat strip (stage, submitted, decision, document count),
+  visa details card (stage, visa type, submission/biometrics/interview/
+  decision dates, created/updated), application context card (application
+  link, student link, student ID, email, phone, country, university link,
+  course), and a notes card
+- **Documents**: server-rendered table of all documents attached to this
+  application (name, type, size, status badge, uploaded/reviewed/expires)
+- **Timeline**: merged timeline of `ApplicationStatusHistory` entries
+  (stage changes with from→to, note, actor name, timestamp) and audit
+  log entries (action, old/new value, timestamp) — sorted newest first
+
+**Visa Requirements** (country-specific configuration):
+- full CRUD (create, edit, delete) via DataTable + FormDialog +
+  ConfirmDialog
+- fields: Country, Requirement name, Description, Required (boolean),
+  Sort order, Status (ACTIVE/INACTIVE)
+- country-scoped — admins configure the list of documents/steps students
+  must submit for a visa application to each country
+- edit/delete via the existing `/api/visa/requirements/[id]` endpoints
+
+**Pure helpers** (`lib/constants/visa.ts`, unit-tested):
+- `VISA_STATUSES`, `VISA_STATUS_LABELS` — canonical enums + labels
+- `TERMINAL_VISA_STATUSES` — `["REFUSED", "WITHDRAWN", "COMPLETED"]`
+  (APPROVED is intentionally not terminal)
+- `POSITIVE_DECISION_STATUSES` — `["APPROVED", "COMPLETED"]`
+- `NEGATIVE_DECISION_STATUSES` — `["REFUSED", "WITHDRAWN"]`
+- `VISA_SORT_KEYS` — sort allow-list for the admin list
+- `COMMON_VISA_TYPES` — dropdown suggestions for the visaType field
+- `allowedTransitions(from)` — returns the set of statuses the visa can
+  move to from the given current status; terminal statuses return []
+- `canTransition(from, to)` — true if the transition is allowed
+- `isDecisionStatus(status)` — true for APPROVED / REFUSED / WITHDRAWN
+  (sets `decisionAt`)
+- `isSubmissionStatus(status)` / `isBiometricsStatus(status)` /
+  `isInterviewStatus(status)` — true for the corresponding date-setting
+  statuses
+- `buildAdminVisaWhere(filters)` — Prisma `where` fragment with
+  deletedAt null + AND-combined search/stage/country/student/
+  application/university filters
+
+**Visa service** (`lib/services/visa.ts`):
+- `changeStage(id, targetStage, note, actor)` — enforces transition
+  rules via `canTransition`, sets the appropriate date field
+  (submittedAt/biometricsAt/interviewAt/decisionAt) only when not
+  already set (preserves the original "first time we hit this stage"
+  timestamp), writes an `ApplicationStatusHistory` entry, syncs the
+  linked application's `stageKey`, notifies the student, and audit-logs
+  as `visa_application.stage_changed`.
+- `update(id, input, actor)` — updates editable fields (visaType, dates,
+  notes) with a structured old→new audit diff. Stage changes go through
+  `changeStage` so they're audit-logged distinctly.
+- `archive(id, actor)` — soft-deletes the visa application. Retains the
+  record for audit trails.
+
+**Validation** (`lib/validations/index.ts`):
+- `visaApplicationCreateSchema` — requires `applicationId`; optional
+  `visaType` (max 200 chars) + `notes` (max 5000 chars).
+- `visaApplicationUpdateSchema` — all fields optional; dates are
+  nullable coerced.
+- `visaStageChangeSchema` — `stage` enum (all 9 statuses) + optional
+  `note` (max 2000 chars).
+
+**API improvements**:
+- `GET /api/visa` — full filter set (search, stage, countryId, studentId,
+  applicationId, universityId) + sorting via `sortFrom` allow-list +
+  pagination. Uses `buildAdminVisaWhere`.
+- `POST /api/visa` (new) — create a visa application record tied to an
+  existing application. Validates the application exists + no duplicate
+  visa record. Audit-logs as `visa_application.created`.
+- `PATCH /api/visa` — stage change. Body: `{ id, stage, note? }`.
+  Delegates to `visaService.changeStage` which enforces transition rules.
+- `GET /api/visa/[id]` (new) — full detail: visa record, linked
+  application (student, country, university, course), documents, and
+  merged timeline (ApplicationStatusHistory + audit logs).
+- `PATCH /api/visa/[id]` (new) — update editable fields. Delegates to
+  `visaService.update`.
+- `DELETE /api/visa/[id]` (new) — archive (soft delete). Delegates to
+  `visaService.archive`.
+- `GET /api/visa/meta` (new) — filter options (countries, students,
+  universities, statuses) that have at least one visa application.
+
+**Audit coverage added**: `visa_application.created`, 
+`visa_application.stage_changed` (with old→new stage diff + note),
+`visa_application.updated` (structured field diff),
+`visa_application.archived`. Plus the existing
+`visa_requirement.created/updated/deleted` from Module 06.
+
+**Tests**: `tests/visa.test.ts` — 42 tests covering:
+- Status + sort enum stability + labels
+- Terminal/positive/negative decision status identification
+- `canTransition` (forward, backward, WITHDRAWN from any non-terminal,
+  terminal rejection, same-status rejection, unknown status rejection,
+  APPROVED → COMPLETED allowed)
+- `allowedTransitions` (empty for terminal, non-empty for non-terminal
+  incl. APPROVED, excludes current status)
+- `isDecisionStatus` / `isSubmissionStatus` / `isBiometricsStatus` /
+  `isInterviewStatus` type checks
+- `buildAdminVisaWhere` (deletedAt always present, stage/country/student/
+  application/university filters, search OR clause, whitespace trimming,
+  full AND-chain combination)
+- `visaApplicationCreateSchema` (required applicationId, optional
+  visaType/notes, length caps)
+- `visaApplicationUpdateSchema` (empty accepted, partial updates,
+  nullable dates, length caps)
+- `visaStageChangeSchema` (required stage, all 9 statuses accepted,
+  unknown rejected, optional note, length cap)
+
+429 tests total via `npm run test` (15 files).
+
+**Known limitations**: the `stage` default changed from `VISA_PREPARATION`
+to `PREPARATION` — existing visa records with the old `VISA_PREPARATION`
+value will need a data migration (or will fail validation on next stage
+change). The `VISA_` prefix was dropped for consistency with the new
+9-status set. The visa detail page's timeline merges
+`ApplicationStatusHistory` + audit logs client-side — for very long
+timelines (>50 history entries + >30 audit entries) older events are
+truncated. The stage-change dialog uses `window.location.reload()` to
+refresh the DataTable (a proper queryClient invalidation would be
+cleaner — TODO).

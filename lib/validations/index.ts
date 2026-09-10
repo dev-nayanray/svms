@@ -297,6 +297,55 @@ export const intakeUpdateSchema = intakeSchema.partial().extend({
 
 export const visaRequirementSchema = visaRequirementCreateSchema;
 
+// ─────────────────────────────────────────────
+// Visa applications (Module: Admin Visa Management)
+// ─────────────────────────────────────────────
+
+/**
+ * Schema for creating a visa application record. Tied to an existing
+ * application (the student's case file). The visaType is optional free
+ * text so admins can enter custom types.
+ */
+export const visaApplicationCreateSchema = z.object({
+  applicationId: z.string().min(1, "Application is required"),
+  visaType: z.string().max(200).optional(),
+  notes: z.string().max(5000).optional(),
+});
+
+/**
+ * Schema for updating a visa application's editable fields (visaType,
+ * notes, and the optional date fields). The `stage` field is NOT here —
+ * stage changes go through the dedicated stage-change endpoint so they
+ * can be audit-logged distinctly.
+ */
+export const visaApplicationUpdateSchema = z.object({
+  visaType: z.string().max(200).optional(),
+  submittedAt: z.coerce.date().nullable().optional(),
+  biometricsAt: z.coerce.date().nullable().optional(),
+  interviewAt: z.coerce.date().nullable().optional(),
+  decisionAt: z.coerce.date().nullable().optional(),
+  notes: z.string().max(5000).optional(),
+});
+
+/**
+ * Schema for a visa stage change. The `note` is optional but recommended
+ * — it's stored in the ApplicationStatusHistory entry and the audit log.
+ */
+export const visaStageChangeSchema = z.object({
+  stage: z.enum([
+    "PREPARATION",
+    "SUBMITTED",
+    "BIOMETRICS",
+    "INTERVIEW",
+    "PROCESSING",
+    "APPROVED",
+    "REFUSED",
+    "WITHDRAWN",
+    "COMPLETED",
+  ]),
+  note: z.string().max(2000).optional(),
+});
+
 export const settingSchema = z.object({
   key: z.string().min(1),
   value: z.unknown(),

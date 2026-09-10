@@ -441,10 +441,15 @@ model VisaApplication {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   applicationId String   @unique @db.ObjectId
   application   Application @relation(fields: [applicationId], references: [id])
-  stage         String   @default("VISA_PREPARATION") // VISA_PREPARATION | VISA_SUBMITTED | BIOMETRICS | INTERVIEW | APPROVED | REFUSED
+  stage         String   @default("PREPARATION") // PREPARATION | SUBMITTED | BIOMETRICS | INTERVIEW | PROCESSING | APPROVED | REFUSED | WITHDRAWN | COMPLETED
+  visaType      String?  // e.g. "Student Visa (Tier 4)", "Short-term Study Visa"
   submittedAt   DateTime?
+  biometricsAt  DateTime?
+  interviewAt   DateTime?
   decisionAt    DateTime?
   notes         String?
+  deletedAt     DateTime?
+  deletedBy     String?  @db.ObjectId
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
