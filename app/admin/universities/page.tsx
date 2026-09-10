@@ -1,4 +1,4 @@
-import { UniversitiesAdmin } from "@/components/admin/catalog-admin";
+import { UniversitiesAdmin } from "@/components/admin/universities-admin";
 
 export const dynamic = "force-dynamic";
 

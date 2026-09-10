@@ -115,7 +115,7 @@ export const invoiceSchema = z.object({
 });
 
 export const universitySchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, "Name is required").max(160, "Name is too long"),
   countryId: z.string().min(1, "Country is required"),
   website: z.string().url().optional().or(z.literal("")),
   city: z.string().max(120).optional(),
@@ -124,6 +124,19 @@ export const universitySchema = z.object({
   ranking: z.coerce.number().int().positive().optional(),
   applicationFee: z.coerce.number().nonnegative().optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
+});
+
+/**
+ * Update schema for universities. Mirrors the create schema as a partial,
+ * plus an `archived` boolean that toggles the soft-delete tombstone
+ * (separate from `status` so the audit trail can record lifecycle events
+ * distinctly from activate/deactivate).
+ *
+ * `slug` is intentionally NOT in the update schema — slugs are referenced
+ * by external systems and are immutable after creation.
+ */
+export const universityUpdateSchema = universitySchema.partial().extend({
+  archived: z.boolean().optional(),
 });
 
 export const courseSchema = z.object({

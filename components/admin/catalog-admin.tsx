@@ -3,13 +3,15 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DataTable, type Column } from "@/components/shared/data-table";
-import { ConfirmDialog, FormDialog, PageHeader, type FormField } from "@/components/shared/page-kit";
+import { FormDialog, PageHeader, type FormField } from "@/components/shared/page-kit";
 import { StatusBadge } from "@/components/shared";
 import { Button } from "@/components/ui";
 import { apiFetch } from "@/lib/api-client";
-import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/components/ui/toast";
 import { Plus } from "lucide-react";
+
+// Note: UniversitiesAdmin moved to components/admin/universities-admin.tsx
+// (Module: Admin University Management) for full CRUD with archive/status
+// actions, tabbed detail page, and university-scoped course management.
 
 type University = {
   id: string;
@@ -23,109 +25,6 @@ type University = {
   country: { id: string; name: string };
   _count?: { courses: number };
 };
-
-export function UniversitiesAdmin() {
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editUni, setEditUni] = useState<University | null>(null);
-  const [deleteUni, setDeleteUni] = useState<University | null>(null);
-  const { toast } = useToast();
-  const qc = useQueryClient();
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["/api/universities"] });
-
-  const { data: countries } = useQuery({
-    queryKey: ["/api/countries", "options"],
-    queryFn: () => apiFetch<{ data: { id: string; name: string }[] }>("/api/countries"),
-  });
-  const countryOptions = (countries?.data ?? []).map((c) => ({ value: c.id, label: c.name }));
-
-  const fields: FormField[] = [
-    { type: "text", name: "name", label: "Name", required: true },
-    { type: "select", name: "countryId", label: "Country", options: countryOptions, required: true },
-    { type: "text", name: "city", label: "City", placeholder: "Manchester" },
-    { type: "text", name: "website", label: "Website", placeholder: "https://…" },
-    { type: "text", name: "logo", label: "Logo URL", placeholder: "https://…/logo.png" },
-    { type: "number", name: "ranking", label: "Ranking" },
-    { type: "number", name: "applicationFee", label: "Application fee (USD)" },
-    {
-      type: "select",
-      name: "status",
-      label: "Status",
-      options: [
-        { value: "ACTIVE", label: "Active" },
-        { value: "INACTIVE", label: "Inactive" },
-      ],
-    },
-    { type: "textarea", name: "description", label: "Description" },
-  ];
-
-  const columns: Column<University>[] = [
-    { key: "name", header: "Name", sortable: true, render: (u) => (
-      <span className="inline-flex items-center gap-2">
-        {u.logo && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={u.logo} alt="" className="h-6 w-6 rounded object-contain" />
-        )}
-        <span className="font-medium">{u.name}</span>
-      </span>
-    ) },
-    { key: "country", header: "Country", render: (u) => u.country.name },
-    { key: "city", header: "City", render: (u) => u.city ?? "—" },
-    { key: "ranking", header: "Ranking", render: (u) => u.ranking ?? "—" },
-    { key: "courses", header: "Courses", render: (u) => u._count?.courses ?? 0 },
-    { key: "applicationFee", header: "App Fee", render: (u) => (u.applicationFee ? `$${u.applicationFee}` : "—") },
-    { key: "status", header: "Status", render: (u) => <StatusBadge status={u.status} /> },
-  ];
-
-  return (
-    <>
-      <PageHeader
-        title="Universities"
-        description="Partner university catalog."
-        breadcrumbs={["Admin", "Universities"]}
-        actions={<Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4" aria-hidden /> New University</Button>}
-      />
-      <DataTable
-        endpoint="/api/universities"
-        columns={columns}
-        searchPlaceholder="Search universities…"
-        emptyMessage="No universities yet."
-        rowActions={[
-          { label: "Edit", onClick: (u) => setEditUni(u) },
-          { label: "Delete", destructive: true, onClick: (u) => setDeleteUni(u) },
-        ]}
-      />
-      <FormDialog
-        open={createOpen} onOpenChange={setCreateOpen}
-        title="New University" fields={fields}
-        endpoint="/api/universities" invalidateKey="/api/universities" successMessage="University created"
-      />
-      {editUni && (
-        <FormDialog
-          key={editUni.id} open={!!editUni} onOpenChange={(v) => !v && setEditUni(null)}
-          title={`Edit ${editUni.name}`} fields={fields}
-          endpoint="/api/universities" entityId={editUni.id}
-          invalidateKey="/api/universities" successMessage="University updated"
-        />
-      )}
-      <ConfirmDialog
-        open={!!deleteUni} onOpenChange={(v) => !v && setDeleteUni(null)}
-        title="Delete University"
-        message={`Soft-delete ${deleteUni?.name}? Its courses are retained.`}
-        confirmLabel="Delete" destructive
-        onConfirm={async () => {
-          try {
-            await apiFetch(`/api/universities/${deleteUni!.id}`, { method: "DELETE" });
-            toast({ title: "University deleted", variant: "success" });
-            invalidate();
-          } catch (err) {
-            toast({ title: "Failed", description: (err as Error).message, variant: "error" });
-            throw err;
-          }
-        }}
-      />
-    </>
-  );
-}
 
 type Course = {
   id: string;

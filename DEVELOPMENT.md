@@ -216,10 +216,11 @@ message. `GET /api/notifications` returns latest 50 + unread count; `PATCH` mark
 `auditLog.record({ userId, action, entity, entityId, oldValue, newValue, ipAddress, userAgent })`.
 Logged actions include: user.registered, student.created/soft_deleted, lead.converted,
 application.created/stage_changed, document.uploaded/approved/rejected/under_review,
-invoice.created, payment.recorded, university.created/updated, course.created,
-country.created/updated/status_changed/archived/unarchived, visa_requirement.created/updated/deleted,
-document_requirement.created/updated/deleted, university.favorited/unfavorited,
-counseling_request.created, task.created. Viewable at `/admin/audit`.
+invoice.created, payment.recorded, university.created/updated/status_changed/archived/unarchived,
+course.created/updated/status_changed/deleted, country.created/updated/status_changed/
+archived/unarchived, visa_requirement.created/updated/deleted, document_requirement.created/
+updated/deleted, university.favorited/unfavorited, counseling_request.created, task.created,
+intake.created. Viewable at `/admin/audit`.
 
 ## 19. UI/UX Standards
 
@@ -1205,3 +1206,187 @@ filtering by tuition want concrete numbers); the meta endpoint's
 intake list is capped at the default Prisma limit (no pagination) since
 the filter dropdown needs all active intakes at once — fine for the
 expected scale but worth revisiting if intake counts grow large.
+
+## 38. Admin University Management (v2)
+
+**Routes**: `/admin/universities` (list) and `/admin/universities/[id]`
+(detail). APIs: `GET/POST /api/universities`, `GET/PATCH/DELETE
+/api/universities/[id]`.
+
+**Fields managed** (per the brief): Name, Slug (auto-derived, immutable
+after creation), Country, Logo (URL), Website, Description, Ranking,
+Application Fee, Status (ACTIVE/INACTIVE). The model also carries an
+optional `city` field used by the student-facing discovery module
+(Module 07) and surfaced in the admin list/form.
+
+**List features** (all server-side via the shared `DataTable`):
+- server-side pagination (default 20/page)
+- search across name, city, AND country name (OR-combined, case-
+  insensitive) — so searching "Manchester" matches universities named
+  "Manchester", universities in the city of Manchester, and universities
+  in a country named "Manchester" (edge case, but free)
+- filter by Status (ACTIVE/INACTIVE) and by Country (dropdown)
+- sortable columns via the `sortFrom` allow-list: name, ranking,
+  applicationFee, status, createdAt
+- archived toggle (`?archived=true`) to view soft-deleted universities
+- column visibility, loading skeletons, empty + error states
+- row actions: **View** (link to detail), **Edit** (full form),
+  **Status** (activate ↔ deactivate via confirm dialog), **Archive**
+  (confirm dialog with active-application guard)
+- per-row counts: courses, active applications
+
+**Row actions** (all RBAC'd server-side via `universities.read` /
+`universities.manage`): View, Edit, Status (activate/deactivate),
+Archive/Unarchive. Archive is blocked when active applications reference
+the university — the admin must deactivate instead so in-flight
+applications retain their data.
+
+**University detail page** sections (Radix `Tabs`):
+
+- **Overview**: stat strip (ranking, application fee, courses count,
+  active applications count), about card (name, slug, country link,
+  city, ranking, status, created/updated/archived timestamps),
+  description card, and an activity timeline rendered from the
+  university's audit trail (`AuditLog` where entity=University, latest
+  30 events).
+- **Courses**: full CRUD via the `UniversityCourses` client component
+  (DataTable + FormDialog + ConfirmDialog). Admin can add, edit, and
+  delete (soft-delete) courses belonging to this university. The
+  universityId is injected into every payload so the admin doesn't
+  re-select it per course. Each course row shows name, degree level,
+  duration, tuition (with currency), intake count, application count,
+  application deadline, and status. Course deletion is blocked when
+  active applications reference the course (409 with a clear message).
+- **Intakes**: server-rendered table of all active intakes across this
+  university's courses (intake name, course name, level, month/year,
+  deadline).
+- **Requirements**: two side-by-side cards — document requirements
+  (country-scoped + global, with scope + required flag) and visa
+  requirements for the university's country.
+- **Application Fee**: application fee (formatted with Intl.NumberFormat
+  in the country's currency), country currency, course count, and a
+  "How application fees work" callout explaining the fee is what
+  students pay the university on submission (separate from tuition,
+  typically non-refundable, recorded against the application in the
+  Finance module).
+- **Active Applications**: server-rendered table of in-flight
+  applications (status=ACTIVE) targeting this university, with deep
+  links into the application detail page and the owning student's
+  record.
+
+**Reusable CRUD components** (no per-page reimplementations): every
+list/form/dialog/confirm/status pill goes through the shared `DataTable`,
+`FormDialog`, `ConfirmDialog`, `PageHeader`, `StatusBadge`, `EmptyState`,
+`TableShell`, and Radix `Tabs` primitives. The university-scoped course
+manager (`UniversityCourses`) follows the exact same shape as the
+country-scoped visa/document requirement managers from Module 06.
+
+**Pure helpers** (`lib/constants/universities-admin.ts`, unit-tested):
+
+- `UNIVERSITY_STATUSES`, `UNIVERSITY_STATUS_LABELS` — canonical enums +
+  labels shared by validation, UI filters, and tests.
+- `UNIVERSITY_SORT_KEYS` — sort allow-list for the `sortFrom` helper.
+- `normalizeSlug(name)` — lowercases, strips non-alphanumerics, collapses
+  separators, trims dashes. Returns "" for nullish input. Used to derive
+  the slug suffix at create time (`${normalizeSlug(name)}-${timestamp36}`).
+- `archiveBlockReason(university)` — pure pre-flight guard mirroring the
+  server-side check: blocks archiving when active applications reference
+  the university; blocks when already archived (with priority over the
+  applications check).
+- `buildAdminUniversityWhere(filters)` — Prisma `where` fragment for the
+  admin list. Enforces the soft-delete filter (deletedAt null vs not-null
+  based on the `archived` toggle) and AND-combines search, status, and
+  countryId filters.
+- `formatFee(fee, currency)` — `Intl.NumberFormat` with safe fallback
+  for invalid currency codes.
+- `isValidSlug(slug)` — regex validator for the slug contract (lowercase
+  letters, digits, dashes; no leading/trailing/consecutive dashes).
+
+**Validation** (`lib/validations/index.ts`):
+
+- `universitySchema` requires name + countryId; caps name at 160 chars
+  and description at 5000; validates website + logo as URLs (or empty);
+  ranking must be a positive integer; applicationFee must be
+  non-negative; status defaults to ACTIVE.
+- `universityUpdateSchema` is partial and accepts the `archived` boolean.
+  `slug` is intentionally NOT in the update schema — slugs are
+  immutable after creation (referenced by external systems and audit
+  logs).
+
+**API improvements**:
+
+- `GET /api/universities` now supports `?archived=true` (was implicit),
+  `?status=` filter, `?countryId=` filter, search across name/city/
+  country, and includes `_count` for courses and active applications
+  per row. Uses `buildAdminUniversityWhere` so the visibility rule lives
+  in one place.
+- `GET /api/universities/[id]` returns the full detail payload: country,
+  courses (with intake + application counts), active applications (with
+  student + course joins, latest 25), and the audit activity timeline
+  (latest 30 events). All in a single DB round-trip so the detail page
+  renders without N+1 queries.
+- `POST /api/universities` validates the referenced country exists and
+  is not archived (404 if missing), dedupe-checks the name within the
+  same country (case-insensitive, 409 on conflict — two universities in
+  different countries CAN share a name), derives the slug from the name
+  + a timestamp suffix for uniqueness, and audit-logs the creation with
+  name/slug/countryId/ranking/status.
+- `PATCH /api/universities/[id]` has a separate archive/unarchive code
+  path (with the active-application guard returning 409) distinct from
+  field updates. Field updates write a structured old→new audit diff
+  (name/countryId/website/city/logo/description/ranking/applicationFee/
+  status). Status changes emit a *separate* `university.status_changed`
+  audit entry so the timeline can surface activate/deactivate events
+  distinctly from generic edits. Name dedupe-check is case-insensitive
+  within the same country. Country existence is validated when countryId
+  is changed.
+- `DELETE /api/universities/[id]` is the archive path (soft delete).
+  Blocked when active applications reference the university (409 with a
+  clear message prompting the admin to deactivate instead). Audit-logs
+  `university.archived` with the old name + slug.
+
+**RBAC**: reads need `universities.read` (admin + employee + student);
+mutations (create/edit/archive/status) need `universities.manage`
+(admin-only) — all enforced server-side in every handler via `guard()`.
+
+**Audit coverage added**: `university.created` (now records
+name/slug/countryId/ranking/status), `university.updated` (structured
+old→new diff), `university.status_changed` (distinct activate/deactivate
+event), `university.archived` / `university.unarchived`. The course
+mutations also gained `course.updated` / `course.status_changed` /
+`course.deleted` audit entries (with the same active-application guard
+on delete).
+
+**Tests**: `tests/universities-admin.test.ts` — 48 tests covering:
+- University status + sort enum stability + labels
+- `normalizeSlug` (lowercasing, separator collapse, dash trim, digit
+  preservation, nullish/blank input, underscore stripping behaviour)
+- `archiveBlockReason` (no apps, N apps, already archived, priority of
+  the already-archived check over the applications check)
+- `buildAdminUniversityWhere` (archived toggle, status filter, countryId
+  filter, search OR clause across name/city/country, whitespace
+  trimming, AND-chain combination, status clause omission when
+  undefined)
+- `formatFee` (nullish, USD formatting, default currency, invalid
+  currency fallback, thousands separators)
+- `isValidSlug` (valid slugs, uppercase rejection, leading/trailing
+  dash rejection, consecutive-dash rejection, non-alphanumeric
+  rejection, nullish/empty rejection)
+- `universitySchema` (required fields, default status, city/logo
+  acceptance, URL validation, empty-website handling, non-positive
+  ranking rejection, negative fee rejection, name/description length
+  caps, invalid status rejection)
+- `universityUpdateSchema` (partial acceptance, archived flag, field
+  validation, multi-field updates, slug immutability on update)
+
+271 tests total via `npm run test` (12 files).
+
+**Known limitations**: the slug is immutable after creation (by design
+— slugs are referenced by external systems and audit logs); the name
+dedupe-check is case-insensitive within a single country but not across
+countries (two universities in different countries CAN share a name);
+the archived toggle is a binary switch (no "archived + inactive" mixed
+view); the course manager on the detail page loads up to 100 courses
+per university (pagination on scroll is TODO); the activity timeline is
+capped at 30 events (older events are accessible via the global
+`/admin/audit` page filtered by entity=University).
