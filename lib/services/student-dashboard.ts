@@ -56,9 +56,9 @@ export type PaymentSummary = {
 
 /** Financial totals are always computed server-side from invoice records. */
 export function paymentSummaryFromInvoices(
-  invoices: { invoiceNumber: string; total: number; paidAmount: number; dueAmount: number; dueDate: Date | null; status: string; deletedAt: Date | null }[]
+  invoices: { invoiceNumber: string; total: number; paidAmount: number; dueAmount: number; dueDate: Date | null; status: string }[]
 ): PaymentSummary {
-  const live = invoices.filter((i) => !i.deletedAt && i.status !== "CANCELLED" && i.status !== "DRAFT");
+  const live = invoices.filter((i) => i.status !== "CANCELLED" && i.status !== "DRAFT");
   const totalAmount = live.reduce((s, i) => s + i.total, 0);
   const paid = live.reduce((s, i) => s + i.paidAmount, 0);
   const remaining = live.reduce((s, i) => s + i.dueAmount, 0);
@@ -260,7 +260,6 @@ export async function getStudentDashboard(student: StudentProfile, userId: strin
         country: true,
         university: true,
         course: true,
-        employee: { include: { user: { select: { name: true } } } },
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -281,7 +280,7 @@ export async function getStudentDashboard(student: StudentProfile, userId: strin
     }),
     prisma.invoice.findMany({
       where: { studentId: student.id, deletedAt: null },
-      select: { invoiceNumber: true, total: true, paidAmount: true, dueAmount: true, dueDate: true, status: true, deletedAt: null },
+      select: { invoiceNumber: true, total: true, paidAmount: true, dueAmount: true, dueDate: true, status: true },
     }),
     prisma.payment.findMany({
       where: { studentId: student.id, deletedAt: null, status: "PAID" },

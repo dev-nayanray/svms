@@ -7,11 +7,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui";
 import { NavIcon, type NavIconName } from "@/components/shared/nav-icons";
 
-
-export type NavItem = { href: string; label: string; icon: React.ElementType };
-export type NavGroup = { label: string; items: NavItem[] };
- 
 export type NavItem = { href: string; label: string; icon: NavIconName };
+export type NavGroup = { label: string; items: NavItem[] };
 
 
 export function SidebarShell({

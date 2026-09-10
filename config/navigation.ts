@@ -1,123 +1,73 @@
+import type { NavIconName } from "@/components/shared/nav-icons";
 
-import {
-  LayoutDashboard,
-  Users,
-  GraduationCap,
-  Target,
-  FolderKanban,
-  FileText,
-  Building2,
-  BookOpen,
-  Globe,
-  CalendarClock,
-  Stamp,
-  CheckSquare,
-  MessageSquare,
-  CreditCard,
-  Receipt,
-  BarChart3,
-  Bell,
-  Settings,
-  ScrollText,
-  GitBranch,
-  ShieldCheck,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-
-export type NavItem = { href: string; label: string; icon: LucideIcon };
+export type NavItem = { href: string; label: string; icon: NavIconName };
 export type NavGroup = { label: string; items: NavItem[] };
 
 export const ADMIN_NAV_GROUPS: NavGroup[] = [
   {
     label: "Main",
     items: [
-      { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
     ],
   },
   {
     label: "Sales & Admissions",
     items: [
-      { href: "/admin/leads", label: "Leads", icon: Target },
-      { href: "/admin/students", label: "Students", icon: Users },
-      { href: "/admin/applications", label: "Applications", icon: FolderKanban },
+      { href: "/admin/leads", label: "Leads", icon: "Target" },
+      { href: "/admin/students", label: "Students", icon: "Users" },
+      { href: "/admin/applications", label: "Applications", icon: "FolderKanban" },
     ],
   },
   {
     label: "Academic",
     items: [
-      { href: "/admin/countries", label: "Countries", icon: Globe },
-      { href: "/admin/universities", label: "Universities", icon: Building2 },
-      { href: "/admin/courses", label: "Courses", icon: BookOpen },
-      { href: "/admin/intakes", label: "Intakes", icon: CalendarClock },
+      { href: "/admin/countries", label: "Countries", icon: "Globe" },
+      { href: "/admin/universities", label: "Universities", icon: "Building2" },
+      { href: "/admin/courses", label: "Courses", icon: "BookOpen" },
+      { href: "/admin/intakes", label: "Intakes", icon: "CalendarClock" },
     ],
   },
   {
     label: "Documents & Visa",
     items: [
-      { href: "/admin/documents", label: "Documents", icon: FileText },
-      { href: "/admin/visa", label: "Visa Management", icon: Stamp },
+      { href: "/admin/documents", label: "Documents", icon: "FileText" },
+      { href: "/admin/visa", label: "Visa Management", icon: "Stamp" },
     ],
   },
   {
     label: "Operations",
     items: [
-      { href: "/admin/tasks", label: "Tasks", icon: CheckSquare },
-      { href: "/admin/messages", label: "Messages", icon: MessageSquare },
-      { href: "/admin/notifications", label: "Notifications", icon: Bell },
+      { href: "/admin/tasks", label: "Tasks", icon: "CheckSquare" },
+      { href: "/admin/messages", label: "Messages", icon: "MessageSquare" },
+      { href: "/admin/notifications", label: "Notifications", icon: "Bell" },
     ],
   },
   {
     label: "Finance",
     items: [
-      { href: "/admin/payments", label: "Payments", icon: CreditCard },
-      { href: "/admin/invoices", label: "Invoices", icon: Receipt },
-      { href: "/admin/reports", label: "Reports", icon: BarChart3 },
+      { href: "/admin/payments", label: "Payments", icon: "CreditCard" },
+      { href: "/admin/invoices", label: "Invoices", icon: "Receipt" },
+      { href: "/admin/reports", label: "Reports", icon: "BarChart3" },
     ],
   },
   {
     label: "Organization",
     items: [
-      { href: "/admin/employees", label: "Employees", icon: GraduationCap },
-      { href: "/admin/branches", label: "Branches", icon: GitBranch },
-      { href: "/admin/roles-permissions", label: "Roles & Permissions", icon: ShieldCheck },
+      { href: "/admin/employees", label: "Employees", icon: "GraduationCap" },
+      { href: "/admin/branches", label: "Branches", icon: "GitBranch" },
+      { href: "/admin/roles-permissions", label: "Roles & Permissions", icon: "ShieldCheck" },
     ],
   },
   {
     label: "System",
     items: [
-      { href: "/admin/settings", label: "Settings", icon: Settings },
-      { href: "/admin/audit", label: "Audit Logs", icon: ScrollText },
+      { href: "/admin/settings", label: "Settings", icon: "Settings" },
+      { href: "/admin/audit", label: "Audit Logs", icon: "ScrollText" },
     ],
   },
-=======
-import type { NavItem } from "@/components/shared/sidebar-shell";
-
-export const ADMIN_NAV: NavItem[] = [
-  { href: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
-  { href: "/admin/leads", label: "Leads", icon: "Target" },
-  { href: "/admin/students", label: "Students", icon: "Users" },
-  { href: "/admin/employees", label: "Employees", icon: "GraduationCap" },
-  { href: "/admin/applications", label: "Applications", icon: "FolderKanban" },
-  { href: "/admin/documents", label: "Documents", icon: "FileText" },
-  { href: "/admin/countries", label: "Countries", icon: "Globe" },
-  { href: "/admin/universities", label: "Universities", icon: "Building2" },
-  { href: "/admin/courses", label: "Courses", icon: "BookOpen" },
-  { href: "/admin/intakes", label: "Intakes", icon: "CalendarClock" },
-  { href: "/admin/visa", label: "Visa Management", icon: "Stamp" },
-  { href: "/admin/tasks", label: "Tasks", icon: "CheckSquare" },
-  { href: "/admin/payments", label: "Payments", icon: "CreditCard" },
-  { href: "/admin/invoices", label: "Invoices", icon: "Receipt" },
-  { href: "/admin/messages", label: "Messages", icon: "MessageSquare" },
-  { href: "/admin/reports", label: "Reports", icon: "BarChart3" },
-  { href: "/admin/branches", label: "Branches", icon: "GitBranch" },
-  { href: "/admin/notifications", label: "Notifications", icon: "Bell" },
-  { href: "/admin/roles-permissions", label: "Roles & Permissions", icon: "ShieldCheck" },
-  { href: "/admin/settings", label: "Settings", icon: "Settings" },
-  { href: "/admin/audit", label: "Audit Logs", icon: "ScrollText" },
- 
 ];
 
-// Flatten for backwards compatibility with sidebar-shell
+// Flatten for backwards compatibility
 export const ADMIN_NAV: NavItem[] = ADMIN_NAV_GROUPS.flatMap((g) => g.items);
 
 export const EMPLOYEE_NAV: NavItem[] = [
