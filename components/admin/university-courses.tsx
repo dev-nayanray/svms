@@ -29,11 +29,11 @@ type Course = {
 };
 
 const DEGREE_LEVEL_OPTIONS = [
-  { value: "FOUNDATION", label: "Foundation" },
+  { value: "DIPLOMA", label: "Diploma" },
   { value: "BACHELOR", label: "Bachelor" },
   { value: "MASTER", label: "Master" },
   { value: "PHD", label: "PhD" },
-  { value: "DIPLOMA", label: "Diploma" },
+  { value: "OTHER", label: "Other" },
 ];
 
 /**

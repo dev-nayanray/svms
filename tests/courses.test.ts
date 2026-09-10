@@ -23,11 +23,11 @@ import {
 describe("course enums", () => {
   it("exposes the canonical degree levels", () => {
     expect(COURSE_DEGREE_LEVELS).toEqual([
-      "FOUNDATION",
+      "DIPLOMA",
       "BACHELOR",
       "MASTER",
       "PHD",
-      "DIPLOMA",
+      "OTHER",
     ]);
   });
 
@@ -590,8 +590,8 @@ describe("courseSchema (admin create, with new English-test fields)", () => {
     expect(
       courseSchema.safeParse({
         universityId: "u1",
-        name: "Foundation Year",
-        degreeLevel: "FOUNDATION",
+        name: "Diploma Year",
+        degreeLevel: "DIPLOMA",
       }).success,
     ).toBe(true);
   });

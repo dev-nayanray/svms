@@ -1,4 +1,4 @@
-import { IntakesAdmin } from "@/components/admin/catalog-admin";
+import { IntakesAdmin } from "@/components/admin/intakes-admin";
 
 export const dynamic = "force-dynamic";
 

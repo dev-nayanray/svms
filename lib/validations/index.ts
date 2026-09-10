@@ -142,7 +142,7 @@ export const universityUpdateSchema = universitySchema.partial().extend({
 export const courseSchema = z.object({
   universityId: z.string().min(1, "University is required"),
   name: z.string().min(1, "Name is required"),
-  degreeLevel: z.enum(["FOUNDATION", "BACHELOR", "MASTER", "PHD", "DIPLOMA"]),
+  degreeLevel: z.enum(["DIPLOMA", "BACHELOR", "MASTER", "PHD", "OTHER"]),
   duration: z.string().optional(),
   tuitionFee: z.coerce.number().nonnegative().optional(),
   currency: z.string().default("USD"),
@@ -152,7 +152,18 @@ export const courseSchema = z.object({
   ieltsRequirement: z.string().max(200).optional(),
   toeflRequirement: z.string().max(200).optional(),
   pteRequirement: z.string().max(200).optional(),
+  applicationDeadline: z.coerce.date().optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
+});
+
+/**
+ * Update schema for courses. Mirrors the create schema as a partial,
+ * plus an `archived` boolean that toggles the soft-delete tombstone
+ * (separate from `status` so the audit trail can record lifecycle
+ * events distinctly from activate/deactivate).
+ */
+export const courseUpdateSchema = courseSchema.partial().extend({
+  archived: z.boolean().optional(),
 });
 
 export const countrySchema = z.object({
@@ -244,6 +255,14 @@ export const intakeSchema = z.object({
   year: z.coerce.number().int().min(2024).max(2100),
   deadline: z.coerce.date().optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
+});
+
+/**
+ * Update schema for intakes. Mirrors the create schema as a partial,
+ * plus an `archived` boolean that toggles the soft-delete tombstone.
+ */
+export const intakeUpdateSchema = intakeSchema.partial().extend({
+  archived: z.boolean().optional(),
 });
 
 export const visaRequirementSchema = visaRequirementCreateSchema;

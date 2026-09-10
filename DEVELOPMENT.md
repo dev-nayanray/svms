@@ -217,10 +217,11 @@ message. `GET /api/notifications` returns latest 50 + unread count; `PATCH` mark
 Logged actions include: user.registered, student.created/soft_deleted, lead.converted,
 application.created/stage_changed, document.uploaded/approved/rejected/under_review,
 invoice.created, payment.recorded, university.created/updated/status_changed/archived/unarchived,
-course.created/updated/status_changed/deleted, country.created/updated/status_changed/
-archived/unarchived, visa_requirement.created/updated/deleted, document_requirement.created/
-updated/deleted, university.favorited/unfavorited, counseling_request.created, task.created,
-intake.created. Viewable at `/admin/audit`.
+course.created/updated/status_changed/archived/unarchived,
+intake.created/updated/status_changed/archived/unarchived,
+country.created/updated/status_changed/archived/unarchived, visa_requirement.created/updated/deleted,
+document_requirement.created/updated/deleted, university.favorited/unfavorited,
+counseling_request.created, task.created. Viewable at `/admin/audit`.
 
 ## 19. UI/UX Standards
 
@@ -1390,3 +1391,157 @@ view); the course manager on the detail page loads up to 100 courses
 per university (pagination on scroll is TODO); the activity timeline is
 capped at 30 events (older events are accessible via the global
 `/admin/audit` page filtered by entity=University).
+
+## 39. Admin Course & Intake Management (v2)
+
+**Routes**: `/admin/courses` (list), `/admin/courses/[id]` (detail),
+`/admin/intakes` (list). APIs: `GET/POST /api/courses`,
+`GET/PATCH/DELETE /api/courses/[id]`, `GET/POST /api/intakes`,
+`GET/PATCH/DELETE /api/intakes/[id]`.
+
+**Degree levels** (updated): `DIPLOMA`, `BACHELOR`, `MASTER`, `PHD`,
+`OTHER`. The old `FOUNDATION` level has been replaced with `OTHER`
+across the schema, validation, UI, and tests. Existing courses with
+`FOUNDATION` degree level will need a manual data migration (or are
+treated as invalid on next edit).
+
+**Course fields managed**: Name, Slug (auto-derived, immutable),
+University, Degree Level, Duration, Tuition Fee, Currency, Application
+Fee, IELTS Requirement, TOEFL Requirement, PTE Requirement, Academic
+Requirements, Application Deadline, Status (ACTIVE/INACTIVE).
+
+**Intake fields managed**: Name, Start Date (month + year, displayed as
+"Sep 2026"), Application Deadline, University (via course), Course,
+Status (ACTIVE/INACTIVE).
+
+**Course list features** (all server-side via the shared `DataTable`):
+- search across course name, university name, AND country name
+- **6 filters**: Status, Country, University, Degree Level, Tuition
+  Range (min + max), English Requirement (IELTS/TOEFL/PTE/Any), and
+  Intake (dropdown of all active intakes)
+- sortable columns: name, tuitionFee, degreeLevel, status, createdAt
+- archived toggle (`?archived=true`) to view soft-deleted courses
+- row actions: View, Edit, Status (activate/deactivate), Archive
+- per-row counts: active intakes, active applications
+
+**Intake list features**:
+- search across intake name, course name, AND university name
+- filters: Status, Country, University, Course
+- sortable columns: name, year, month, deadline, status, createdAt
+- archived toggle
+- row actions: Edit, Status, Archive
+- deadline urgency highlighting (red ≤7 days, amber ≤30 days)
+
+**Course detail page** (`/admin/courses/[id]`, tabbed):
+- **Overview**: stat strip (tuition, app fee, active intakes, active
+  apps), course details card (name, degree, university link, duration,
+  tuition, app fee, status, timestamps), requirements card (IELTS,
+  TOEFL, PTE, legacy note, academic requirements), and an application
+  deadline urgency banner
+- **Intakes**: server-rendered table of active intakes with start date,
+  deadline, urgency badge, and application count
+- **Active Applications**: server-rendered table of in-flight
+  applications with deep links to application + student detail pages
+- **Activity**: audit timeline (latest 30 events for this course)
+
+**API improvements**:
+- `GET /api/courses` — full filter set (countryId, universityId,
+  degreeLevel, tuitionMin/tuitionMax, englishTest, intakeId, status),
+  archived toggle, per-row counts (intakes, applications), proper
+  sorting via `sortFrom` allow-list. Uses `buildAdminCourseWhere`.
+- `GET /api/courses/[id]` (new) — full detail: university + country,
+  active intakes (with app counts), active applications (latest 25
+  with student joins), audit activity timeline (latest 30). Single DB
+  round-trip, no N+1.
+- `POST /api/courses` — validates university exists + not archived
+  (404 if missing), audit-logs creation.
+- `PATCH /api/courses/[id]` — separate archive/unarchive path (with
+  active-application guard returning 409), structured old→new audit
+  diff, distinct `course.status_changed` event, university existence
+  validation when universityId is changed.
+- `DELETE /api/courses/[id]` — soft delete blocked when active
+  applications reference the course (409).
+- `GET /api/intakes` — full filter set (countryId, universityId,
+  courseId, status), archived toggle, proper pagination + sorting via
+  `sortFrom` allow-list. Uses `buildAdminIntakeWhere`.
+- `GET /api/intakes/[id]` (new) — full detail: course + university +
+  country, application count, audit activity timeline.
+- `POST /api/intakes` — validates course exists + not archived (404
+  if missing), audit-logs creation.
+- `PATCH /api/intakes/[id]` — separate archive/unarchive path (with
+  application-reference guard returning 409), structured old→new
+  audit diff, distinct `intake.status_changed` event, course existence
+  validation when courseId is changed.
+- `DELETE /api/intakes/[id]` — changed from hard-delete to soft-delete
+  (archive). Blocked when applications reference the intake (409).
+
+**Database change** (run `npx prisma db push` after pulling): added
+`deletedAt` and `deletedBy` fields to the `Intake` model, plus
+`@@index([status])` and `@@index([year])`. Non-destructive — existing
+intakes continue to work (the new fields default to null).
+
+**Pure helpers** (`lib/constants/courses-admin.ts`, unit-tested):
+- `COURSE_STATUSES`, `COURSE_STATUS_LABELS`, `ADMIN_COURSE_SORT_KEYS`
+- `INTAKE_STATUSES`, `INTAKE_STATUS_LABELS`, `ADMIN_INTAKE_SORT_KEYS`
+- `ENGLISH_TEST_FILTERS` — `["ielts", "toefl", "pte", "any"]`
+- `buildAdminCourseWhere(filters)` — Prisma `where` fragment with
+  archived toggle + AND-combined search/status/country/university/
+  degree/tuition-range/englishTest/intake filters
+- `buildAdminIntakeWhere(filters)` — Prisma `where` fragment with
+  archived toggle + AND-combined search/status/country/university/
+  course filters
+- `courseArchiveBlockReason(course)` — pure pre-flight guard: blocks
+  when active applications reference the course; blocks when already
+  archived (with priority)
+- `intakeArchiveBlockReason(intake)` — pure pre-flight guard: blocks
+  when applications reference the intake; blocks when already archived
+- `formatTuition(fee, currency)` — `Intl.NumberFormat` with safe fallback
+- `intakeStartLabel(month, year)` — human-readable start date label
+
+**Validation**:
+- `courseSchema` — degreeLevel enum updated to `["DIPLOMA", "BACHELOR",
+  "MASTER", "PHD", "OTHER"]`. Added `applicationDeadline` as an optional
+  coerced date field. English-test fields capped at 200 chars.
+- `courseUpdateSchema` — partial + `archived` boolean flag.
+- `intakeSchema` — unchanged (courseId, name, month, year, deadline,
+  status).
+- `intakeUpdateSchema` — partial + `archived` boolean flag.
+
+**Audit coverage added**: `course.created` (now records tuitionFee),
+`course.updated` (structured old→new diff with all fields),
+`course.status_changed`, `course.archived` / `course.unarchived`,
+`intake.created` (now records month/year/deadline), `intake.updated`
+(structured old→new diff), `intake.status_changed`,
+`intake.archived` / `intake.unarchived`.
+
+**Tests**: `tests/courses-admin.test.ts` — 65 tests covering admin
+enums (course + intake statuses, sort keys, english-test filters),
+`buildAdminCourseWhere` (archived toggle, status/degree/university/
+country filters, search OR clause, tuition range, englishTest
+variants, intake filter, full AND-chain combination),
+`buildAdminIntakeWhere` (archived toggle, status/course/university/
+country filters, search OR clause), `courseArchiveBlockReason`
+(no apps, N apps, already archived, priority),
+`intakeArchiveBlockReason` (no apps, N apps, already archived),
+`formatTuition` (nullish, USD, default currency, invalid fallback),
+`intakeStartLabel` (valid month/year, nullish, out-of-range),
+`courseSchema` (required fields, OTHER acceptance, FOUNDATION rejection,
+invalid degree rejection, default status, all fields, negative tuition,
+200-char cap), `courseUpdateSchema` (partial, archived flag, validation,
+multi-field), `intakeSchema` (required fields, month/year validation,
+deadline acceptance, default status), `intakeUpdateSchema` (partial,
+archived flag, validation, multi-field). Existing `tests/courses.test.ts`
+updated to use the new `OTHER` degree level instead of `FOUNDATION`.
+
+336 tests total via `npm run test` (13 files).
+
+**Known limitations**: the degree-level change from `FOUNDATION` to
+`OTHER` requires a manual data migration for existing courses (they'll
+fail validation on next edit if still set to `FOUNDATION`); the
+intake "Start Date" is derived from month + year rather than a
+dedicated `DateTime` field (intentional — keeps the form simple and
+the derivation is testable); the tuition range filter excludes courses
+with a null `tuitionFee` (intentional — admins filtering by tuition
+want concrete numbers); the course detail page's "View" action
+navigates to `/admin/courses/[id]` but there's no equivalent intake
+detail page (intakes are managed inline from the list).

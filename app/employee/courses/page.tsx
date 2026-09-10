@@ -46,7 +46,7 @@ export default async function Page({
           aria-label="Degree level"
         >
           <option value="">All levels</option>
-          {["FOUNDATION", "BACHELOR", "MASTER", "PHD", "DIPLOMA"].map((d) => (
+          {["DIPLOMA", "BACHELOR", "MASTER", "PHD", "OTHER"].map((d) => (
             <option key={d} value={d}>{d}</option>
           ))}
         </select>

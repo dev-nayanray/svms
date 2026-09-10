@@ -18,20 +18,20 @@
  */
 
 export const COURSE_DEGREE_LEVELS = [
-  "FOUNDATION",
+  "DIPLOMA",
   "BACHELOR",
   "MASTER",
   "PHD",
-  "DIPLOMA",
+  "OTHER",
 ] as const;
 export type CourseDegreeLevel = (typeof COURSE_DEGREE_LEVELS)[number];
 
 export const COURSE_DEGREE_LABELS: Record<CourseDegreeLevel, string> = {
-  FOUNDATION: "Foundation",
+  DIPLOMA: "Diploma",
   BACHELOR: "Bachelor",
   MASTER: "Master",
   PHD: "PhD",
-  DIPLOMA: "Diploma",
+  OTHER: "Other",
 };
 
 export const STUDENT_COURSE_SORTS = [
