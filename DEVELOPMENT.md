@@ -4330,3 +4330,216 @@ Single-file orchestrator with inline sub-components:
   badges.
 - **Sticky action area** — CTA row at the bottom.
 - **Multi-visa selector** — compact dropdown → bottom-sheet.
+
+---
+
+## 58. Student Panel — Module 10: Tasks & Deadlines (v2)
+
+**Route**: `/student/tasks` — mobile task-management experience where
+students can see what they need to complete and when, with deadline
+highlighting and checklist-style interaction.
+
+**Goal**: Give the student a clear, scannable view of all tasks
+assigned to them (upload document, complete profile, pay fee, review
+offer, attend appointment, prepare visa documents, etc.), with 5
+filtered views (Today, Upcoming, Overdue, Completed, All) and a
+tap-to-complete checklist UX.
+
+### API surface
+
+Three new student-scoped endpoints, all guarded by
+`studentApiGuard()` — the student record is derived from the session,
+never from a query param or request body.
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| GET | `/api/student/tasks?view=<view>&status=<status>` | List tasks assigned to the caller (`assignedToId = session.user.id`). Supports 5 views: all, today, upcoming, overdue, completed. Optional `?status=` filter. Each task is enriched with an `overdue` boolean flag. Internal fields (`deletedAt`, `deletedBy`, `assignedToId`) stripped. |
+| PATCH | `/api/student/tasks/[id]` | Update a task's status. Students can ONLY set `IN_PROGRESS` or `COMPLETED` — never `TODO` (revert) or `CANCELLED`. Any field other than `status` in the body is rejected with 422. Ownership verified: `assignedToId` must match the caller. Sets `completedAt` automatically. Audit-logs. Notifies the task creator. |
+| POST | `/api/student/tasks/[id]/complete` | Shortcut for the checklist UX — marks the task as COMPLETED. Equivalent to PATCH with `{ status: "COMPLETED" }`. Same ownership check, audit log, and notification. |
+
+### Service (`lib/services/student-tasks.ts`)
+
+- `list(userId, { view?, status? })` — returns tasks assigned to the
+  caller, with the 5-view filter applied server-side. Uses
+  `buildTaskViewWhere` from `lib/constants/tasks.ts`. Enriches each
+  task with an `overdue` boolean (computed via `isOverdue()`).
+- `updateStatus(userId, taskId, newStatus)` — validates the status is
+  in `ALLOWED_STUDENT_STATUSES = ["IN_PROGRESS", "COMPLETED"]`.
+  Verifies ownership (`assignedToId === userId`). Rejects TODO and
+  CANCELLED. Rejects modifying CANCELLED tasks (409 CONFLICT). Sets
+  `completedAt` on COMPLETED, clears on IN_PROGRESS. Audit-logs.
+  Notifies the task creator when COMPLETED.
+- `complete(userId, taskId)` — shortcut for `updateStatus(userId,
+  taskId, "COMPLETED")`.
+- `notifyDeadlineApproaching(now)` — finds open tasks due within the
+  next 24 hours and notifies the assignees. Anti-spam: checks the
+  Notification table for an existing `DEADLINE_APPROACHING`
+  notification for this user in the last 24 hours before sending.
+  Returns the number of notifications sent.
+- `notifyOverdue(now)` — finds overdue open tasks and notifies the
+  assignees. Anti-spam: same 24-hour check on `TASK_OVERDUE`
+  notifications. Returns the number sent.
+
+### Security model
+
+1. **Identity from session only** — `studentApiGuard()` resolves
+   `userId` from the session. Tasks are scoped by `assignedToId`.
+2. **IDOR-safe** — foreign `taskId` (where `assignedToId` doesn't
+   match the caller) returns 404 (NOT_FOUND, never 403 — the
+   existence of another user's task is never confirmed).
+3. **Student permissions** — students can ONLY change status to
+   `IN_PROGRESS` or `COMPLETED`. They CANNOT:
+   - Set status to `TODO` (revert) → 422 VALIDATION_ERROR
+   - Set status to `CANCELLED` (cancel) → 422 VALIDATION_ERROR
+   - Modify any field other than `status` → 422 with the unknown
+     field names listed in the error message
+   - Modify a `CANCELLED` task → 409 CONFLICT
+   - Create or delete tasks
+   - Change title, description, priority, dueDate, assignedToId
+4. **Audit-logged** — every status change emits
+   `task.status_changed` (oldValue + newValue).
+5. **Notifications** — the task creator is notified when the student
+   completes the task (type `TASK_COMPLETED`, only if the creator is
+   different from the student).
+6. **Internal fields stripped** — `deletedAt`, `deletedBy`,
+   `assignedToId` are never on the wire.
+
+### Notification architecture
+
+Three notification triggers (no spam):
+
+1. **Task assigned** — already handled by the admin POST route
+   (`/api/tasks`) which calls `notifications.push` with type
+   `TASK_ASSIGNED` to the assignee.
+2. **Deadline approaching** — `notifyDeadlineApproaching(now)` in the
+   service. Finds open tasks due within 24 hours. Anti-spam: checks
+   for an existing `DEADLINE_APPROACHING` notification for the same
+   user in the last 24 hours. At most one notification per user per
+   day (across all tasks — prevents spam when the cron runs hourly).
+3. **Task overdue** — `notifyOverdue(now)` in the service. Finds
+   open tasks past their due date. Anti-spam: same 24-hour check on
+   `TASK_OVERDUE` notifications.
+
+The notification helpers are pure-DB functions designed to be called
+by a cron job or scheduled task. The actual scheduler is a deployment
+concern (e.g. Vercel Cron, or an external service that calls the
+endpoints periodically).
+
+### Views (5 tabs)
+
+| View | Filter | Use case |
+| ---- | ------ | -------- |
+| Today | `dueDate` within today (UTC) | "What do I need to do today?" |
+| Upcoming | `dueDate` strictly after today | "What's coming up?" |
+| Overdue | `dueDate` in the past AND status is open (TODO/IN_PROGRESS) | "What's late?" |
+| Completed | `status = COMPLETED` | "What have I finished?" |
+| All | No date filter | "Everything assigned to me" |
+
+The view filter is applied server-side via `buildTaskViewWhere()` in
+`lib/constants/tasks.ts`, AND-combined with the `assignedToId` scope.
+
+### Deadline display
+
+The UI shows relative deadlines:
+- "Due today" (same calendar day)
+- "Due tomorrow" (next day)
+- "Due in 3 days" (within 3 days)
+- "MMM d, yyyy" (beyond 3 days)
+- "1 day overdue" / "N days overdue" (past due, open status)
+- Red text for overdue tasks
+
+The `overdue` boolean flag on each task is computed server-side by
+`isOverdue(dueDate, status, now)` — past due AND status is open
+(TODO or IN_PROGRESS). Terminal statuses (COMPLETED, CANCELLED) are
+never marked overdue.
+
+### UI/UX (`components/student/tasks/tasks-view.tsx`)
+
+- **5-tab bar** — horizontal scrollable chips (Today, Upcoming,
+  Overdue, Completed, All). Active tab has a badge showing the task
+  count. Sticky on mobile (below the app shell header).
+- **Task cards** — checklist-style with a checkbox (✓ for completed,
+  □ for open). Each card shows: title, description (2-line clamp),
+  priority badge (URGENT=red, HIGH=amber, MEDIUM=info, LOW=default),
+  deadline label (relative + colored red when overdue), status label,
+  related application link. Completed tasks have line-through + muted
+  treatment + green border.
+- **Actions** — TODO tasks show a "Start" button (→ IN_PROGRESS);
+  IN_PROGRESS tasks show a "Mark Done" button (→ COMPLETED). The
+  checkbox also works as a complete shortcut (POST /complete).
+  CANCELLED tasks have no actions and a muted appearance.
+- **Overdue highlighting** — overdue tasks have a destructive border
+  + red deadline text + "Overdue — please complete as soon as
+  possible" hint.
+- **States**: loading skeleton, server error, offline, empty (per-tab
+  custom messages), optimistic updates with rollback on failure.
+- **Optimistic UI** — tapping "Complete" immediately marks the task
+  as completed locally (via `qc.setQueryData`). If the API call fails,
+  the cache is invalidated and the task reverts to its true state.
+
+### Tests
+
+`tests/student-tasks.test.ts` (38 tests) covers:
+
+**Pure helpers (10 tests)**:
+- `isOverdue`: past due + open status → true; past due + terminal →
+  false; future due → false; null due → false.
+- `isDueToday`: within today UTC → true; tomorrow/yesterday → false.
+- `isUpcoming`: strictly after today → true; today → false.
+- `buildTaskViewWhere`: correct clauses for all 5 views.
+- `computeTaskStats`: counts pending, overdue, completed, cancelled,
+  total.
+
+**List endpoint (7 tests)**:
+- 401 on unauthenticated, 403 on non-STUDENT.
+- Returns tasks assigned to the caller (scoped by `assignedToId`).
+- Applies view filter (`?view=overdue`).
+- Applies status filter (`?status=COMPLETED`).
+- Strips internal fields (`deletedAt`, `deletedBy`, `assignedToId`).
+- Includes the derived `overdue` flag.
+
+**PATCH status endpoint (12 tests)**:
+- 401 on unauthenticated.
+- 404 (IDOR-safe) when the task doesn't belong to the caller.
+- 422 when `status` field is missing.
+- 422 when status is `TODO` (students can't revert).
+- 422 when status is `CANCELLED` (students can't cancel).
+- 422 when body contains fields other than `status` (e.g. `title`,
+  `priority`) — the error message lists the unknown fields.
+- Updates to COMPLETED with `completedAt` set.
+- Updates to IN_PROGRESS without `completedAt`.
+- Audit-logs the status change.
+- Notifies the task creator when COMPLETED.
+- 409 when trying to modify a CANCELLED task.
+- Verifies the findFirst is scoped by `id` + `deletedAt: null`.
+
+**POST complete endpoint (4 tests)**:
+- 401 on unauthenticated.
+- Marks the task as COMPLETED.
+- 404 (IDOR-safe) when the task doesn't belong to the caller.
+- Audit-logs the completion.
+
+**Notification helpers (5 tests)**:
+- `notifyDeadlineApproaching` sends notifications for tasks due
+  within 24h.
+- Anti-spam: skips if already notified in the last 24h.
+- `notifyOverdue` sends notifications for past-due open tasks.
+- Anti-spam: skips if already notified in the last 24h.
+- Both helpers return the count of notifications sent.
+
+### Mobile UX specifics
+
+- **Checklist interaction** — each task card has a checkbox that
+  toggles between open (□) and completed (✓). Tapping the checkbox
+  on an open task fires the `POST /complete` endpoint.
+- **5 horizontal tabs** — scrollable chip row, active tab highlighted
+  with a count badge.
+- **Deadline labels** — relative ("Due today", "Due tomorrow", "Due
+  in 3 days", "N days overdue") with red treatment for overdue.
+- **Priority badges** — URGENT (destructive/red), HIGH (warning/amber),
+  MEDIUM (info/blue), LOW (default/muted).
+- **Sticky tab bar** — stays below the app shell header on mobile so
+  the student can switch views while scrolling.
+- **Optimistic completion** — tapping "Mark Done" immediately
+  completes the task visually; if the API fails, the cache is
+  invalidated and the task reverts.
