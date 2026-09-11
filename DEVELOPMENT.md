@@ -3300,3 +3300,237 @@ with a mocked Prisma + auth stack:
   Retry button, scoped to the detail area (selector still works).
 - **Multiple applications** — selector visible at top; switching
   applications triggers a new detail fetch (cached by `[id]`).
+
+---
+
+## 53. Student Panel — Module 05: Application Timeline (v2)
+
+**Route**: `/student/application/timeline` — mobile-app-style visual
+timeline of the student's journey from initial counseling to final
+visa/travel completion. Reuses the Module 04 application selector
+pattern (no `[id]` in the URL; the page picks the primary
+application or lets the student switch via the selector).
+
+**Goal**: Give the student a single, scannable view of "where am I
+in my journey, what stage am I in now, what happens next, and the
+full chronological history of stage changes" — all driven by real
+`ApplicationStatusHistory` records, no hardcoded progress.
+
+### Page layout
+
+- **Application selector** (only when the student has > 1 application)
+  — reuses `ApplicationSelector` from Module 04. Bottom-sheet on
+  mobile, right-drawer on desktop.
+- **Header card** — application number, country (with flag),
+  university + course, current stage badge, and the progress bar
+  (animated, reuses `ProgressBar` from Module 04).
+- **Current-stage callout** — prominent visual treatment (different
+  color for in-progress vs. complete). Shows the current stage label,
+  a one-line description of what happened at this stage, and a
+  "What happens next?" sub-card with the next-step copy.
+- **Pipeline strip** — vertical on mobile (compact, with "Now" badge
+  on the current stage), horizontal-scroll on desktop (small dots
+  + labels). Each stage is marked completed (✓) / current (ring) /
+  upcoming (border) / skipped (line-through).
+- **Activity history header** — with `Latest` / `All History` toggle
+  (only shown when there are more than 5 history records).
+- **Vertical timeline list** — each item is an expandable card
+  showing the stage label, student-facing description, date, time,
+  and (where available) the display name of who made the change.
+  Tap to expand the change-note if present.
+- **CTA row** — Application, Message Counselor, Documents.
+
+### API surface
+
+One new endpoint, plus a service method that builds the full
+timeline view.
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| GET | `/api/student/application/[id]/timeline` | Returns the timeline view: application header fields, full pipeline (with state markers), current-stage callout data (label + description + next-step copy), and the chronological history (newest-first by default). |
+
+### Service method (`lib/services/student-application.ts`)
+
+`getTimeline(studentId, applicationId)` returns:
+
+```
+{
+  application: { id, applicationNumber, stageKey, stageLabel, status, priority, lastUpdated, country, university, course },
+  progress: { percent, currentIndex, total, passed, isComplete },
+  stages: StageMarker[],                // full pipeline with state markers
+  currentStage: { key, label, description, nextDescription, isComplete },
+  timeline: TimelineItem[],             // ApplicationStatusHistory rows, newest-first
+  timelineCount: number,                // total history length (for the Latest/All toggle)
+}
+```
+
+Each `TimelineItem` has the student-safe shape:
+
+```
+{
+  id, fromStage, toStage,
+  fromLabel, toLabel,                  // title-cased for display
+  description,                         // student-facing copy from STAGE_DESCRIPTIONS
+  note,                                // the change-note (intended student-visible)
+  createdAt,                           // timestamp
+  changedByName,                       // display name only; null for system-created records
+}
+```
+
+### IDOR safety
+
+Identity is fixed at the route layer:
+1. `studentApiGuard()` resolves `studentId` from the session.
+2. `getTimeline(studentId, applicationId)` scopes the Prisma
+   `where` clause by both `id: applicationId` AND `studentId`.
+   A foreign `applicationId` returns `null` → the route 404s
+   (NOT_FOUND, never 403 — the existence of another student's
+   application is never confirmed).
+3. The `applicationStatusHistory.findMany` call is scoped by
+   `applicationId` only — but since the application itself was
+   already verified to belong to the caller, the history is
+   transitively scoped too.
+
+### Data exfiltration guard
+
+The timeline payload is built with an explicit allow-list of
+fields per item. The following are NEVER on the wire:
+
+- `changedById` (the internal ObjectId of the user who made the
+  change) — only the display `name` is exposed.
+- IP address, userAgent — these don't exist on
+  `ApplicationStatusHistory`, but the explicit map documents the
+  contract.
+- Audit metadata (`auditLog.id`, etc.) — not part of the history
+  table, but the contract is explicit.
+- Internal `Note` model records (visibility: INTERNAL) — those are
+  a separate model with their own visibility filter; the timeline
+  only exposes the `note` field on `ApplicationStatusHistory`,
+  which is the brief change-label (e.g. "Application created",
+  "Visa stage: PREPARATION → SUBMITTED") intended to be
+  student-visible by design.
+
+The user display names are resolved in a single extra query
+(`prisma.user.findMany` with `select: { id: true, name: true }`)
+to avoid N+1 — only `id` and `name` are selected; no email, no
+phone, no role, no passwordHash.
+
+### Pipeline utility additions (`lib/utils/application-pipeline.ts`)
+
+Two new lookup tables + two pure functions, all unit-tested:
+
+- `STAGE_DESCRIPTIONS: Record<string, string>` — student-facing
+  description for each of the 18 canonical stages. Written from
+  the student's perspective ("Your application was submitted to
+  the university.") — no internal terms, no employee names, no
+  raw stage keys in the copy.
+- `NEXT_STAGE_DESCRIPTIONS: Record<string, string>` — student-facing
+  "what happens next?" copy for the current stage. Gives the
+  student context even when there's no concrete next-action CTA.
+- `getStageDescription(key)` — returns the canonical description
+  for known keys, falls back to `titleCaseStage(key)` for unknown
+  keys (no leak of internal fallback text).
+- `getNextStageDescription(key)` — returns the canonical next-step
+  copy, falls back to "We're moving your application forward." for
+  unknown keys.
+
+### UI/UX (`components/student/application/timeline-view.tsx`)
+
+Single file with the orchestrator + three sub-components
+(`TimelineDetail`, `PipelineStrip`, `TimelineList`) plus a
+skeleton and the online-status hook.
+
+- **State handling** — loading (skeleton), server error
+  (AlertTriangle + retry), offline (WifiOff + retry disabled),
+  empty (no applications → CTA to browse universities; no history
+  → friendly "no activity yet" card).
+- **Latest/All toggle** — `useState<"latest" | "all">`. Latest
+  shows the first 5 history items; All shows everything. The
+  toggle only appears when `timelineCount > 5`. A "Show all N
+  activities" button appears at the bottom in Latest mode.
+- **Expandable timeline items** — `useState<Set<string>>` tracks
+  which item ids are expanded. Tapping a card toggles its
+  expansion. Only items with a `note` show the chevron affordance.
+- **Current-stage visual prominence** — the matching timeline
+  item (where `toStage === currentStageKey`) gets a primary
+  border, ring, and a "Current" badge. The stage dot is filled
+  with primary color; non-current items use border-only dots.
+- **Responsive layout** — vertical timeline on mobile (with
+  compact pipeline strip), wider timeline + horizontal pipeline
+  on desktop (`md:` breakpoint).
+- **Smooth transitions** — `transition-colors` on cards and
+  buttons; `transition-transform` on the chevron; chevron
+  rotates 180° when expanded.
+
+### Tests
+
+`tests/application-timeline-helpers.test.ts` (11 tests) covers the
+pure helpers:
+
+- `STAGE_DESCRIPTIONS` and `NEXT_STAGE_DESCRIPTIONS` cover every
+  stage in `CANONICAL_PIPELINE`.
+- The copy has no raw stage keys, no internal terms ("audit",
+  "ip address", "objectid"), no angle-bracketed placeholders.
+- `getStageDescription` returns canonical copy for known keys,
+  falls back to `titleCaseStage` for unknown keys, returns a
+  fallback string for null/undefined.
+- `getNextStageDescription` returns canonical copy for known keys,
+  falls back to a generic copy for unknown keys, returns a
+  fallback string for null/undefined.
+- COMPLETED's next-step copy acknowledges the journey is over.
+
+`tests/application-timeline.test.ts` (20 tests) covers the API
+route with a mocked Prisma + auth stack:
+
+- 401 on unauthenticated callers.
+- 403 on non-STUDENT roles.
+- 403 (not 404) on STUDENT-without-profile so existence is never
+  confirmed.
+- 404 (NOT_FOUND, not 403) when the application id is foreign —
+  the existence of another student's application is never
+  confirmed.
+- The application.findFirst call is scoped by the session-
+  resolved studentId (verified by inspecting the Prisma call args).
+- The payload shape: application header fields, current-stage
+  callout data (label + description + nextDescription),
+  `isComplete=true` only when stageKey is COMPLETED.
+- The pipeline stages have correct state markers (completed /
+  current / upcoming / skipped).
+- The timeline items are in newest-first order (mock fixture is
+  pre-sorted to simulate Prisma's orderBy desc).
+- Each timeline item has only the student-safe fields — `id`,
+  `fromStage`, `toStage`, `fromLabel`, `toLabel`, `description`,
+  `createdAt`, `changedByName`, `note`. Forbidden internal fields
+  (`changedById`, `ipAddress`, `userAgent`, `auditId`,
+  `internalNote`) are NOT present.
+- `changedByName` is correctly resolved from the User table.
+- The user.findMany call only selects `id` and `name` (no email,
+  no phone, no role, no passwordHash).
+- `timelineCount` equals the full history length (not the
+  latest-only count).
+- Empty history: returns 200 with an empty timeline array; the
+  current-stage callout is still populated from the app's
+  stageKey; the user.findMany call is skipped entirely when there
+  are no history records.
+- Null `changedById` (system-created records): `changedByName` is
+  null.
+- Multiple applications: the timeline for app-1 returns app-1's
+  history only (verified by inspecting the
+  `applicationStatusHistory.findMany` call args); switching to
+  app-2 re-queries with `applicationId: "app-2"` (no cross-app
+  leak).
+
+### States handled
+
+- **Loading** — skeleton hero + skeleton callout + skeleton
+  timeline items (TanStack Query `isLoading` with `retry: false`).
+- **Server error** — AlertTriangle + error message + Retry button.
+- **Offline** — WifiOff + "Check your connection" + Retry disabled.
+- **Empty (no applications)** — Compass icon + CTA to browse
+  universities.
+- **Empty history** — Clock icon + "No activity recorded yet.
+  Check back after your counselor updates your application."
+- **Per-application detail loading** — skeleton between selector
+  tap and timeline arrival.
+- **Per-application detail error** — small AlertTriangle card with
+  Retry button, scoped to the detail area (selector still works).

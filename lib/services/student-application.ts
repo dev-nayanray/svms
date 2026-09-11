@@ -5,6 +5,8 @@ import {
   computeProgressPercent,
   deriveStudentNextAction,
   titleCaseStage,
+  getStageDescription,
+  getNextStageDescription,
   type StageMarker,
   type ProgressSummary,
   type StudentNextAction,
@@ -512,7 +514,139 @@ export const studentApplicationService = {
     const reshaped = { ...row, counselor };
     return buildStudentSafeView(reshaped as never, stages);
   },
+
+  /**
+   * Get the timeline view for one application. Used by Module 05
+   * (Application Timeline). Returns:
+   *  - the application header fields (number, country, stage)
+   *  - the full pipeline (stages with state markers — so the UI can
+   *    render the "✓ Lead ✓ Counseling ● Current ○ Upcoming" strip)
+   *  - the timeline items (ApplicationStatusHistory records, ordered
+   *    newest-first by default), each with the student-safe fields:
+   *      fromStage, toStage, note, createdAt, changedByName
+   *    No IP address, no userAgent, no audit metadata, no internal
+   *    employee IDs/emails/phones are exposed.
+   *  - the current-stage callout data: stage label, description,
+   *    and the "what happens next?" copy.
+   *
+   * Ownership is verified server-side: the query is scoped by
+   * `studentId` from the session, so a foreign `applicationId`
+   * returns null → the route 404s.
+   *
+   * NOTE on the `note` field: ApplicationStatusHistory.note is a brief
+   * change-note (e.g. "Application created", "Visa stage: …"). It is
+   * NOT the internal `Note` model (which has visibility filtering).
+   * The change-note is intended to be student-visible by design —
+   * it's the human-readable label for the stage transition. We pass
+   * it through unchanged.
+   */
+  async getTimeline(studentId: string, applicationId: string) {
+    const [app, stages, historyRaw] = await Promise.all([
+      prisma.application.findFirst({
+        where: { id: applicationId, studentId, deletedAt: null },
+        select: {
+          id: true,
+          applicationNumber: true,
+          stageKey: true,
+          status: true,
+          priority: true,
+          updatedAt: true,
+          country: { select: { id: true, name: true, flag: true } },
+          university: { select: { id: true, name: true } },
+          course: { select: { id: true, name: true } },
+        },
+      }),
+      prisma.applicationStage.findMany({
+        where: { enabled: true },
+        orderBy: { sortOrder: "asc" },
+        select: { key: true, name: true, sortOrder: true, enabled: true },
+      }),
+      prisma.applicationStatusHistory.findMany({
+        where: { applicationId },
+        orderBy: { createdAt: "desc" },
+        // ApplicationStatusHistory has `changedById` (an ObjectId) but
+        // no `changedBy` relation in the schema — so we can't `include`
+        // the user directly. We resolve the display names separately
+        // (one extra query) and only ever expose `name` (no email,
+        // no phone, no role, no internal ID).
+      }),
+    ]);
+
+    if (!app) return null;
+
+    // Resolve the display names for all the changedBy users in one
+    // extra query (avoids N+1). Only the `name` field is selected.
+    const changedByIds = Array.from(
+      new Set(
+        historyRaw
+          .map((h) => h.changedById)
+          .filter((id): id is string => id !== null && id !== undefined),
+      ),
+    );
+    const users =
+      changedByIds.length > 0
+        ? await prisma.user.findMany({
+            where: { id: { in: changedByIds } },
+            select: { id: true, name: true },
+          })
+        : [];
+    const nameById = new Map(users.map((u) => [u.id, u.name]));
+
+    const stageMarkers: StageMarker[] = computeStageStates(
+      app.stageKey,
+      stages,
+      historyRaw.map((h) => ({ toStage: h.toStage })),
+    );
+    const progress: ProgressSummary = computeProgressPercent(app.stageKey, stages);
+
+    // Map each history row to the student-safe timeline item shape.
+    // We explicitly omit changedById (internal ObjectId), IP address,
+    // userAgent, and any audit metadata — these never existed on
+    // ApplicationStatusHistory anyway, but the explicit map is the
+    // defense-in-depth contract. Only the display `name` of the user
+    // who made the change is exposed (looked up above).
+    const timeline = historyRaw.map((h) => ({
+      id: h.id,
+      fromStage: h.fromStage,
+      toStage: h.toStage,
+      fromLabel: titleCaseStage(h.fromStage),
+      toLabel: titleCaseStage(h.toStage),
+      description: getStageDescription(h.toStage),
+      note: h.note, // change-note, intended student-visible
+      createdAt: h.createdAt,
+      changedByName: h.changedById ? (nameById.get(h.changedById) ?? null) : null,
+    }));
+
+    return {
+      application: {
+        id: app.id,
+        applicationNumber: app.applicationNumber,
+        stageKey: app.stageKey,
+        stageLabel: titleCaseStage(app.stageKey),
+        status: app.status,
+        priority: app.priority,
+        lastUpdated: app.updatedAt,
+        country: app.country
+          ? { id: app.country.id, name: app.country.name, flag: app.country.flag ?? null }
+          : null,
+        university: app.university ? { id: app.university.id, name: app.university.name } : null,
+        course: app.course ? { id: app.course.id, name: app.course.name } : null,
+      },
+      progress,
+      stages: stageMarkers,
+      currentStage: {
+        key: app.stageKey,
+        label: titleCaseStage(app.stageKey),
+        description: getStageDescription(app.stageKey),
+        nextDescription: getNextStageDescription(app.stageKey),
+        isComplete: app.stageKey === "COMPLETED",
+      },
+      timeline,
+      timelineCount: timeline.length,
+    };
+  },
 };
 
 /** Type re-export for the route layer. */
 export type StudentApplicationView = NonNullable<Awaited<ReturnType<typeof studentApplicationService.getById>>>;
+export type StudentApplicationTimeline = NonNullable<Awaited<ReturnType<typeof studentApplicationService.getTimeline>>>;

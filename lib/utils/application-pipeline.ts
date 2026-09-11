@@ -249,3 +249,76 @@ export function titleCaseStage(key: string | null | undefined): string {
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 }
+
+// ───────────────────────────────────────────────────────────────────
+// Stage descriptions (Module 05 — Application Timeline)
+// ───────────────────────────────────────────────────────────────────
+//
+// Pure lookup tables — student-facing copy for "what happened at this
+// stage?" and "what happens next?". These are intentionally written
+// from the student's perspective and contain no internal process
+// detail (no employee assignments, no audit metadata, no internal
+// note references). Unknown stages fall back to a generic copy.
+
+/**
+ * Student-facing description of what happened at each stage. Used in
+ * the timeline list to give a one-line summary the student can scan.
+ */
+export const STAGE_DESCRIPTIONS: Record<string, string> = {
+  LEAD: "Your application journey started.",
+  COUNSELING: "You had your first counseling session with your assigned counselor.",
+  PROFILE_ASSESSMENT: "Your academic profile was assessed for eligibility.",
+  COUNTRY_SELECTION: "Your destination country was selected.",
+  UNIVERSITY_SELECTION: "Your target university was selected.",
+  DOCUMENT_COLLECTION: "Required documents were collected and verified.",
+  APPLICATION_SUBMITTED: "Your application was submitted to the university.",
+  CONDITIONAL_OFFER: "You received a conditional offer from the university.",
+  UNCONDITIONAL_OFFER: "Your offer was confirmed — unconditional offer received.",
+  DEPOSIT_PAYMENT: "Your deposit payment was confirmed.",
+  CONFIRMATION: "Your enrollment was confirmed by the university.",
+  VISA_PREPARATION: "Visa documents are being prepared by your counselor.",
+  VISA_SUBMITTED: "Your visa application was submitted to the embassy.",
+  BIOMETRICS: "Your biometrics appointment was completed.",
+  INTERVIEW: "Your visa interview was conducted.",
+  VISA_DECISION: "A visa decision was received from the embassy.",
+  TRAVEL_PREPARATION: "Travel arrangements are being finalized.",
+  COMPLETED: "Your application journey is complete. Safe travels!",
+};
+
+/**
+ * Student-facing "what happens next" copy for the current stage. Used
+ * in the current-stage callout so the student always knows what to
+ * expect, even when there's no concrete next-action CTA.
+ */
+export const NEXT_STAGE_DESCRIPTIONS: Record<string, string> = {
+  LEAD: "Your counselor will reach out to schedule your first counseling session.",
+  COUNSELING: "Your counselor is assessing your profile and recommending next steps.",
+  PROFILE_ASSESSMENT: "We're helping you select the right destination country and university.",
+  COUNTRY_SELECTION: "We're shortlisting universities in your chosen country.",
+  UNIVERSITY_SELECTION: "We're collecting the required documents for your application.",
+  DOCUMENT_COLLECTION: "We're preparing to submit your application to the university.",
+  APPLICATION_SUBMITTED: "We're waiting for the university's decision on your application.",
+  CONDITIONAL_OFFER: "Please pay the deposit to confirm your enrollment.",
+  UNCONDITIONAL_OFFER: "Your enrollment is confirmed. Visa preparation is starting.",
+  DEPOSIT_PAYMENT: "We're confirming your enrollment with the university.",
+  CONFIRMATION: "We're preparing your visa application documents.",
+  VISA_PREPARATION: "Your counselor is preparing the required visa documents.",
+  VISA_SUBMITTED: "We're waiting for the embassy to process your visa.",
+  BIOMETRICS: "Your biometrics have been recorded. An interview may be scheduled next.",
+  INTERVIEW: "We're waiting for the visa decision from the embassy.",
+  VISA_DECISION: "Your visa has been decided. Travel preparation is starting.",
+  TRAVEL_PREPARATION: "Final travel arrangements are being made.",
+  COMPLETED: "Your journey is complete. Safe travels!",
+};
+
+/** Get the student-facing description for a stage key. */
+export function getStageDescription(key: string | null | undefined): string {
+  if (!key) return "Stage details unavailable.";
+  return STAGE_DESCRIPTIONS[key] ?? titleCaseStage(key);
+}
+
+/** Get the "what happens next" copy for a stage key (current stage). */
+export function getNextStageDescription(key: string | null | undefined): string {
+  if (!key) return "Your application is being processed.";
+  return NEXT_STAGE_DESCRIPTIONS[key] ?? "We're moving your application forward.";
+}
