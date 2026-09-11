@@ -4543,3 +4543,121 @@ never marked overdue.
 - **Optimistic completion** — tapping "Mark Done" immediately
   completes the task visually; if the API fails, the cache is
   invalidated and the task reverts.
+
+---
+
+## 59. Student Panel — Module 11: Student Payments (v2)
+
+**Route**: `/student/payments` — transparent payment overview with
+financial summary, payment history, status badges, and expandable
+detail cards. All totals computed server-side.
+
+**Goal**: Give the student a clear view of their financial obligations
+(total, paid, outstanding, pending) and a chronological history of
+every payment record (date, amount, method, status, reference).
+
+### API surface
+
+Three new student-scoped GET-only endpoints, all guarded by
+`studentApiGuard()` — the student record is derived from the session,
+never from a query param or request body.
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| GET | `/api/student/payments` | List ALL payments for the caller. Each includes linked application + invoice summary. `transactionReference` shown for PAID/PARTIAL/REFUNDED, masked for PENDING/CANCELLED. Internal fields stripped. |
+| GET | `/api/student/payments/[id]` | Full detail of one payment. IDOR-safe: foreign id → 404. |
+| GET | `/api/student/payments/summary` | Financial summary: totalAmount, paid, outstanding, pending, currency, invoiceCount, paymentCount, nextOpenInvoice. ALL computed server-side. |
+
+### Service (`lib/services/student-payments.ts`)
+
+- `list(studentId)` — returns payments scoped by `studentId` from the
+  session. Newest-first (by paymentDate, then createdAt). Each payment
+  includes the linked application + invoice summary. The
+  `transactionReference` is shown for PAID/PARTIAL/REFUNDED but
+  masked (null) for PENDING/CANCELLED.
+- `getById(studentId, paymentId)` — returns one payment with full
+  detail (including invoice items + dates). Ownership verified.
+- `getSummary(studentId)` — computes the financial summary from the
+  Invoice + Payment tables:
+  - `totalAmount`: sum of non-DRAFT, non-CANCELLED invoice totals
+  - `paid`: sum of non-CANCELLED invoice `paidAmount`s
+  - `outstanding`: sum of non-DRAFT, non-CANCELLED invoice `dueAmount`s
+  - `pending`: sum of PENDING payments
+  - `nextOpenInvoice`: the invoice with the earliest `dueDate` that
+    still has an outstanding balance
+  - `currency`: from the first payment record (or "BDT" default)
+
+### Security model
+
+1. **Identity from session only** — `studentApiGuard()` resolves
+   `studentId` from the session. All queries are scoped by it.
+2. **IDOR-safe** — foreign `paymentId` returns 404 (NOT_FOUND, never
+   403 — the existence of another student's payment is never confirmed).
+3. **Read-only** — students CANNOT create, update, delete, or refund
+   payments. All routes are GET-only. Payment management goes through
+   the admin `/api/payments` routes (ADMIN only, `finance.manage`).
+4. **Server-side calculations** — all financial totals are computed
+   from the Invoice + Payment tables on the server. The client NEVER
+   sends totals. This is the single source of truth for "how much does
+   the student owe?".
+5. **`transactionReference` masking** — shown for PAID/PARTIAL/
+   REFUNDED (the student's own transaction confirmation number). Masked
+   (null) for PENDING (no reference yet) and CANCELLED.
+6. **Internal fields stripped** — `createdById`, `deletedAt`,
+   `deletedBy` are never on the wire.
+
+### UI/UX (`components/student/payments/payments-view.tsx`)
+
+- **Financial summary card** — 2×2 grid of metric tiles:
+  - Total Amount (default tone)
+  - Paid (success/green tone)
+  - Outstanding (warning/amber tone if > 0)
+  - Pending (info/blue tone if > 0)
+  - Payment progress bar (paid / total %)
+- **Next payment due card** — warning-toned card showing the next
+  open invoice with its due amount, due date, and a "View Invoice"
+  link (only shown when there's an outstanding balance).
+- **Payment history** — expandable card list. Each card shows:
+  - Status icon (✓ Paid, clock Pending, refresh Refunded, card default)
+  - Amount + currency (prominent)
+  - Payment method label + payment date
+  - Status badge (success/warning/info/default)
+  - Tap to expand: amount, method, date, status, reference (if shown),
+    related invoice (with total/paid/due + link), related application.
+- **CTA row** — Invoices, Application, Contact Counselor.
+- **States**: loading skeleton, server error, offline, empty (no
+  payments → friendly message).
+
+### Tests
+
+`tests/student-payments.test.ts` (22 tests):
+
+**List (8 tests)**:
+- 401 on unauthenticated, 403 on non-STUDENT.
+- Returns only the caller's payments (scoped by studentId).
+- Scopes findMany by studentId from the session.
+- Internal fields stripped (`createdById`, `deletedAt`, `deletedBy`).
+- `transactionReference` shown for PAID.
+- `transactionReference` masked for PENDING.
+- `transactionReference` shown for REFUNDED.
+- `transactionReference` masked for CANCELLED.
+
+**Detail (5 tests)**:
+- 401 on unauthenticated.
+- 404 (IDOR-safe) when payment doesn't belong to caller.
+- Full detail with invoice + application.
+- findFirst scoped by studentId (ownership check).
+- Internal fields stripped.
+
+**Summary (6 tests)**:
+- 401 on unauthenticated.
+- Server-side computation of totalAmount, paid, outstanding, pending.
+- DRAFT and CANCELLED invoices excluded from totals.
+- nextOpenInvoice correctly identified.
+- null nextOpenInvoice when all invoices are paid.
+- Zero totals when no invoices or payments.
+- Invoice + payment queries scoped by studentId.
+
+**Payment method labels (3 tests)**:
+- Correct human-readable labels for all 6 methods (CASH, BANK_TRANSFER,
+  BKASH, NAGAD, CARD, OTHER).
