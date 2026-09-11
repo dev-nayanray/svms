@@ -3088,3 +3088,215 @@ mocked Prisma + auth stack:
 - ✅ Atomic commit: the file is written first, then the DB row is
   updated. A failure between the two leaves an orphan file, not a
   dangling DB reference.
+
+---
+
+## 52. Student Panel — Module 04: My Application (v2)
+
+**Route**: `/student/application` — mobile-app-style Application
+Management screen. (The legacy `/student/applications` table-list view
+is preserved as a separate page for staff-style browsing; this page is
+the new mobile-first primary view.)
+
+**Goal**: Let the student see — at a glance — the complete visa /
+application journey for one (or, with the selector, multiple)
+applications: where they are in the pipeline, what's the next action,
+who their counselor is, what's pending, what's been paid, and the
+full history.
+
+### Page layout
+
+- **Application selector** — shown only when the student has more than
+  one application. Compact summary card with a chevron affordance;
+  taps to open a bottom-sheet (mobile) / right drawer (desktop)
+  listing all applications, each with country flag, university, stage
+  badge, and percent.
+- **Header card** — application number, country (with flag), university
+  + course, current stage badge, and the progress bar (animated).
+- **Next-action sticky banner** — derived from real state (pending
+  docs → open invoices → open tasks → message counselor). Priority
+  HIGH/MEDIUM/LOW determines the visual emphasis.
+- **Pipeline card** — vertical on mobile, horizontal-scroll on
+  desktop. Each stage is marked completed / current / upcoming /
+  skipped. Markers derive from the application's actual `stageKey` +
+  `statusHistory`, never hardcoded.
+- **Tabs** (desktop) / stacked cards (mobile):
+  - Overview — pipeline + Overview / Status / Dates cards
+  - Details — University / Course / Intake / Counselor / Overview / Status
+  - Documents — counts (approved / pending / in review / rejected) + items
+  - Tasks & Payments — task list + payment totals + next open invoice
+  - Visa — visa stage + dates (only when the visa record exists)
+  - Timeline — full stage-change history (student-visible notes only)
+- **CTA row** — Upload Document, Pay Outstanding, Message Counselor,
+  Visa Info. Each links to the relevant student-panel page.
+
+### API surface
+
+All endpoints live under `/api/student/` and are guarded by
+`studentApiGuard()` — the student record is derived from the session,
+**never** from a query parameter or request body. Every read emits an
+`auditLog` entry only when the application is in a sensitive stage
+(VISA_SUBMITTED / VISA_DECISION / COMPLETED) to avoid audit spam.
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| GET | `/api/student/applications` | List all the caller's applications as summary objects (no documents/tasks/etc. detail). Used by the multi-application selector. |
+| GET | `/api/student/application` | Returns the primary application (most recently-updated ACTIVE one) + the full list. Accepts `?id=<id>` to fetch a specific application's full detail view. |
+| GET | `/api/student/application/[id]` | Full detail view of one application. Ownership is verified server-side (the query is scoped by `studentId`); foreign/missing records both 404. |
+
+### IDOR safety
+
+Identity is fixed at the route layer:
+1. `studentApiGuard()` resolves `studentId` from the session.
+2. The service's `getById(studentId, applicationId)` uses the resolved
+   `studentId` in the Prisma `where` clause — the URL's `id` is
+   combined with the session's `studentId`. A foreign `id` simply
+   returns `null` → the route 404s. The 404 message ("Application
+   not found") never confirms the existence of another student's
+   application — foreign and missing records are indistinguishable.
+
+### Data exfiltration guard
+
+The student-safe view (`buildStudentSafeView`) masks / excludes:
+
+- **Internal notes** — filtered at the Prisma `include` level via
+  `where: { visibility: "STUDENT" }`. Only student-visible notes
+  ever leave the DB. The `note` field on `ApplicationStatusHistory`
+  is always student-visible (it's the change note), so it's passed
+  through.
+- **Document reviewNote** — only surfaced when the document's status
+  is `REJECTED` (so the student knows why). For `APPROVED` /
+  `UNDER_REVIEW` / `UPLOADED`, the internal review note is masked to
+  avoid leaking internal process commentary.
+- **Payment transactionReference** — never exposed. The student sees
+  the amount, currency, payment method, status, and date — not the
+  internal bank transaction reference.
+- **Visa internal notes** — the `notes` field on `VisaApplication`
+  is admin/counselor-only; the student-safe view omits it entirely.
+- **Internal employee info** — the counselor section shows only
+  name + email + designation. No internal user IDs, no phone numbers.
+- **Financial internals** — only invoice totals + per-payment summary.
+  No internal cost breakdowns, no employee commission data, no
+  audit-log detail.
+
+### Pipeline utility (`lib/utils/application-pipeline.ts`)
+
+Pure, unit-tested helpers — the single source of truth for "where is
+this application in its journey?". Used by both the service
+(server-side) and the UI (client-side, so the bar can recompute
+without a round-trip).
+
+- `CANONICAL_PIPELINE` — 18 stages, sortOrder 1..18. The live source
+  of truth is the `ApplicationStage` table; this is the fallback when
+  the table is empty (e.g. fresh install before seed).
+- `computeStageStates(currentStageKey, stages, history?)` —
+  returns per-stage state markers. Without history, prior stages
+  are optimistically "completed" (the app went straight through).
+  With history, only stages actually recorded as reached are
+  "completed"; unreached prior stages are "skipped" (e.g. no
+  biometrics required for this country).
+- `computeProgressPercent(currentStageKey, stages)` — returns
+  `{ percent, currentIndex, total, passed, isComplete }`. The
+  current stage counts as "done" (the student is in it now).
+- `deriveStudentNextAction({ pendingDocuments, openInvoices,
+  openTasks, hasCounselor, applicationId })` — priority order:
+  pending docs → open invoices (HIGH if overdue) → open tasks
+  (HIGH if overdue) → message counselor (LOW) → view application
+  details (LOW). Returns `{ title, reason, priority, ctaLabel, ctaHref }`.
+- `titleCaseStage(key)` — `"VISA_DECISION"` → `"Visa Decision"`.
+
+### Service (`lib/services/student-application.ts`)
+
+- `list(studentId)` — returns the caller's applications as
+  `ApplicationSummary` objects (no documents / notes / etc.).
+  Scoped by `studentId` from the session.
+- `primary(studentId)` — returns the most-recently-updated ACTIVE
+  application as a summary. Null if the student has no applications.
+- `getById(studentId, applicationId)` — returns the full
+  student-safe detail view. Ownership is verified via the scoped
+  `where` clause. The `auditLog` records `student_application.viewed`
+  only when the application is in a sensitive stage
+  (VISA_SUBMITTED / VISA_DECISION / COMPLETED).
+- `buildStudentSafeView(row, stages)` — pure function on its inputs
+  that constructs the masked, client-safe shape (see "Data
+  exfiltration guard" above).
+
+### UI/UX (`components/student/application/`)
+
+Five components:
+
+- `application-view.tsx` — the main orchestrator. Fetches
+  `/api/student/applications` on mount via TanStack Query; if the
+  student has > 1 application, renders the selector. Uses
+  `useMemo` for `apps` + `effectiveSelectedId` so the downstream
+  `useQuery` cache key is stable. State handling: loading skeleton,
+  server error, offline (with retry button), empty state with CTA
+  to browse universities.
+- `application-selector.tsx` — bottom-sheet (mobile) / right-drawer
+  (desktop) selector. Each option shows country flag, university,
+  application number, stage label, and percent.
+- `pipeline-progress.tsx` — vertical on mobile, horizontal-scroll on
+  desktop. Each stage dot is colored by state (completed = primary
+  fill, current = primary ring, upcoming = border, skipped = muted
+  + line-through). Also exports a `ProgressBar` component.
+- `section-cards.tsx` — 12 section components (Overview, University,
+  Course, Intake, Status, Dates, Counselor, Documents, Tasks,
+  Payments, Visa, Timeline) + `NextActionBanner`. Each uses a
+  `NavButton` helper that wraps `useRouter().push(href)` (no
+  `window.location.assign`).
+
+### Tests
+
+`tests/application-pipeline.test.ts` (28 tests) covers the pure
+helpers: null / unknown current stage, prior stages as completed
+without history, skipped stages with history, current always
+reached, COMPLETED stage, CANONICAL_PIPELINE fallback, disabled
+stage filter, progress percent for first / middle / last stage,
+`isComplete` flag, `passed` count, next-action priority order,
+title-case helper, pipeline integrity (18 stages, monotonic
+sortOrder).
+
+`tests/student-application.test.ts` (19 tests) covers the API routes
+with a mocked Prisma + auth stack:
+
+- 401 on unauthenticated callers (all 3 routes).
+- 403 on non-STUDENT roles (list + detail).
+- The list returns the caller's applications only — scoped by
+  studentId from the session (verified by inspecting the Prisma
+  call args).
+- The list shape only has summary fields (no `documents`, `notes`,
+  `statusHistory`, `visaApplication`, etc. on each item).
+- The primary endpoint returns the primary + the full list when no
+  `?id` is given; returns the full detail view when `?id=<own>` is
+  given.
+- Foreign `?id` returns 404 (NOT_FOUND, not 403) — existence is
+  never confirmed.
+- The detail endpoint returns the full student-safe view for the
+  caller's own application (with stages, progress, documents,
+  tasks, payments, nextAction, counselor).
+- Internal / employee notes are never exposed (only STUDENT
+  visibility notes appear).
+- Document `reviewNote` is masked for non-REJECTED documents.
+- Payment `transactionReference` is never on the wire.
+- Visa internal `notes` field is never on the wire.
+- The `where` clause uses the session-resolved studentId, never the
+  URL or body (verified by inspecting the Prisma call args).
+- Multiple applications: list returns all of them; primary endpoint
+  returns the primary + the full list.
+
+### States handled
+
+- **Loading** — skeleton hero + skeleton cards (TanStack Query
+  `isLoading` with `retry: false`).
+- **Server error** — AlertTriangle + the error message + Retry
+  button.
+- **Offline** — WifiOff + "Check your connection" + Retry disabled.
+  An offline badge appears in the footer.
+- **Empty (no applications)** — FolderOpen icon + CTA to browse
+  universities.
+- **Per-application detail loading** — skeleton between selector
+  tap and detail arrival.
+- **Per-application detail error** — small AlertTriangle card with
+  Retry button, scoped to the detail area (selector still works).
+- **Multiple applications** — selector visible at top; switching
+  applications triggers a new detail fetch (cached by `[id]`).
