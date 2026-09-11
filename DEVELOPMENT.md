@@ -4023,3 +4023,167 @@ API routes with a mocked Prisma + auth + permissions stack:
 - **Sticky action bar** — the favorite/counseling/website actions
   stick below the app shell header on mobile so they're always
   reachable while scrolling through the detail page.
+
+---
+
+## 56. Student Panel — Module 08: Courses & Intakes (v2)
+
+**Routes**: `/student/courses` (list) + `/student/courses/[id]` (detail)
+— modern mobile course discovery and viewing experience.
+
+**Goal**: Let students browse courses offered by partner universities,
+filter by country/tuition/degree/intake/English requirements, and view
+full course details including intakes with deadline urgency highlighting
+— all in a mobile-first card-based UI with expandable sections.
+
+### Architecture reuse
+
+The API routes, visibility helpers, and list component already existed
+from the initial SVMS build. Module 08 modernizes the UI layer:
+
+- **Reused as-is**: `/api/student/courses` (list), `/api/student/courses/
+  [id]` (detail), `/api/student/courses/meta` (filter metadata),
+  `/api/student/intakes` (intake browsing), `lib/constants/courses.ts`
+  (visibility rules, `buildStudentCourseWhere`, `intakeDeadlineUrgency`,
+  `formatTuitionFee`, `collectEnglishRequirements`, `hasOpenIntake`,
+  `intakeStartDate`), `studentCourseQuerySchema` + `studentIntakeQuerySchema`
+  (Zod validation).
+- **Modernized**: the list page now wraps `StudentCoursesList` in a
+  `MobilePage` container for consistent spacing with the other student
+  modules. The detail page was rebuilt from a tab-based SSR server
+  component to a modern mobile-first client component with expandable
+  card sections (accordions).
+
+### List page (`/student/courses`)
+
+Renders `StudentCoursesList` (already mobile-first) inside a
+`MobilePage` wrapper. Features:
+
+- **Sticky search bar** — server-side search across course name,
+  university name, and country name.
+- **Filter drawer** — country, university, degree level, tuition range
+  (min + max), intake, English-test requirement (ielts/toefl/pte/any).
+  Sort dropdown is inline (name, tuitionFee, degreeLevel, createdAt).
+- **Active filter chips** — horizontal scroll on mobile, each removable.
+- **Course cards** — 1-column on mobile, 2-column on sm+. Each card
+  shows: degree level badge, course name, university name with logo,
+  country+city, duration, tuition fee, English-requirement chips,
+  open-intake indicator, "View details" + "Request counseling" actions.
+- **States**: loading skeleton, empty (no courses / no matches), error
+  (retry), pagination (prev/next + page indicator).
+- **Counseling request dialog** — inline modal with a free-text message
+  field. Posts to `/api/student/counseling-requests` with `courseId`.
+
+### Detail page (`/student/courses/[id]`)
+
+Rebuilt as a client component (`CourseDetailView`) that fetches via the
+secure `/api/student/courses/[id]` endpoint. Features:
+
+- **Header card** — university logo/initials avatar, degree level badge,
+  course name, university link (to `/student/universities/[id]`),
+  location (city + country with flag).
+- **Sticky action bar** (mobile, below the app shell header) / inline
+  actions (desktop): Request Counseling (or "Counseling requested"
+  disabled state with status), View University (navigates to the
+  university detail), Visit Website (external link).
+- **Expandable card sections** (accordions — tap to expand/collapse):
+  - **Overview** (default open) — quick-facts grid (degree, duration,
+    tuition, application fee, currency, open intakes count).
+  - **Intakes** — chronological card list. Each intake card shows name,
+    start date, deadline, and an urgency badge:
+    - "urgent" (≤7 days, red)
+    - "soon" (≤30 days, amber)
+    - "past" (closed, muted)
+    - "none" (no deadline = open, green)
+    - "normal" (open, muted)
+  - **Requirements** — English requirements (structured IELTS/TOEFL/PTE
+    breakdown from `collectEnglishRequirements`) + academic requirements
+    (free text from the course's `academicRequirements` field).
+  - **Application Information** — tuition, application fee, degree,
+    duration, application deadline banner (with urgency-based color
+    treatment), and a "How to apply" guidance card explaining that
+    students don't apply directly — they request counseling.
+- **CTA row** — Back to list, Universities, My Application.
+- **States**: loading skeleton, not found / offline (with retry).
+
+### API routes (reused, no new routes)
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| GET | `/api/student/courses` | List visible courses. Server-side search + filters (country, university, degree, tuition range, intake, englishTest). Strips `deletedAt`/`deletedBy`. Enriches with `englishRequirementsList`, `hasOpenIntake`, `activeIntakeCount`. |
+| GET | `/api/student/courses/[id]` | Full detail: course + ACTIVE intakes + university + country + English requirements + `counselingRequested` + `counselingRequestStatus`. Strips internal fields. |
+| GET | `/api/student/courses/meta` | Filter metadata: countries, universities, degree levels, intakes, tuition range (min+max). |
+| GET | `/api/student/intakes` | Browse active intakes across all visible courses. Enriches with derived `startDate` + `deadlineUrgency`. Supports `upcomingOnly` filter. |
+
+### Visibility rule (chained)
+
+`isCourseVisibleToStudent()` in `lib/constants/courses.ts` is the single
+source of truth for "which courses can a student see?". A course is
+student-visible only if:
+
+- the course itself has `status: ACTIVE` and `deletedAt: null`
+- its parent university has `status: ACTIVE` and `deletedAt: null`
+- the university's parent country has `status: ACTIVE` and `deletedAt: null`
+
+This chained visibility (course → university → country) is enforced at
+the DB level via nested Prisma `where` fragments in
+`buildStudentCourseWhere()`, so a single round-trip filters out
+invisible courses. The detail route additionally calls
+`isCourseVisibleToStudent()` on the fetched row — if it fails, the
+route 404s (never 403).
+
+### Deadline urgency highlighting
+
+`intakeDeadlineUrgency(deadline, now)` in `lib/constants/courses.ts`
+returns one of: `"urgent"` (≤7 days), `"soon"` (≤30 days), `"normal"`
+(>30 days), `"past"` (already passed), `"none"` (no deadline). The UI
+uses this to render colored urgency badges on intake cards and
+application-deadline banners.
+
+### Tests
+
+`tests/student-courses-routes.test.ts` (28 tests) covers the API routes:
+
+**Course list (12 tests)**:
+- 401 on unauthenticated.
+- Returns visible courses with enriched fields (`englishRequirementsList`,
+  `hasOpenIntake`, `activeIntakeCount`). Internal fields stripped.
+- Pagination metadata included.
+- Visibility enforced at DB level (course + university + country ACTIVE).
+- Server-side search across course name, university name, country name.
+- countryId, universityId, degreeLevel, tuition range (min+max),
+  englishTest (ielts/any) filters produce correct AND clauses.
+- pageSize clamped to 24.
+- Status forced to ACTIVE (students can't see inactive courses).
+- Only ACTIVE intakes returned within each course.
+
+**Course detail (7 tests)**:
+- 401 on unauthenticated.
+- 404 for INACTIVE courses (visibility rule).
+- 404 when the course doesn't exist.
+- Full detail for ACTIVE courses with `englishRequirementsList`.
+- Internal fields stripped.
+- `counselingRequested=true` + status when the student has an open request.
+- Only ACTIVE intakes returned.
+
+**Intakes (9 tests)**:
+- 401 on unauthenticated.
+- Returns intakes with derived `startDate` + `deadlineUrgency`.
+- Visibility chain enforced at DB level.
+- countryId filter via nested course.university.countryId.
+- `upcomingOnly=true` excludes past-deadline intakes.
+- `upcomingOnly=true` keeps no-deadline intakes (treated as "open").
+- Pagination metadata included.
+
+### Mobile UX specifics
+
+- **Cards, not tables** — the detail page replaces the previous
+  `Tabs`+`TableShell` layout with expandable card sections (accordions).
+- **Deadline urgency badges** — each intake card shows a colored badge
+  based on how close the deadline is (red ≤7 days, amber ≤30 days, muted
+  for past, green for open-no-deadline).
+- **Sticky action bar** — the Request Counseling / View University /
+  Visit Website actions stick below the app shell header on mobile.
+- **Expandable course details** — all 4 detail sections (Overview,
+  Intakes, Requirements, Application Information) are accordions
+  (Overview open by default, rest collapsed).
