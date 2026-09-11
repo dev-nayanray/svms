@@ -87,11 +87,15 @@ export async function GET(req: NextRequest) {
       prisma.university.count({ where }),
     ]);
 
-    const data = rows.map(({ _count, ...u }) => ({
-      ...u,
-      courseCount: _count.courses,
-      isFavorite: favoriteUniversityIds.includes(u.id),
-    }));
+    const data = rows.map(({ _count, deletedAt: _da, deletedBy: _db, ...u }) => {
+      void _da;
+      void _db;
+      return {
+        ...u,
+        courseCount: _count.courses,
+        isFavorite: favoriteUniversityIds.includes(u.id),
+      };
+    });
 
     return ok({
       data,

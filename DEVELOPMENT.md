@@ -3824,3 +3824,202 @@ with a mocked Prisma + auth + filesystem stack:
 - Preview sheet — bottom-sheet on mobile (92dvh max), right-drawer
   on desktop (640px wide).
 - All touch targets ≥ 44px.
+
+---
+
+## 55. Student Panel — Module 07: Universities (v2)
+
+**Route**: `/student/universities` (list) + `/student/universities/[id]`
+(detail) — modern mobile university discovery and viewing experience.
+
+**Goal**: Let students browse universities recommended/curated by the
+agency (NOT a public marketplace — only ACTIVE universities in ACTIVE
+countries are visible), save favorites, request counseling, and view
+courses/intakes/requirements — all in a mobile-first card-based UI
+with bottom-sheet filters and expandable detail sections.
+
+### Architecture reuse
+
+The API routes, visibility helpers, and list component already existed
+from the initial SVMS build. Module 07 modernizes the UI layer:
+
+- **Reused as-is**: `/api/student/universities` (list), `/api/student/
+  universities/[id]` (detail), `/api/student/universities/meta`
+  (filter metadata), `/api/student/favorites` (toggle), `/api/student/
+  counseling-requests` (POST), `lib/constants/universities.ts`
+  (visibility rules, `buildStudentUniversityWhere`, `resolveUniversity
+  Logo`, `universityInitials`, `formatApplicationFee`, `rankingTier`),
+  `studentUniversityQuerySchema` (Zod validation).
+- **Modernized**: the list page now wraps `StudentUniversitiesList` in
+  a `MobilePage` container for consistent spacing with the other
+  student modules. The detail page was rebuilt from a table-based SSR
+  server component to a modern mobile-first client component with
+  expandable card sections (accordions).
+- **Security fix**: the list route now strips `deletedAt` and
+  `deletedBy` from the response (the detail route already stripped
+  them; the list route was missing this step).
+
+### List page (`/student/universities`)
+
+Renders `StudentUniversitiesList` (already mobile-first) inside a
+`MobilePage` wrapper. Features:
+
+- **Sticky search bar** — server-side search across name, city, and
+  country name. Survives scroll on mobile.
+- **Filter bottom sheet** — Drawer component (right-side on desktop,
+  full-height on mobile). Filters: country, city, ranking ceiling,
+  favorites-only. Sort dropdown is inline (students change sort
+  often).
+- **Active filter chips** — horizontal scroll on mobile, each chip
+  removable inline. "Clear all" button at the end.
+- **University cards** — 1-column on mobile, 2-column grid on sm+.
+  Each card shows: logo/initials avatar, name, country+city, ranking
+  chip (with tier badge), course count, application fee, description
+  excerpt (3-line clamp), favorite heart (optimistic toggle), "View
+  details" + "Request counseling" actions, website link.
+- **States**: loading skeleton (4 cards), empty (no universities /
+  no matches), error (retry button), pagination (prev/next + page
+  indicator).
+- **Counseling request dialog** — inline modal with a free-text
+  message field. Posts to `/api/student/counseling-requests`.
+
+### Detail page (`/student/universities/[id]`)
+
+Rebuilt as a client component (`UniversityDetailView`) that fetches
+via the secure `/api/student/universities/[id]` endpoint. Features:
+
+- **Header card** — logo/initials avatar, name, location (city +
+  country with flag), ranking chip with tier badge, "Active" badge,
+  description excerpt (3-line clamp).
+- **Sticky action bar** (mobile, below the app shell header) / inline
+  actions (desktop): Save (heart toggle, optimistic), Request
+  Counseling (or "Counseling requested" disabled state with status),
+  Visit Website (external link, noopener/noreferrer).
+- **Expandable card sections** (accordions — tap to expand/collapse):
+  - **Overview** (default open) — full description + quick-facts
+    grid (country, city, ranking, application fee, currency).
+  - **Courses** — card list (NOT a table). Each course card is
+    itself expandable: name, degree level, tuition fee; tap to reveal
+    duration, application fee, deadline, academic requirements,
+    English requirements (IELTS/TOEFL/PTE breakdown).
+  - **Intakes** — chronological card list. Each intake shows name,
+    course, degree level, and deadline badge (warning tone if the
+    deadline is within 30 days).
+  - **Requirements** — document requirements (with scope: APPLICATION
+    / VISA / PROFILE, required/optional badge) + visa requirements
+    scoped to the university's country.
+  - **Application Information** — fee, course count, intake count,
+    currency, and a "How to apply" guidance card explaining that
+    students don't apply directly — they request counseling.
+- **CTA row** — Back to list, Browse Courses, My Application.
+- **States**: loading skeleton, not found / offline (with retry),
+  error.
+
+### API routes (reused, with one security fix)
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| GET | `/api/student/universities` | List visible universities. Server-side search + filters. Returns `isFavorite` + `courseCount` per card. **Now strips `deletedAt`/`deletedBy`** from the response. |
+| GET | `/api/student/universities/[id]` | Full detail: university + ACTIVE courses + ACTIVE intakes + ACTIVE document/visa requirements + `isFavorite` + `counselingRequested` + `counselingRequestStatus`. Strips internal fields. |
+| GET | `/api/student/universities/meta` | Filter metadata: countries with visible universities, cities, max ranking. Aggregate-only (no university records leaked). |
+| POST | `/api/student/favorites` | Toggle favorite. Idempotent. Returns new `isFavorite` state. Audit-logged. |
+| POST | `/api/student/counseling-requests` | Request counseling. Blocks duplicates (one open request per student+university). Notifies the assigned counselor. Audit-logged. |
+
+### Visibility rule (single source of truth)
+
+`isUniversityVisibleToStudent()` in `lib/constants/universities.ts`
+is the single source of truth for "which universities can a student
+see?". A university is student-visible only if:
+
+- its own `status` is `ACTIVE`
+- its `deletedAt` is `null`
+- its parent country's `status` is `ACTIVE`
+- its parent country's `deletedAt` is `null`
+
+This is enforced at the DB level by `buildStudentUniversityWhere()`,
+which is used by the list route. The detail route additionally calls
+`isUniversityVisibleToStudent()` on the fetched row — if it fails,
+the route 404s (never 403 — the existence of an archived university
+is never confirmed).
+
+### Security
+
+- **Visibility**: only ACTIVE universities in ACTIVE countries are
+  returned. INACTIVE/deleted universities 404 at the detail route and
+  are filtered out at the DB level on the list route.
+- **Status filter is forced**: students cannot pass `?status=INACTIVE`
+  to see inactive universities — the route ignores the `status` param
+  and always uses `ACTIVE`.
+- **No direct modification**: students cannot create, update, or
+  delete universities. The student routes are all GET (read-only)
+  except for favorites toggle and counseling requests, which create
+  rows in `UniversityFavorite` / `CounselingRequest` — never modify
+  the `University` table itself.
+- **Internal fields stripped**: `deletedAt`, `deletedBy`, internal
+  `_count` are stripped from both list and detail responses.
+- **Audit-logged**: `university.favorited`, `university.unfavorited`,
+  `counseling_request.created` events are recorded.
+
+### Tests
+
+`tests/student-universities-routes.test.ts` (28 tests) covers the
+API routes with a mocked Prisma + auth + permissions stack:
+
+**List endpoint (14 tests)**:
+- 401 on unauthenticated callers.
+- Returns visible universities with `isFavorite` flag + `courseCount`.
+- Internal fields (`deletedAt`, `deletedBy`) stripped from response.
+- Pagination metadata included.
+- Visibility enforced at DB level (where clause includes
+  `deletedAt: null, status: ACTIVE` + `country: { deletedAt: null,
+  status: ACTIVE }`).
+- Server-side search across name, city, and country name (OR clause
+  with 3 conditions).
+- Country, city, rankingMax, favoriteOnly filters all produce the
+  correct AND clauses.
+- favoriteOnly with no favorites returns an impossible match
+  (`id: { in: [] }`).
+- Sort by name (asc) and ranking (asc — lower is better).
+- Students cannot filter by status — status is always forced to
+  ACTIVE.
+- pageSize is clamped to 24 (Math.min, not a 422 reject).
+- isFavorite=true when the student has favorited the university.
+
+**Detail endpoint (14 tests)**:
+- 401 on unauthenticated callers.
+- 404 for INACTIVE universities (visibility rule).
+- 404 for soft-deleted universities (visibility rule).
+- 404 when the university doesn't exist.
+- Returns full detail for ACTIVE universities in ACTIVE countries.
+- Internal fields (`deletedAt`, `deletedBy`) stripped.
+- `isFavorite=true` when the student has favorited this university.
+- `counselingRequested=true` + `counselingRequestStatus` when the
+  student has an open counseling request.
+- Only ACTIVE courses are returned (where clause on courses include).
+- Only ACTIVE intakes are returned (where clause on intakes include).
+- Only ACTIVE document + visa requirements are returned.
+- Document requirements are scoped to the university's country OR
+  global (`countryId: null`).
+- Visa requirements are scoped to the university's country only.
+
+### Mobile UX specifics
+
+- **Cards, not tables** — the detail page replaces the previous
+  `TableShell`-based courses/intakes sections with expandable card
+  lists. Each course card is itself expandable (tap to reveal
+  requirements, fees, deadlines).
+- **Horizontal chips** — active filter chips scroll horizontally on
+  mobile. Ranking tier + course count + application fee are chips on
+  each university card.
+- **Filter bottom sheets** — the filter UI uses the `Drawer`
+  component (right-side on desktop, full-height sheet on mobile).
+- **Logo/initials support** — the `resolveUniversityLogo()` helper
+  validates the URL shape; `universityInitials()` strips common
+  corporate suffixes ("University", "Institute", "of", "the") so
+  "University of Toronto" → "T", not "Uo".
+- **Expandable details** — all 5 detail sections are accordions
+  (default: Overview open, rest closed). Course cards within the
+  Courses section are also individually expandable.
+- **Sticky action bar** — the favorite/counseling/website actions
+  stick below the app shell header on mobile so they're always
+  reachable while scrolling through the detail page.
