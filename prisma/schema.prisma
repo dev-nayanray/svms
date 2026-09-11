@@ -418,6 +418,18 @@ model Document {
   mimeType      String
   fileSize      Int
   status        String               @default("REQUESTED") // REQUESTED | UPLOADED | UNDER_REVIEW | APPROVED | REJECTED | EXPIRED
+  // User-facing category (Module 06): Personal | Academic | English Test |
+  // Financial | Passport | University | Visa | Other. Optional so the
+  // existing admin upload flow (which doesn't set it) still works.
+  category      String?
+  // Version history (Module 06): when a student replaces an APPROVED
+  // document, the OLD row is preserved with its status intact, and a
+  // NEW row is created with `replacesId` pointing back. A row is
+  // "current" when no other row has `replacesId = this.id` (i.e. the
+  // `replacedBy` relation is empty). See `lib/services/student-document.ts`.
+  replacesId    String?              @db.ObjectId
+  replaces      Document?            @relation("DocumentVersions", fields: [replacesId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replacedBy    Document[]           @relation("DocumentVersions")
   uploadedById  String?              @db.ObjectId
   reviewedById  String?              @db.ObjectId
   reviewNote    String?
@@ -432,6 +444,8 @@ model Document {
   @@index([studentId])
   @@index([applicationId])
   @@index([status])
+  @@index([category])
+  @@index([replacesId])
 }
 
 // ─────────────────────────────────────────────

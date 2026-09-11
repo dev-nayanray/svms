@@ -608,3 +608,46 @@ export const profilePhotoSchema = z.object({
   mimeType: z.string().min(1).max(100),
   fileSize: z.number().int().positive().max(5 * 1024 * 1024, "Max photo size is 5MB"),
 });
+
+// ─────────────────────────────────────────────
+// Student Document Management (Module 06)
+// ─────────────────────────────────────────────
+
+/**
+ * Schema for the form fields accompanying a multipart document upload.
+ * The file itself is validated separately (MIME + size + extension)
+ * inside the route handler because FormData file fields can't be in
+ * the JSON body.
+ *
+ * SECURITY: `studentId` is NOT in this schema — it's resolved from
+ * the session at the route layer. The student can never claim to be
+ * uploading on behalf of another student.
+ */
+export const studentDocumentUploadSchema = z.object({
+  name: z.string().min(1, "Document name is required").max(200, "Name is too long"),
+  category: z.enum([
+    "Personal",
+    "Academic",
+    "English Test",
+    "Financial",
+    "Passport",
+    "University",
+    "Visa",
+    "Other",
+  ]),
+  applicationId: z.string().max(200).optional(),
+  requirementId: z.string().max(200).optional(),
+});
+
+/**
+ * Schema for the form fields accompanying a multipart document
+ * replacement. Same shape as the upload schema — the route also
+ * takes the documentId from the URL, verifies ownership, and
+ * creates a NEW row with `replacesId` pointing back to the old one.
+ *
+ * The OLD document's status (e.g. APPROVED) is preserved — the
+ * student can't silently overwrite an approved document. The old
+ * row remains in the DB for the audit trail and is reachable via
+ * the "history" link on the new document.
+ */
+export const studentDocumentReplaceSchema = studentDocumentUploadSchema;

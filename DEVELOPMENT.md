@@ -3534,3 +3534,293 @@ route with a mocked Prisma + auth stack:
   tap and timeline arrival.
 - **Per-application detail error** — small AlertTriangle card with
   Retry button, scoped to the detail area (selector still works).
+
+---
+
+## 54. Student Panel — Module 06: Document Management (v2)
+
+**Route**: `/student/documents` — mobile-first document center where
+students can see required documents, upload, preview, replace
+rejected documents, understand rejection reasons, and track missing
+documents. (The legacy admin `/api/documents*` routes are preserved
+separately; this module is the new student-facing surface.)
+
+**Goal**: Give the student a single, scannable view of every document
+in their visa journey, with secure upload, inline preview, and
+explicit rejection-reason CTAs — all while preserving the audit
+trail and preventing IDOR.
+
+### Schema changes (Prisma)
+
+The existing `Document` model gained two new fields:
+
+- `category String?` — user-facing category (Personal, Academic,
+  English Test, Financial, Passport, University, Visa, Other).
+  Optional so the existing admin upload flow (which doesn't set it)
+  still works.
+- `replacesId String? @db.ObjectId` + self-relation
+  `replaces Document? @relation("DocumentVersions", ...)` +
+  `replacedBy Document[] @relation("DocumentVersions")` — for
+  version history. When a student replaces an APPROVED document, the
+  OLD row is preserved with its status intact, and a NEW row is
+  created with `replacesId` pointing back. A row is "current" when
+  no other row points to it (the `replacedBy` relation is empty).
+
+Two new indexes: `@@index([category])` and `@@index([replacesId])`.
+
+After schema change: `npx prisma generate` (MongoDB is schemaless so
+no migration is required; existing documents simply grow the new
+keys on next write).
+
+### API surface
+
+Five new endpoints under `/api/student/documents/`, all guarded by
+`studentApiGuard()` — the student record is derived from the session,
+**never** from a query parameter or request body.
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| GET  | `/api/student/documents` | List the caller's "current" documents (superseded rows are hidden; reachable via the detail endpoint's `history` field). Optional `?category=` and `?status=` filters. |
+| POST | `/api/student/documents` (multipart) | Secure upload. Validates MIME + size + extension against an allow-list, writes to private storage, creates a Document row with status=UPLOADED, notifies the assigned employee, audit-logs the upload. |
+| GET  | `/api/student/documents/[id]` | Detail view of one document, including the version history (chain of `replaces` rows). Ownership is verified server-side. |
+| POST | `/api/student/documents/[id]/replace` (multipart) | Replace an existing document. The OLD row is PRESERVED (status intact); a NEW row is created with `replacesId` pointing back. The new row starts as UPLOADED and needs review again. |
+| GET  | `/api/student/documents/[id]/download` | Secure download — the ONLY way to retrieve a file. Streams the file with Content-Type + Content-Disposition: attachment. Audit-logs every access. |
+
+### Private storage architecture
+
+Files are written to `/private-uploads/student-docs/<studentId>/`
+— NOT under `/public/`. They are NEVER directly accessible via a
+URL. The only way to read a file is through the download endpoint,
+which verifies ownership server-side and streams the file.
+
+The on-disk filename is `<timestamp>-<sha256-16>.<ext>`:
+
+- Two students uploading the same file get distinct paths (no
+  collisions, no overwrite attacks).
+- The original filename (which may contain PII or special chars) is
+  never used on disk.
+- The extension is derived from the MIME type (validated against an
+  allow-list), so a renamed `.exe` cannot execute.
+
+The `fileUrl` field on the Document row is a *private path*
+(prefixed with `private:`) — NOT a public URL. The download endpoint
+translates this back to a real filesystem path after verifying
+ownership. Legacy public-URL fileUrls (pre-Module 06) are
+explicitly rejected by the download endpoint (404).
+
+### File validation
+
+Server-side validation (the source of truth — client-side validation
+is mirrored for UX but never trusted):
+
+- **MIME type allow-list**: `application/pdf`, `image/jpeg`,
+  `image/png`, `image/webp`. Anything else is 422'd BEFORE the
+  file touches disk.
+- **File size cap**: 10 MB (`MAX_FILE_SIZE`). Oversized files are
+  422'd before disk.
+- **Empty files**: 422'd before disk.
+- **On-disk extension**: derived from the MIME type via
+  `EXT_BY_MIME`, never trusted from the client. A `.exe` renamed
+  to `.pdf` is rejected at the MIME check.
+
+### IDOR safety
+
+Identity is fixed at the route layer:
+
+1. `studentApiGuard()` resolves `studentId` from the session.
+2. Every Prisma query is scoped by `studentId` from the session —
+   the URL's `[id]` is combined with `studentId` in the `where`
+   clause. A foreign `id` returns `null` → the route 404s
+   (NOT_FOUND, never 403 — the existence of another student's
+   document is never confirmed).
+3. The download endpoint additionally verifies the file exists on
+   disk before streaming; orphan DB rows return 404 gracefully
+   instead of crashing mid-stream.
+
+### Data exfiltration guard
+
+The student-safe view (`buildStudentSafeView`) explicitly omits:
+
+- `fileUrl` — NEVER exposed on the wire. The download endpoint is
+  the only way to retrieve the file.
+- `uploadedById`, `reviewedById`, `deletedBy` — internal ObjectIds.
+  The reviewer's identity is implicit (the audit log records it);
+  the student doesn't need to know who reviewed their document.
+- Internal `Note` model records — those are a separate model
+  (`visibility: INTERNAL` filter); the `reviewNote` on `Document`
+  is the rejection reason, which IS shown to the student when the
+  status is REJECTED.
+- Audit metadata (`AuditLog.id`, IP, userAgent) — never on the wire.
+
+### Version history (the "approved document cannot be silently overwritten" rule)
+
+When a student replaces a document (regardless of status), the
+service:
+
+1. Verifies ownership of the OLD document (scoped by `studentId`).
+2. Creates a NEW Document row with `replacesId = oldId`,
+   `status = UPLOADED`, and the same `requirementId`/`applicationId`
+   as the old one (unless the client explicitly overrode them).
+3. The OLD document is NOT modified — its status (e.g. APPROVED)
+   stays intact. The OLD row remains in the DB for the audit trail.
+4. The list endpoint uses `replacedBy: { none: {} }` to return only
+   "current" documents — rows where no other row points to them.
+5. The detail endpoint walks the `replaces` chain (1 query per
+   ancestor, capped at typical depths of 1–2) to build the
+   `history` array, oldest-first.
+
+This means:
+
+- An APPROVED document remains APPROVED in the history (it's not
+  overwritten, it's superseded).
+- The new upload starts as UPLOADED and needs review again.
+- The student sees the new version as "current" and the old one as
+  superseded (reachable via the "history" link on the new doc).
+- Audit events: `student_document.uploaded` (new doc, no
+  replacesId), `student_document.replaced` (new doc, with
+  replacesId), and `student_document.replacement_created` (on the
+  OLD doc, recording its pre-replacement status).
+
+### Service (`lib/services/student-document.ts`)
+
+- `list(studentId, { category?, status? })` — returns "current"
+  documents only (`replacedBy: { none: {} }`). Optional category +
+  status filters.
+- `getById(studentId, documentId)` — returns the full detail view
+  + version history (the `replaces` chain).
+- `validateFile(mimeType, fileSize)` — throws 400 BAD_REQUEST on
+  invalid MIME or size.
+- `writePrivateFile(studentId, bytes, mimeType)` — writes to
+  `/private-uploads/student-docs/<studentId>/<timestamp>-<sha16>.<ext>`,
+  returns the `private:` -prefixed fileUrl.
+- `resolvePrivatePath(fileUrl)` — translates the stored fileUrl
+  back to a filesystem path. Throws 404 for legacy public-URL
+  fileUrls (defense in depth).
+- `createDocument({ studentId, name, category, ...,
+  replacesId?, actorId })` — creates the Document row with
+  status=UPLOADED, notifies the assigned employee, audit-logs.
+- `replaceDocument({ studentId, documentId, ..., actorId })` —
+  verifies ownership of the OLD doc, creates a NEW doc with
+  `replacesId = oldId`, audit-logs the replacement.
+- `resolveForDownload(studentId, documentId)` — verifies ownership,
+  resolves the private path, verifies the file exists on disk,
+  audit-logs the download. Returns `{ filePath, fileName, mimeType,
+  fileSize }` or null.
+- `createDownloadStream(filePath)` — returns a Node `ReadStream` for
+  the route to pipe to the response.
+- `cleanupPrivateFile(fileUrl)` — best-effort unlink of an orphan
+  file (used when the DB write fails AFTER the file was written).
+
+### UI/UX (`components/student/documents/`)
+
+Five components:
+
+- `documents-view.tsx` — the main orchestrator. Renders the
+  category filter chip row (Personal, Academic, English Test,
+  Financial, Passport, University, Visa, Other, All), the status
+  filter row (All / Pending / Approved / Rejected), the documents
+  list (grouped by category when no category filter is active; flat
+  when filtered), and a sticky upload CTA on mobile. State
+  handling: loading skeleton, server error, offline, empty.
+- `document-card.tsx` — compact card with status badge, dates,
+  rejection banner (with reason + "Upload New Version" CTA),
+  expired banner, requested banner, and status-appropriate actions
+  (Upload / View / Download / Replace). The actions shown depend on
+  the document's status:
+  - REQUESTED → Upload (opens new-upload sheet, no replaceId)
+  - UPLOADED / UNDER_REVIEW → View, Download
+  - APPROVED → View, Download, Replace
+  - REJECTED / EXPIRED → View, Download, Upload New Version
+- `upload-sheet.tsx` — bottom-sheet (mobile) / right-drawer
+  (desktop) upload flow. Handles both new uploads and replacements
+  (the only difference is the `replaceId` prop). Drag-and-drop file
+  selection, MIME + size validation (mirrors server-side), real
+  XHR-based upload progress bar, replace-mode hint that explains
+  the version-preservation behavior. The parent passes a `key` that
+  changes each time the sheet opens, so the form state is reset via
+  remount instead of setState-in-effect (the React-recommended
+  pattern).
+- `document-preview.tsx` — preview sheet for previewable types
+  (PDF, JPG, PNG, WebP). Fetches the file via the secure download
+  endpoint, creates a `blob:` URL for inline rendering (PDF via
+  `<iframe>`, images via `<img>`). The blob URL is revoked when
+  the sheet closes — the file content lives in memory only as long
+  as the preview is open. Falls back to a download-only CTA for
+  non-previewable types or fetch errors.
+
+### Tests
+
+`tests/student-documents.test.ts` (33 tests) covers the API routes
+with a mocked Prisma + auth + filesystem stack:
+
+- **List endpoint**: 401 on unauthenticated, 403 on non-STUDENT,
+  returns only the caller's current documents (no superseded),
+  `fileUrl` never on the wire, scopes the findMany by studentId
+  from the session, supports the `?category=` and `?status=`
+  filters.
+- **Upload endpoint**: 401 on unauthenticated, 422 on no file, 422
+  on invalid MIME type (file never touches disk), 422 on oversized
+  file (real 11MB Blob; file never touches disk), 422 on empty
+  file (never touches disk), 422 on missing name field, 422 on
+  invalid category. Accepts a valid PDF upload, creates the document
+  row with status=UPLOADED, audit-logs `student_document.uploaded`,
+  writes to private storage with a sha256-based filename (NOT the
+  original filename), never trusts `studentId` from the body.
+- **Detail endpoint**: 401 on unauthenticated, 404 (NOT_FOUND,
+  not 403) when the document doesn't belong to the caller (IDOR-
+  safe), scopes the findFirst by studentId from the session,
+  returns the detail view with student-safe fields (no `fileUrl`,
+  no `uploadedById`/`reviewedById`/`deletedBy`), includes the
+  version history array.
+- **Replace endpoint**: 401 on unauthenticated, 404 (IDOR-safe)
+  when the OLD document doesn't belong to the caller, creates a
+  NEW row with `replacesId` pointing to the old one (preserves
+  APPROVED status — no `prisma.document.update` is called), audits
+  both `student_document.replaced` and
+  `student_document.replacement_created`, rejects invalid file
+  types in the replace flow too, writes the new file to private
+  storage (NOT /public/).
+- **Download endpoint**: 401 on unauthenticated, 404 (IDOR-safe)
+  when the document doesn't belong to the caller, 404 when the
+  file is missing from disk (orphan DB row), 409 CONFLICT for
+  REQUESTED documents (no file uploaded yet), streams the file
+  with Content-Type + Content-Disposition: attachment, sanitizes
+  the filename in Content-Disposition (no header injection via
+  CRLF), audit-logs every download, rejects legacy public-URL
+  fileUrls (defense in depth).
+
+### States handled
+
+- **Loading** — skeleton filter chips + skeleton document cards.
+- **Server error** — AlertTriangle + error message + Retry button.
+- **Offline** — WifiOff + "Check your connection" + Retry disabled.
+  An offline badge appears in the footer.
+- **Empty (no documents)** — FileText icon + CTA to upload.
+- **Empty (filtered)** — "No documents match your filters. Try
+  clearing them."
+- **Per-document upload progress** — XHR progress bar with percent.
+- **Per-document upload error** — toast + sheet stays open so the
+  student can retry.
+- **Per-document download in-flight** — spinner on the Download
+  button (disabled while in flight).
+- **Per-document preview loading** — "Loading preview…" pulse in
+  the preview body.
+- **Per-document preview error** — AlertTriangle + "Couldn't load
+  preview" + Download-fallback CTA.
+
+### Mobile UX specifics
+
+- Sticky upload CTA — floats above the bottom nav on mobile
+  (`bottom-[calc(env(safe-area-inset-bottom)+4.5rem)]`), hidden on
+  desktop (md+).
+- Category filter chips — horizontal scroll on mobile, full width
+  on desktop.
+- Status filter row — horizontal scroll on mobile, full width on
+  desktop.
+- Document cards — full-width on mobile, multi-column grid on
+  desktop (via the parent's responsive layout).
+- Upload sheet — bottom-sheet on mobile (rounded top, drag handle),
+  right-drawer on desktop (480px wide).
+- Preview sheet — bottom-sheet on mobile (92dvh max), right-drawer
+  on desktop (640px wide).
+- All touch targets ≥ 44px.

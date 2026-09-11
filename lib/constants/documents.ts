@@ -47,6 +47,56 @@ export const ALLOWED_MIME_TYPES = [
 ] as const;
 export type AllowedMimeType = (typeof ALLOWED_MIME_TYPES)[number];
 
+/**
+ * Maps a MIME type to a safe file extension. The extension on disk is
+ * always derived from the MIME type (never trusted from the client),
+ * so a renamed `.exe` cannot execute. Falls back to `.bin`.
+ */
+export const EXT_BY_MIME: Record<string, string> = {
+  "application/pdf": ".pdf",
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+};
+
+/**
+ * User-facing document categories (Module 06). Optional on the
+ * Document model so the existing admin upload flow still works
+ * without a category. Used by the student documents UI for the
+ * category filter chips.
+ */
+export const DOCUMENT_CATEGORIES = [
+  "Personal",
+  "Academic",
+  "English Test",
+  "Financial",
+  "Passport",
+  "University",
+  "Visa",
+  "Other",
+] as const;
+export type DocumentCategory = (typeof DOCUMENT_CATEGORIES)[number];
+
+/** Returns true if the given string is a valid user-facing category. */
+export function isValidDocumentCategory(value: unknown): value is DocumentCategory {
+  return typeof value === "string" && (DOCUMENT_CATEGORIES as readonly string[]).includes(value);
+}
+
+/**
+ * Returns true if the file's MIME type is previewable inline in the
+ * browser (images + PDF). Other supported types (none currently, but
+ * the function is here for future DOCX/XLSX preview support) return
+ * false and the UI falls back to a download-only CTA.
+ */
+export function isPreviewable(mimeType: string): boolean {
+  return (
+    mimeType === "application/pdf" ||
+    mimeType === "image/jpeg" ||
+    mimeType === "image/png" ||
+    mimeType === "image/webp"
+  );
+}
+
 /** Maximum upload file size: 10 MB. */
 export const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
