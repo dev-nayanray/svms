@@ -33,6 +33,18 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# uploaded profile photos (Module 03) — generated at runtime
+/public/uploads/
+
+# sandbox-only scaffolding (not part of the project repo)
+/skills/
+/download/
+/tool-results/
+/upload/
+/scripts/
+/dev.log
+/dev-server.log
+
 # vercel
 .vercel
 

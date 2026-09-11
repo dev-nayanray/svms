@@ -93,14 +93,22 @@ model Student {
   nationality           String?
   phone                 String?
   email                 String
+  whatsapp              String?
+  alternativePhone      String?
   address               String?
   city                  String?
+  district              String?
+  division              String?
   country               String?
+  postalCode            String?
   passportNumber        String?
   passportIssueDate     DateTime?
   passportExpiryDate    DateTime?
+  passportIssuingCountry String?
   emergencyContactName  String?
   emergencyContactPhone String?
+  emergencyContactRelation String?
+  profilePhotoUrl       String?
   assignedEmployeeId    String?            @db.ObjectId
   employee              Employee?          @relation("AssignedStudents", fields: [assignedEmployeeId], references: [id])
   branchId              String?            @db.ObjectId
@@ -200,6 +208,7 @@ model EnglishProficiency {
   listeningScore Float?
   speakingScore  Float?
   testDate       DateTime?
+  expiryDate     DateTime?
   certificateUrl String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

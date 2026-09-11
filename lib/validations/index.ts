@@ -508,3 +508,103 @@ export const studentIntakeQuerySchema = paginationSchema
     upcomingOnly: z.coerce.boolean().optional(),
   })
   .omit({ status: true }); // intakes use their own status filter
+
+// ─────────────────────────────────────────────
+// Student Profile (Module 03 — My Profile)
+// ─────────────────────────────────────────────
+
+/**
+ * Permitted fields for student self-service profile edits.
+ *
+ * SECURITY: The schema is an explicit allow-list. Ownership-critical
+ * fields (studentId, userId, branchId, assignedEmployeeId, status,
+ * role, etc.) are NOT here and CANNOT be introduced by the client.
+ * The PATCH route derives the student record from the session and
+ * passes only these fields to the service.
+ */
+export const studentProfilePatchSchema = z.object({
+  // Personal information
+  firstName: z.string().min(1, "First name is required").max(80).optional(),
+  lastName: z.string().min(1, "Last name is required").max(80).optional(),
+  dateOfBirth: z.coerce.date().nullable().optional(),
+  gender: z.enum(["MALE", "FEMALE", "OTHER"]).nullable().optional(),
+  nationality: z.string().max(120).nullable().optional(),
+
+  // Contact information
+  phone: z.string().max(40).nullable().optional(),
+  whatsapp: z.string().max(40).nullable().optional(),
+  alternativePhone: z.string().max(40).nullable().optional(),
+
+  // Address
+  country: z.string().max(120).nullable().optional(),
+  division: z.string().max(120).nullable().optional(),
+  district: z.string().max(120).nullable().optional(),
+  city: z.string().max(120).nullable().optional(),
+  address: z.string().max(500).nullable().optional(),
+  postalCode: z.string().max(20).nullable().optional(),
+
+  // Passport (sensitive — masked on read)
+  passportNumber: z.string().max(40).nullable().optional(),
+  passportIssueDate: z.coerce.date().nullable().optional(),
+  passportExpiryDate: z.coerce.date().nullable().optional(),
+  passportIssuingCountry: z.string().max(120).nullable().optional(),
+
+  // Emergency contact
+  emergencyContactName: z.string().max(120).nullable().optional(),
+  emergencyContactPhone: z.string().max(40).nullable().optional(),
+  emergencyContactRelation: z.string().max(60).nullable().optional(),
+});
+
+/** Type derived from the patch schema — what the client may send. */
+export type StudentProfilePatch = z.infer<typeof studentProfilePatchSchema>;
+
+/**
+ * Academic record create/update schema. `level` is the enum used by the
+ * UI tabs (SSC, HSC, DIPLOMA, BACHELOR, MASTER, PHD, OTHER). The
+ * `certificateUrl` is set by the upload endpoint — clients can pass
+ * it directly here if they have a pre-uploaded URL.
+ */
+export const academicRecordCreateSchema = z.object({
+  level: z.enum(["SSC", "HSC", "DIPLOMA", "BACHELOR", "MASTER", "PHD", "OTHER"]),
+  institution: z.string().min(1, "Institution is required").max(200),
+  group: z.string().max(120).optional(),
+  subject: z.string().max(120).optional(),
+  result: z.string().max(40).optional(),
+  passingYear: z.coerce.number().int().min(1900).max(2100).optional(),
+  certificateUrl: z.string().max(500).optional(),
+});
+
+export const academicRecordUpdateSchema = academicRecordCreateSchema.partial();
+
+/**
+ * English proficiency record create/update. The `testType` enum mirrors
+ * the EnglishProficiency model. Individual scores are optional because
+ * not every test (e.g., DUOLINGO) reports four sub-scores; the overall
+ * score is the one displayed at the top.
+ */
+export const englishProficiencyCreateSchema = z.object({
+  testType: z.enum(["IELTS", "TOEFL", "PTE", "DUOLINGO", "OTHER"]),
+  overallScore: z.coerce.number().min(0).max(990).optional(),
+  readingScore: z.coerce.number().min(0).max(990).optional(),
+  writingScore: z.coerce.number().min(0).max(990).optional(),
+  listeningScore: z.coerce.number().min(0).max(990).optional(),
+  speakingScore: z.coerce.number().min(0).max(990).optional(),
+  testDate: z.coerce.date().nullable().optional(),
+  expiryDate: z.coerce.date().nullable().optional(),
+  certificateUrl: z.string().max(500).optional(),
+});
+
+export const englishProficiencyUpdateSchema = englishProficiencyCreateSchema.partial();
+
+/**
+ * Profile photo metadata schema. The upload endpoint produces these
+ * fields; the patch endpoint accepts them to commit the photo to the
+ * student record. `mimeType` and `fileSize` are validated against an
+ * allow-list and a hard cap.
+ */
+export const profilePhotoSchema = z.object({
+  fileUrl: z.string().min(1, "File URL is required").max(500),
+  fileName: z.string().min(1).max(255),
+  mimeType: z.string().min(1).max(100),
+  fileSize: z.number().int().positive().max(5 * 1024 * 1024, "Max photo size is 5MB"),
+});

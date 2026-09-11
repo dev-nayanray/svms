@@ -2858,3 +2858,233 @@ Permissions-Policy, disables `x-powered-by`, and adds `Service-Worker-Allowed: /
 server-component role redirects, role-home routing, navigation config integrity,
 PWA manifest shape, install CTA gating (standalone/dismissal/unsupported), and the
 service-worker offline-safety contract (never caches `/api/*`, GET-only).
+
+---
+
+## 51. Student Panel — Module 03: My Profile (v2)
+
+**Route**: `/student/profile` — full-screen mobile experience, card-based on desktop.
+
+**Goal**: Let students view and edit their own profile data across eight
+sections (Personal, Contact, Address, Passport, Academic, English
+Proficiency, Emergency Contact, and a Profile Completion summary),
+without ever exposing ownership-critical fields (role, status, branchId,
+assignedEmployeeId, etc.) to the client.
+
+### Sections
+
+1. **Personal Information** — Full Name, Date of Birth, Gender, Nationality, Profile Photo.
+2. **Contact Information** — Email (read-only here), Phone, WhatsApp, Alternative Phone.
+3. **Address** — Country, Division, District, City, Address, Postal Code.
+4. **Passport Information** — Passport Number (masked on read), Issue Date, Expiry Date, Issuing Country.
+5. **Academic Information** — CRUD over the existing `AcademicRecord` model (SSC, HSC, Diploma, Bachelor, Master, PHD, OTHER) with institution, group, subject, GPA/grade, passing year, and certificate reference.
+6. **English Proficiency** — CRUD over `EnglishProficiency` (IELTS, TOEFL, PTE, DUOLINGO, OTHER) with overall + four sub-scores, test date, and expiry date (new).
+7. **Emergency Contact** — Name, Phone, Relationship.
+8. **Profile Completion** — A live percentage indicator computed from the required fields, with the next-missing-fields highlighted and a "Complete Profile" CTA that opens the relevant edit sheet.
+
+### Schema additions (Prisma)
+
+The existing `Student` model was extended with the fields needed to back the
+new sections:
+
+- `whatsapp`, `alternativePhone` — contact channels beyond the primary phone.
+- `division`, `district`, `postalCode` — finer-grained address than just `country/city/address`.
+- `passportIssuingCountry` — paired with the existing `passportNumber` / `passportIssueDate` / `passportExpiryDate`.
+- `emergencyContactRelation` — paired with the existing `emergencyContactName` / `emergencyContactPhone`.
+- `profilePhotoUrl` — dedicated column for the profile photo (separate from the user's `avatar` field, which is admin-controlled).
+
+The `EnglishProficiency` model gained an `expiryDate` field for tests that
+expire (typically IELTS at 2 years).
+
+After changing the schema: `npx prisma generate` (MongoDB is schemaless so
+no migration is required; existing documents simply grow the new keys on
+next write).
+
+### API surface
+
+All endpoints live under `/api/student/profile/` and are guarded by
+`studentApiGuard()` — the student record is derived from the session,
+**never** from a query parameter or request body. Every write emits
+one or more `AuditLog` entries (see "Audit events" below).
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| GET  | `/api/student/profile` | Returns the caller's own profile, masked for display, with academic records, English proficiency records, and a dynamically-computed completion summary. |
+| PATCH | `/api/student/profile` | Self-service edits. Body validated by `studentProfilePatchSchema` (allow-list). Ownership fields in the body trigger a 422. |
+| POST | `/api/student/profile/photo` (multipart) | Secure photo upload: MIME allow-list (JPEG/PNG/WEBP), 5MB cap, sha-256 on-disk name, atomic commit + old-file cleanup. |
+| DELETE | `/api/student/profile/photo` | Remove the photo (nulls `profilePhotoUrl`, deletes the file). |
+| POST | `/api/student/profile/academic-records` | Add an academic record. |
+| PATCH | `/api/student/profile/academic-records/[id]` | Update one academic record (ownership re-checked server-side). |
+| DELETE | `/api/student/profile/academic-records/[id]` | Remove an academic record. |
+| POST | `/api/student/profile/english-proficiencies` | Add an English test record. |
+| PATCH | `/api/student/profile/english-proficiencies/[id]` | Update one English test record. |
+| DELETE | `/api/student/profile/english-proficiencies/[id]` | Remove an English test record. |
+
+### Validation (Zod schemas)
+
+All schemas live in `lib/validations/index.ts` under the "Student Profile
+(Module 03 — My Profile)" section.
+
+- `studentProfilePatchSchema` — explicit allow-list of permitted
+  self-edit fields. Critically **absent**: `studentId`, `userId`,
+  `branchId`, `assignedEmployeeId`, `status`, `role`, `email`, financial
+  fields, internal notes, application ownership. Even if a client
+  sneaks these keys into the body, Zod strips them and the service's
+  `sanitizePatchInput` does a second pass of allow-list filtering
+  (defense in depth).
+- `academicRecordCreateSchema` / `academicRecordUpdateSchema` — level
+  enum + institution required; passingYear coerced and bounded to
+  1900–2100.
+- `englishProficiencyCreateSchema` / `englishProficiencyUpdateSchema` —
+  testType enum; all scores optional (DUOLINGO doesn't report four
+  sub-scores); `testDate` and `expiryDate` accept null.
+- `profilePhotoSchema` — metadata schema used by the upload endpoint
+  (fileUrl, fileName, mimeType, fileSize ≤ 5MB).
+
+### Security model
+
+1. **Identity from session only** — `studentApiGuard()` resolves the
+   student record from the authenticated user; the route then passes
+   `g.student` to the service. No `studentId` from the URL or body
+   determines ownership.
+2. **Allow-list patching** — `studentProfilePatchSchema` and
+   `sanitizePatchInput` together guarantee that only the permitted
+   fields can ever reach Prisma. The route additionally 422s if any
+   forbidden ownership key is present in the raw body — a loud signal
+   for bugs rather than a silent drop.
+3. **Passport masking on read** — `maskPassport()` (reused from
+   `lib/utils/student-insights`) keeps the first 2 and last 2
+   characters and replaces the middle with bullets. The masked value
+   is returned as `passportNumberMasked` alongside the raw value; the
+   UI shows the masked form, the raw is reserved for authenticated
+   admin paths.
+4. **Photo upload safety** — MIME type is checked against an
+   **allow-list** (not inferred from the file extension); the on-disk
+   extension is derived from the MIME type so a renamed `.exe` cannot
+   execute. The on-disk filename is a sha-256 hash + timestamp so
+   collisions and overwrite attacks don't work. The previous photo
+   file is unlinked after the new URL is committed (best-effort).
+5. **Audit trail** — every PATCH emits `student_profile.updated`; if
+   `phone`, `whatsapp`, or `alternativePhone` actually changed value,
+   a second event `student_profile.{field}_changed` is emitted so
+   reviewers can filter on contact changes specifically. Photo
+   add/remove emit `student_profile.photo_changed` /
+   `student_profile.photo_removed`. Academic and English CRUD emit
+   `academic_record.*` and `english_proficiency.*` events.
+6. **Email changes are NOT here** — email is read-only on the profile
+   patch endpoint. Email changes require a verified email-change flow
+   (out of scope for Module 03).
+
+### Profile completion
+
+`lib/utils/profile-completion.ts` is a pure, unit-tested helper used by
+both the service (server-side, returns the percentage in the API
+payload) and the UI (client-side, recomputes instantly on edit so the
+bar animates before the save round-trips).
+
+- The 7 sections are: Personal (6 fields), Contact (3 fields), Address
+  (6 fields), Passport (4 fields), Academic (1 meta: ≥1 record),
+  English (1 meta: ≥1 record), Emergency (3 fields). Total: 24
+  checkpoints.
+- Whitespace-only strings count as empty.
+- `Date` instances count as filled when `!isNaN(date.getTime())`.
+- Missing fields are returned with their `section`, `sectionKey`, and
+  `label` so the UI can render "Missing: Passport Expiry Date" rather
+  than just a number.
+
+### UI/UX
+
+`components/student/profile/` houses five components:
+
+- `profile-view.tsx` — the main orchestrator. Fetches
+  `/api/student/profile` on mount via TanStack Query, renders a hero
+  header (avatar + name + completion %), a "Complete Profile" CTA when
+  < 100%, and 8 section cards. State handling: loading (skeleton),
+  server error (AlertTriangle), offline (WifiOff + retry button),
+  in-flight refresh (spinner on the refresh button).
+- `profile-sheet.tsx` — the reusable edit sheet. Mobile: slides in
+  from the bottom (92dvh max, drag handle, safe-area footer). Desktop
+  (md+): slides in from the right as a 480px drawer. Sticky footer
+  with Save/Cancel; both disabled while saving.
+- `profile-photo.tsx` — upload/preview/replace/remove. Optimistic local
+  preview via `URL.createObjectURL`; reverts on failure.
+- `academic-records.tsx` — CRUD UI for academic records with an
+  inline add/edit sheet.
+- `english-proficiency.tsx` — CRUD UI for English test records.
+
+Forms use React Hook Form + Zod resolver. Date inputs use
+`<input type="date">` (string values) and convert to `Date` on submit
+in `handleSave`. The toast system surfaces success/error feedback.
+
+### States handled
+
+- **Loading** — skeleton hero + skeleton cards (TanStack Query's
+  `isLoading` with `retry: false`).
+- **Saving** — Save button shows "Saving…" and is disabled; the
+  underlying form is read-only until the round-trip completes.
+- **Saved** — toast `success` variant + the cached profile view is
+  updated optimistically via `qc.setQueryData`.
+- **Validation error** — per-field error messages from the API's
+  `error.fields` object are surfaced by the toast description.
+- **Server error** — toast `error` variant with the message.
+- **Offline** — `useOnlineStatus()` hook subscribes to
+  `window.online/offline` events; an offline badge appears in the
+  footer and the Retry button is disabled.
+- **Incomplete profile** — the completion card lists the missing
+  fields and offers a "Complete Profile" CTA that opens the relevant
+  edit sheet.
+
+### Tests
+
+`tests/profile-completion.test.ts` (7 tests) covers the pure helper:
+empty profile, academic record counts as a fill, whitespace-only
+strings count as empty, 100% on full profile, section grouping,
+section list integrity.
+
+`tests/profile-validations.test.ts` (25 tests) covers the schemas:
+partial updates, date coercion, null-clearing, gender/level enums,
+length caps, ownership-field stripping, the absence of `email` /
+`role` / `permissions` / `notes` from the patch schema, photo size
+limits.
+
+`tests/profile-route.test.ts` covers the GET and PATCH routes with a
+mocked Prisma + auth stack:
+- 401 on unauthenticated callers.
+- 403 on non-STUDENT roles.
+- 403 (not 404) on STUDENT-without-profile so existence is never
+  confirmed.
+- 200 with completion data on the happy path.
+- The student record is derived from the session, never from client
+  input (IDOR-safe).
+- Permitted fields are written and a `student_profile.updated` audit
+  event is emitted.
+- Sensitive contact changes emit dedicated `phone_changed` /
+  `whatsapp_changed` events.
+- Ownership fields in the body trigger a 422 VALIDATION_ERROR.
+- Invalid input (over-long string) triggers a 422 with per-field
+  messages.
+- `null` clears an optional field.
+- The service never writes `role`, `branchId`,
+  `assignedEmployeeId`, or `status` via this route.
+- Passport masking on read returns the raw value alongside the masked
+  form, and `'—'` for null.
+
+### Photo upload security checklist
+
+- ✅ MIME-type allow-list (`image/jpeg`, `image/png`, `image/webp`) —
+  not inferred from the file extension.
+- ✅ Hard 5MB cap on file size, checked before the file touches disk.
+- ✅ Empty files rejected.
+- ✅ On-disk filename is `Date.now()-<sha256-16>.<ext>` — collisions
+  and overwrite attacks don't work, two students uploading the same
+  file get distinct paths.
+- ✅ Files are written under `public/uploads/profile-photos/<studentId>/`
+  with `mkdir -p` semantics.
+- ✅ The previous photo file is unlinked after the new URL is
+  committed (best-effort; orphan files are a janitorial problem, not
+  a user-visible failure).
+- ✅ `public/uploads/` is in `.gitignore` so uploaded files are never
+  committed.
+- ✅ Atomic commit: the file is written first, then the DB row is
+  updated. A failure between the two leaves an orphan file, not a
+  dangling DB reference.
