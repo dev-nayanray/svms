@@ -4187,3 +4187,146 @@ application-deadline banners.
 - **Expandable course details** — all 4 detail sections (Overview,
   Intakes, Requirements, Application Information) are accordions
   (Overview open by default, rest collapsed).
+
+---
+
+## 57. Student Panel — Module 09: Student Visa Management (v2)
+
+**Route**: `/student/visa` — mobile visa-tracking experience where
+students can see their visa status, timeline, dates, requirements, and
+next actions. Students can view but CANNOT modify visa status — all
+routes are GET-only. Stage changes go through the admin
+`/api/visa` PATCH endpoint (EMPLOYEE/ADMIN only, `visa.manage`).
+
+### API surface
+
+Three new student-scoped GET-only endpoints, all guarded by
+`studentApiGuard()` — the student record is derived from the session,
+never from a query param or request body.
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| GET | `/api/student/visa` | List ALL visa applications for the caller's own applications. Joins through `application.studentId` so only the caller's visas are returned. |
+| GET | `/api/student/visa/[id]` | Full detail: visa record (stage, visaType, dates) + linked application (country, university, course) + visa pipeline markers + timeline (ApplicationStatusHistory). IDOR-safe: foreign id → 404. |
+| GET | `/api/student/visa/requirements?countryId=<id>` | ACTIVE visa requirements for the given country. Used for the student's requirements checklist. `countryId` is required (422 if missing). |
+
+### Service (`lib/services/student-visa.ts`)
+
+- `list(studentId)` — returns visa summaries for the caller's
+  applications. Scopes by `application.studentId` from the session.
+  Never exposes `notes`, `deletedAt`, `deletedBy`.
+- `getById(studentId, visaId)` — returns the full student-safe detail
+  view with pipeline markers + timeline. Ownership verified by
+  joining through `application.studentId`. Foreign `visaId` → null
+  (route 404s). Never exposes `notes`.
+- `getRequirements(countryId)` — returns ACTIVE visa requirements
+  sorted by sortOrder + name.
+
+### Security model
+
+1. **Identity from session only** — `studentApiGuard()` resolves
+   `studentId` from the session. The query joins through
+   `application.studentId` so foreign visas are never returned.
+2. **IDOR-safe** — foreign `visaId` returns 404 (NOT_FOUND, never 403
+   — the existence of another student's visa is never confirmed).
+3. **`notes` field NEVER exposed** — it's internal admin/counselor
+   commentary. The student-safe view omits it entirely. Tests verify
+   the string "Internal note" never appears in the response body.
+4. **Read-only** — students cannot modify visa status, dates, or any
+   other field. All routes are GET-only. Stage changes go through the
+   admin `/api/visa` PATCH endpoint (guarded by `visa.manage`
+   permission — EMPLOYEE/ADMIN only).
+5. **Internal fields stripped** — `deletedAt`, `deletedBy`,
+   `applicationId` (internal ObjectId) are never on the wire.
+
+### Visa pipeline
+
+The student-visible pipeline has 7 stages (the 9-stage visa flow minus
+the 2 terminal negative outcomes which are shown as the visa's current
+status, not as pipeline stages):
+
+```
+Preparation → Submitted → Biometrics → Interview → Processing → Decision → Completed
+```
+
+`computeVisaPipeline(currentStage, history)` in the service derives
+per-stage state markers: `completed` (before current), `current`
+(matches the visa's stage), `upcoming` (after current). The UI renders
+these as a vertical timeline with colored dots (✓ for completed, ring
+for current, border for upcoming).
+
+### UI/UX (`components/student/visa/visa-view.tsx`)
+
+Single-file orchestrator with inline sub-components:
+
+- **Visa status card** — prominent visual treatment with a colored
+  border + status icon + status badge. Color depends on the stage:
+  success (APPROVED/COMPLETED), destructive (REFUSED/WITHDRAWN),
+  warning (PREPARATION), info (SUBMITTED/BIOMETRICS/INTERVIEW/
+  PROCESSING).
+- **Visa pipeline timeline** — vertical timeline with 7 stages,
+  colored dots (✓ completed, ring current, border upcoming), "Now"
+  badge on the current stage.
+- **Date cards** — 2×2 grid: Submitted, Biometrics, Interview, Decision.
+  Each card has an icon, label, and localized date. The Decision card
+  uses success tone when APPROVED/COMPLETED, destructive when REFUSED.
+- **Requirements checklist** — country-specific visa requirements
+  fetched from `/api/student/visa/requirements?countryId=...`. Each
+  item shows name, description, and Required/Optional badge.
+- **Activity history** — timeline of ApplicationStatusHistory entries
+  (newest-first, top 8). Each entry shows the stage transition + note
+  + timestamp.
+- **Sticky action area** — CTA row: Application, Documents, Message
+  Counselor.
+- **Multi-visa selector** — when the student has multiple visa
+  applications, a compact selector appears at the top (bottom-sheet
+  on mobile, centered dialog on desktop).
+- **States**: loading skeleton, server error, offline, empty (no visa
+  applications → CTA to view application), per-visa detail loading +
+  error.
+
+### Tests
+
+`tests/student-visa.test.ts` (21 tests) covers the API routes:
+
+**List (6 tests)**:
+- 401 on unauthenticated, 403 on non-STUDENT.
+- Returns only the caller's visas (scoped by `application.studentId`).
+- `notes` field NEVER on the wire.
+- Internal fields (`deletedAt`, `deletedBy`, `applicationId`) stripped.
+- `stageLabel` is human-readable ("Biometrics").
+
+**Detail (7 tests)**:
+- 401 on unauthenticated.
+- 404 (NOT_FOUND, not 403) when visa doesn't belong to caller
+  (IDOR-safe).
+- Full detail with pipeline + timeline.
+- `notes` field NEVER on the wire (verified by checking the raw
+  response body string for "Internal note").
+- Pipeline: current stage marked "current", prior stages "completed",
+  future stages "upcoming".
+- Timeline is newest-first.
+- findFirst scoped by `application.studentId` (ownership check).
+
+**Requirements (5 tests)**:
+- 401 on unauthenticated.
+- 422 when `countryId` is missing.
+- Returns ACTIVE requirements with `required`/`optional` flags.
+- Filters by `status: ACTIVE` at DB level.
+- Returns empty array when no requirements exist.
+
+**Dates display (2 tests)**:
+- Detail view includes all 4 date fields (submittedAt, biometricsAt,
+  interviewAt, decisionAt).
+- List view also includes all 4 date fields.
+
+### Mobile UX specifics
+
+- **Status card** — prominent colored border (success/destructive/
+  warning/info) + status icon + stage badge.
+- **Pipeline timeline** — vertical with colored dots, "Now" badge.
+- **Date cards** — 2×2 grid with icon + label + date.
+- **Requirements checklist** — card list with Required/Optional
+  badges.
+- **Sticky action area** — CTA row at the bottom.
+- **Multi-visa selector** — compact dropdown → bottom-sheet.
