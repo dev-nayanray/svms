@@ -127,6 +127,7 @@ model Student {
   counselingRequests    CounselingRequest[]
   appointments          Appointment[]
   supportRequests       SupportRequest[]
+  preferences           StudentPreference?
   deletedAt             DateTime?
   deletedBy             String?            @db.ObjectId
   createdAt             DateTime           @default(now())
@@ -759,4 +760,27 @@ model SupportRequest {
   @@index([studentId])
   @@index([status])
   @@index([category])
+}
+
+// ─────────────────────────────────────────────
+// Student Preferences (Module 17 — Settings)
+// ─────────────────────────────────────────────
+
+model StudentPreference {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  studentId           String   @unique @db.ObjectId
+  student             Student  @relation(fields: [studentId], references: [id])
+  // Notification preferences (each is a boolean — true = notify)
+  notifApplication    Boolean  @default(true)
+  notifDocuments      Boolean  @default(true)
+  notifVisa           Boolean  @default(true)
+  notifPayments       Boolean  @default(true)
+  notifTasks          Boolean  @default(true)
+  notifMessages       Boolean  @default(true)
+  notifAppointments   Boolean  @default(true)
+  // Appearance + language
+  theme               String   @default("system") // system | light | dark
+  language            String   @default("en") // en | bn
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }

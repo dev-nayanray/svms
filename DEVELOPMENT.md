@@ -5168,3 +5168,84 @@ close tickets (admin only).
 - Supports ?category=Documents filter.
 - Supports ?search=upload filter.
 - Returns empty array on no match.
+
+---
+
+## 65. Student Panel — Module 17: Student Settings (v2)
+
+**Route**: `/student/settings` — clean mobile-app-style settings screen
+with expandable sections for Account, Notifications, Security,
+Appearance, Language, Help, and Logout.
+
+### Prisma schema addition
+
+New `StudentPreference` model with: studentId (unique), 7 notification
+boolean toggles (notifApplication, notifDocuments, notifVisa,
+notifPayments, notifTasks, notifMessages, notifAppointments), theme
+(system|light|dark), language (en|bn). Relation to Student.
+
+### API surface
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| GET | `/api/student/settings` | Returns preferences (7 notification toggles + theme + language) + account info (email, phone, name). Creates default prefs if none exist. Never exposes passwordHash, role, permissions, branchId. |
+| PATCH | `/api/student/settings` | Update preferences. Only the patched fields are updated. Zod-validated. Audit-logged. Never allows changing email, role, status, etc. |
+| POST | `/api/student/settings/password` | Change password. Body: {currentPassword, newPassword}. Zod-validated (min 8, letter + number, ≠ current). bcrypt-verified. Audit-logged. Never exposes hashes. |
+
+### UI/UX
+
+- **Profile summary card** — avatar initials, name, email, "Edit Profile" link.
+- **Expandable sections** (accordions):
+  - **Account** — email, phone, WhatsApp, alt phone + link to edit.
+  - **Notifications** (default open) — 7 toggle switches for notification
+    categories. Optimistic updates with rollback.
+  - **Security** — Change Password form (current, new, confirm) with
+    validation. "Active Sessions" placeholder for future feature.
+  - **Appearance** (default open) — 3 theme options (Light, Dark, System)
+    with icons. Applies theme immediately via localStorage + `.dark` class.
+  - **Language** — English + বাংলা options. Architecture ready for i18n.
+  - **Help** — links to Support Center + Messages.
+- **Logout** — confirmation dialog before calling `signOut()`.
+- States: loading skeleton, error, offline, optimistic UI.
+
+### Security
+
+- Identity always from session (`studentApiGuard`).
+- `passwordHash`, `role`, `permissions`, `branchId`, `assignedEmployeeId`,
+  `status` never exposed in GET response.
+- Password change verifies current password via `bcrypt.compare`.
+- New password hashed with `bcrypt.hash(newPassword, 10)`.
+- `studentId` never trusted from body — always from session.
+- Audit-logged: `student_settings.updated`, `student.password_changed`.
+- Theme applied client-side via `localStorage` + `.dark` class — matches
+  the existing theme architecture (no new library needed).
+
+### Tests
+
+`tests/student-settings.test.ts` (21 tests):
+
+**GET settings (5 tests)**:
+- 401 on unauthenticated, 403 on non-STUDENT.
+- Returns preferences + account info.
+- Creates default preferences if none exist.
+- Never exposes passwordHash, role, permissions, branchId, status.
+
+**PATCH settings (7 tests)**:
+- 401 on unauthenticated.
+- Updates notification preference (notifApplication: false).
+- Updates theme to dark.
+- Updates language to bn.
+- 422 on invalid theme.
+- 422 on invalid language.
+- Audit-logged.
+
+**POST password (9 tests)**:
+- 401 on unauthenticated.
+- 422 on short password (<8 chars).
+- 422 on no number.
+- 422 on no letter.
+- 422 when same as current.
+- 403 when current password incorrect.
+- Changes password when correct.
+- Audit-logged.
+- Never exposes passwordHash in response.

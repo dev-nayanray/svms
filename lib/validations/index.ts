@@ -666,3 +666,34 @@ export const supportRequestSchema = z.object({
   attachmentUrl: z.string().max(500).optional(),
   attachmentName: z.string().max(255).optional(),
 });
+
+// ─────────────────────────────────────────────
+// Student Settings (Module 17 — Settings)
+// ─────────────────────────────────────────────
+
+export const studentSettingsPatchSchema = z.object({
+  // Notification preferences
+  notifApplication: z.boolean().optional(),
+  notifDocuments: z.boolean().optional(),
+  notifVisa: z.boolean().optional(),
+  notifPayments: z.boolean().optional(),
+  notifTasks: z.boolean().optional(),
+  notifMessages: z.boolean().optional(),
+  notifAppointments: z.boolean().optional(),
+  // Appearance + language
+  theme: z.enum(["system", "light", "dark"]).optional(),
+  language: z.enum(["en", "bn"]).optional(),
+});
+
+export type StudentSettingsPatch = z.infer<typeof studentSettingsPatchSchema>;
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Za-z]/, "Must contain a letter")
+    .regex(/[0-9]/, "Must contain a number"),
+}).refine((data) => data.currentPassword !== data.newPassword, {
+  message: "New password must be different from the current password",
+  path: ["newPassword"],
+});
