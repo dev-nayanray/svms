@@ -5034,3 +5034,49 @@ page with richer filtering and navigation.
 - Returns the count of notifications marked.
 - Audit-logs the bulk read action.
 - Does NOT audit-log when count is 0 (no-op).
+
+---
+
+## 63. Student Panel — Module 15: Student Appointments (v2)
+
+**Route**: `/student/appointments` — mobile-friendly appointment
+management interface.
+
+### Prisma schema addition
+
+New `Appointment` model with: studentId, employeeId, scheduledAt,
+durationMins, purpose, location, meetingMethod (IN_PERSON |
+VIDEO_CALL | PHONE_CALL | ONLINE), meetingLink, status, notes,
+cancelledAt, cancelledBy, cancelReason, completedAt. Relations to
+Student + Employee. Indexes on studentId, employeeId, scheduledAt,
+status.
+
+### Status flow
+
+- SCHEDULED → CONFIRMED (student confirms)
+- SCHEDULED/CONFIRMED → CANCELLED (student or counselor cancels)
+- SCHEDULED/CONFIRMED → COMPLETED (admin marks complete)
+- SCHEDULED → NO_SHOW (admin marks no-show)
+
+Students can only: confirm (SCHEDULED→CONFIRMED), cancel
+(SCHEDULED/CONFIRMED→CANCELLED). They CANNOT mark COMPLETED or
+NO_SHOW.
+
+### API surface
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| GET | `/api/student/appointments?filter=<filter>` | List caller's appointments. Filters: all, upcoming (SCHEDULED/CONFIRMED + future), past (COMPLETED/NO_SHOW or past), cancelled. Scoped by studentId. |
+| GET | `/api/student/appointments/[id]` | Full detail. IDOR-safe. |
+| POST | `/api/student/appointments/[id]/confirm` | Confirm SCHEDULED→CONFIRMED. 409 if not SCHEDULED. Audit-logged. Counselor notified. |
+| POST | `/api/student/appointments/[id]/cancel` | Cancel SCHEDULED/CONFIRMED→CANCELLED. Body: {cancelReason?}. 409 if terminal. Audit-logged. Counselor notified. |
+
+### Tests
+
+`tests/student-appointments.test.ts` (26 tests) covering: list (401/403,
+scoped by studentId, filters, internal fields stripped), detail (401,
+IDOR-safe 404, full detail, ownership), confirm (401, IDOR-safe 404,
+SCHEDULED→CONFIRMED, 409 on non-SCHEDULED, audit-logged, counselor
+notified), cancel (401, IDOR-safe 404, SCHEDULED/CONFIRMED→CANCELLED,
+409 on COMPLETED/CANCELLED, audit-logged, counselor notified, optional
+reason).

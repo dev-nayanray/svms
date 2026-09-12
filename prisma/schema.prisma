@@ -125,6 +125,7 @@ model Student {
   conversations         Conversation[]
   universityFavorites   UniversityFavorite[]
   counselingRequests    CounselingRequest[]
+  appointments          Appointment[]
   deletedAt             DateTime?
   deletedBy             String?            @db.ObjectId
   createdAt             DateTime           @default(now())
@@ -146,6 +147,7 @@ model Employee {
   leads     Lead[]
   conversations Conversation[]
   managedBranches Branch[] @relation("BranchManager")
+  appointments  Appointment[]
   deletedAt DateTime?
   deletedBy String?   @db.ObjectId
   createdAt DateTime  @default(now())
@@ -513,6 +515,37 @@ model Task {
   @@index([dueDate])
   @@index([status])
   @@index([priority])
+}
+
+// ─────────────────────────────────────────────
+// Appointments (Module 15 — Student Appointments)
+// ─────────────────────────────────────────────
+
+model Appointment {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  studentId     String    @db.ObjectId
+  student       Student   @relation(fields: [studentId], references: [id])
+  employeeId    String    @db.ObjectId
+  employee      Employee  @relation(fields: [employeeId], references: [id])
+  scheduledAt   DateTime
+  durationMins  Int       @default(30)
+  purpose       String
+  location      String?   // physical address or "Online"
+  meetingMethod String?   // IN_PERSON | VIDEO_CALL | PHONE_CALL | ONLINE
+  meetingLink   String?   // URL for video calls
+  status        String    @default("SCHEDULED") // SCHEDULED | CONFIRMED | COMPLETED | CANCELLED | NO_SHOW
+  notes         String?
+  cancelledAt   DateTime?
+  cancelledBy   String?   @db.ObjectId
+  cancelReason  String?
+  completedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([studentId])
+  @@index([employeeId])
+  @@index([scheduledAt])
+  @@index([status])
 }
 
 model Note {
