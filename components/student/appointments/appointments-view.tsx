@@ -76,7 +76,9 @@ export function AppointmentsView() {
     queryKey: ["student-appointments", filter],
     queryFn: () => apiFetch<ListResponse>(`/api/student/appointments?filter=${filter}`),
     retry: false,
-    refetchInterval: 60_000,
+    // Real-time updates arrive via SSE (StudentRealtimeProvider).
+    // 120s fallback polling in case SSE has a prolonged disconnect.
+    refetchInterval: 120_000,
     staleTime: 30_000,
   });
 

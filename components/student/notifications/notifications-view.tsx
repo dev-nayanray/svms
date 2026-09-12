@@ -97,8 +97,9 @@ export function NotificationsView() {
     queryFn: () =>
       apiFetch<NotificationResponse>(`/api/student/notifications?category=${activeTab}`),
     retry: false,
-    // Poll every 30 seconds for unread badge updates
-    refetchInterval: 30_000,
+    // Real-time updates arrive via SSE (StudentRealtimeProvider).
+    // 120s fallback polling in case SSE has a prolonged disconnect.
+    refetchInterval: 120_000,
     staleTime: 10_000,
   });
 

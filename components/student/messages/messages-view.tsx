@@ -44,8 +44,9 @@ export function MessagesView() {
     queryKey: ["student-conversations"],
     queryFn: () => apiFetch<ListResponse>("/api/student/messages"),
     retry: false,
-    // Poll every 30 seconds for unread count updates
-    refetchInterval: 30_000,
+    // Real-time updates arrive via SSE (StudentRealtimeProvider).
+    // 120s fallback polling in case SSE has a prolonged disconnect.
+    refetchInterval: 120_000,
     staleTime: 10_000,
   });
 

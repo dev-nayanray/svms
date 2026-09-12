@@ -56,13 +56,18 @@ export function ChatView({ conversationId }: { conversationId: string }) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const online = useOnlineStatus();
 
-  // Fetch the conversation — polls every 5 seconds when active
+  // Fetch the conversation. Real-time updates arrive via the SSE
+  // connection (StudentRealtimeProvider in the layout) — when a new
+  // message arrives, the provider invalidates this query instantly.
+  // No polling needed. A 120s fallback is kept as a safety net in
+  // case SSE has a brief disconnect.
   const detailQ = useQuery<ConversationResponse>({
     queryKey: ["student-conversation", conversationId],
     queryFn: () => apiFetch<ConversationResponse>(`/api/student/messages/${conversationId}`),
     retry: false,
-    // Poll every 5 seconds for near-real-time message delivery
-    refetchInterval: 5_000,
+    // Fallback polling — only kicks in if SSE has a prolonged disconnect.
+    // Normal operation: SSE invalidates this query in <100ms.
+    refetchInterval: 120_000,
     staleTime: 3_000,
   });
 

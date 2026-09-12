@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { buildConversationWhere } from "@/lib/constants/notifications";
 import { auditLog } from "@/lib/services/audit";
 import { notifications } from "@/lib/services/notification";
+import { publishStudentEvent } from "@/lib/realtime/event-bus";
 import { z } from "zod";
 
 const sendMessageSchema = z.object({
@@ -146,7 +147,22 @@ export async function POST(req: NextRequest) {
         type: "NEW_MESSAGE",
         title: "New message",
         message: body.body.slice(0, 100) + (body.body.length > 100 ? "…" : ""),
-        link: `/student/applications`,
+        link: `/student/messages/${conversation.id}`,
+      });
+
+      // Publish a dedicated message_received event with the conversationId
+      // so the student's chat view can invalidate the specific chat query
+      // and the inbox can refresh the unread count + preview. This is
+      // in addition to the notification_created event published by
+      // notifications.push() above — the message_received event carries
+      // the conversationId which the notification doesn't.
+      publishStudentEvent(body.studentId, "message_received", {
+        conversationId: conversation.id,
+        messageId: message.id,
+        senderId: user.id,
+        senderName: user.name,
+        preview: body.body.slice(0, 100),
+        createdAt: message.createdAt,
       });
     }
 

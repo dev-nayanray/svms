@@ -13,6 +13,7 @@ import { APP_NAME } from "@/lib/constants/app";
 import { STUDENT_TABS, STUDENT_MORE, isActivePath } from "@/config/student-nav";
 import { StudentNavIcon, NotificationBadge } from "@/components/student/ui";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
+import { LiveIndicator } from "@/components/student/realtime-provider";
 
 const TAB_ICONS: Record<string, string> = Object.fromEntries(STUDENT_TABS.map((t) => [t.href, t.icon]));
 const MORE_ICONS: Record<string, string> = Object.fromEntries(STUDENT_MORE.map((t) => [t.href, t.icon]));
@@ -49,7 +50,9 @@ function useUnreadCount() {
   const { data } = useQuery({
     queryKey: ["student-notifications", "unread"],
     queryFn: () => apiFetch<{ unreadCount: number }>("/api/notifications"),
-    refetchInterval: 60_000,
+    // Real-time updates arrive via SSE (StudentRealtimeProvider).
+    // 120s fallback polling in case SSE has a prolonged disconnect.
+    refetchInterval: 120_000,
   });
   return data?.unreadCount ?? 0;
 }
@@ -105,6 +108,9 @@ export function StudentAppShell({
             {isHome ? <span className="hidden md:inline">{APP_NAME}</span> : pageTitle(pathname)}
             <span className="md:hidden">{isHome ? APP_NAME : pageTitle(pathname)}</span>
           </h1>
+
+          {/* Live indicator — shows real-time connection status (desktop only) */}
+          <LiveIndicator />
 
           <Link
             href="/student/notifications"
