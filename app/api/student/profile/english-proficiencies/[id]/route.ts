@@ -24,7 +24,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     const updated = await studentProfileService.updateEnglishProficiency(
       g.student.id,
       id,
-      input as Record<string, unknown>,
+      input,
       g.userId
     );
     return ok(updated);

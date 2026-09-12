@@ -575,6 +575,7 @@ export const academicRecordCreateSchema = z.object({
 });
 
 export const academicRecordUpdateSchema = academicRecordCreateSchema.partial();
+export type AcademicRecordUpdate = z.infer<typeof academicRecordUpdateSchema>;
 
 /**
  * English proficiency record create/update. The `testType` enum mirrors
@@ -595,6 +596,7 @@ export const englishProficiencyCreateSchema = z.object({
 });
 
 export const englishProficiencyUpdateSchema = englishProficiencyCreateSchema.partial();
+export type EnglishProficiencyUpdate = z.infer<typeof englishProficiencyUpdateSchema>;
 
 /**
  * Profile photo metadata schema. The upload endpoint produces these

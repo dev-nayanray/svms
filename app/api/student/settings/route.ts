@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { ok, handleApiError } from "@/lib/api";
 import { studentApiGuard } from "@/lib/student/guard";
 import { studentSettingsService } from "@/lib/services/student-settings";
-import { studentSettingsPatchSchema } from "@/lib/validations";
+import { studentSettingsPatchSchema, type StudentSettingsPatch } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -48,10 +48,10 @@ export async function PATCH(req: NextRequest) {
     const g = await studentApiGuard();
     if (!g.ok) return g.error;
 
-    const input = studentSettingsPatchSchema.parse(await req.json());
+    const input: StudentSettingsPatch = studentSettingsPatchSchema.parse(await req.json());
     const preferences = await studentSettingsService.updatePreferences(
       g.student.id,
-      input as Record<string, unknown>,
+      input,
       g.userId,
     );
     return ok({ preferences });

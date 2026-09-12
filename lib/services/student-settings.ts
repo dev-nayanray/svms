@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { HttpError } from "@/lib/api";
 import bcrypt from "bcryptjs";
 import { auditLog } from "./audit";
+import type { StudentSettingsPatch } from "@/lib/validations";
 
 /**
  * Student-scoped Settings service for Module 17.
@@ -87,10 +88,13 @@ export const studentSettingsService = {
    * Update the caller's preferences (notifications, theme, language).
    * Only the fields in the patch are updated. Ownership is implicit:
    * the query is scoped by studentId from the session.
+   *
+   * The input is typed as `StudentSettingsPatch` (from the Zod schema)
+   * so TypeScript enforces that only schema-allowed fields are passed.
    */
   async updatePreferences(
     studentId: string,
-    input: Record<string, unknown>,
+    input: StudentSettingsPatch,
     actorId: string,
   ): Promise<StudentPreferences> {
     // Ensure the preferences row exists

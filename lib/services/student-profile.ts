@@ -3,8 +3,12 @@ import { HttpError } from "@/lib/api";
 import { auditLog } from "./audit";
 import { maskPassport } from "@/lib/utils/student-insights";
 import { computeProfileCompletion, type ProfileCompletionResult } from "@/lib/utils/profile-completion";
-import type { StudentProfilePatch } from "@/lib/validations";
-import type { Student as PrismaStudent, AcademicRecord, EnglishProficiency } from "@prisma/client";
+import type {
+  StudentProfilePatch,
+  AcademicRecordUpdate,
+  EnglishProficiencyUpdate,
+} from "@/lib/validations";
+import type { Prisma, Student as PrismaStudent, AcademicRecord, EnglishProficiency } from "@prisma/client";
 
 /**
  * Profile service for the Student Panel's Module 03 (My Profile).
@@ -117,6 +121,57 @@ function sanitizePatchInput(input: StudentProfilePatch): StudentProfilePatch {
 }
 
 /**
+ * Build a `Prisma.StudentUpdateInput` from the Zod-validated patch input.
+ *
+ * WHY THIS EXISTS
+ * ---------------
+ * Previously the patch method passed `data: input as Record<string, unknown>`
+ * directly to `prisma.student.update`. That cast bypassed TypeScript's type
+ * checking entirely — if a field name in the Zod schema didn't match a field
+ * on the Prisma Student model (typo, renamed field, stale Prisma client),
+ * the error only surfaced at RUNTIME as a `PrismaClientValidationError` with
+ * a generic "Unknown argument" message.
+ *
+ * By constructing the update payload field-by-field with the explicit
+ * `Prisma.StudentUpdateInput` type annotation, TypeScript now catches any
+ * field-name mismatch at COMPILE TIME. The `as Prisma.StudentUpdateInput`
+ * assertion at the end is safe because every field we set is a known,
+ * type-checked scalar on the Student model.
+ *
+ * Null is preserved where the schema allows it (nullable string fields) —
+ * this lets a student clear a field by sending `null` in the patch.
+ *
+ * Only fields present in the input (i.e. `!== undefined`) are included —
+ * Prisma treats `undefined` as "don't update this field", which is what
+ * we want for a PATCH (not PUT) semantics.
+ */
+function buildStudentUpdateInput(input: StudentProfilePatch): Prisma.StudentUpdateInput {
+  const data: Prisma.StudentUpdateInput = {};
+  if (input.firstName !== undefined) data.firstName = input.firstName;
+  if (input.lastName !== undefined) data.lastName = input.lastName;
+  if (input.dateOfBirth !== undefined) data.dateOfBirth = input.dateOfBirth;
+  if (input.gender !== undefined) data.gender = input.gender;
+  if (input.nationality !== undefined) data.nationality = input.nationality;
+  if (input.phone !== undefined) data.phone = input.phone;
+  if (input.whatsapp !== undefined) data.whatsapp = input.whatsapp;
+  if (input.alternativePhone !== undefined) data.alternativePhone = input.alternativePhone;
+  if (input.country !== undefined) data.country = input.country;
+  if (input.division !== undefined) data.division = input.division;
+  if (input.district !== undefined) data.district = input.district;
+  if (input.city !== undefined) data.city = input.city;
+  if (input.address !== undefined) data.address = input.address;
+  if (input.postalCode !== undefined) data.postalCode = input.postalCode;
+  if (input.passportNumber !== undefined) data.passportNumber = input.passportNumber;
+  if (input.passportIssueDate !== undefined) data.passportIssueDate = input.passportIssueDate;
+  if (input.passportExpiryDate !== undefined) data.passportExpiryDate = input.passportExpiryDate;
+  if (input.passportIssuingCountry !== undefined) data.passportIssuingCountry = input.passportIssuingCountry;
+  if (input.emergencyContactName !== undefined) data.emergencyContactName = input.emergencyContactName;
+  if (input.emergencyContactPhone !== undefined) data.emergencyContactPhone = input.emergencyContactPhone;
+  if (input.emergencyContactRelation !== undefined) data.emergencyContactRelation = input.emergencyContactRelation;
+  return data;
+}
+
+/**
  * Contact changes that we treat as "sensitive" — they alter how we
  * reach the student, so the audit log records the old → new value.
  * The route uses this list to emit dedicated audit events.
@@ -159,6 +214,12 @@ export const studentProfileService = {
    * student row (the one derived from the session); the service writes
    * only the allow-listed fields and emits dedicated audit events for
    * sensitive contact changes.
+   *
+   * The Prisma update payload is built via `buildStudentUpdateInput`
+   * (not a raw cast) so TypeScript enforces that every field name we
+   * write actually exists on the Student model. This catches stale
+   * Prisma clients and field-name typos at compile time rather than
+   * at runtime as a `PrismaClientValidationError`.
    */
   async patch(
     student: PrismaStudent,
@@ -166,6 +227,7 @@ export const studentProfileService = {
     actorId: string,
   ): Promise<StudentProfileRow> {
     const input = sanitizePatchInput(rawInput);
+    const updateData = buildStudentUpdateInput(input);
 
     // Capture pre-image for the audit trail. Only fields we allow.
     const oldValue: Record<string, unknown> = {};
@@ -175,7 +237,7 @@ export const studentProfileService = {
 
     const updated = await prisma.student.update({
       where: { id: student.id },
-      data: input as Record<string, unknown>,
+      data: updateData,
       include: {
         academicRecords: { orderBy: { passingYear: "desc" } },
         englishProficiencies: { orderBy: { testDate: "desc" } },
@@ -299,7 +361,7 @@ export const studentProfileService = {
   async updateAcademicRecord(
     studentId: string,
     recordId: string,
-    input: Record<string, unknown>,
+    input: AcademicRecordUpdate,
     actorId: string,
   ): Promise<AcademicRecord> {
     // Re-verify ownership before any write — the route resolved the
@@ -308,9 +370,20 @@ export const studentProfileService = {
       where: { id: recordId, studentId },
     });
     if (!existing) throw new HttpError(404, "NOT_FOUND", "Academic record not found");
+    // Build a type-safe Prisma update payload — only fields that exist
+    // on the AcademicRecord model are passed. Catches schema drift at
+    // compile time rather than runtime.
+    const data: Prisma.AcademicRecordUpdateInput = {};
+    if (input.level !== undefined) data.level = input.level;
+    if (input.institution !== undefined) data.institution = input.institution;
+    if (input.group !== undefined) data.group = input.group;
+    if (input.subject !== undefined) data.subject = input.subject;
+    if (input.result !== undefined) data.result = input.result;
+    if (input.passingYear !== undefined) data.passingYear = input.passingYear;
+    if (input.certificateUrl !== undefined) data.certificateUrl = input.certificateUrl;
     const updated = await prisma.academicRecord.update({
       where: { id: recordId },
-      data: input,
+      data,
     });
     await auditLog.record({
       userId: actorId,
@@ -318,7 +391,7 @@ export const studentProfileService = {
       entity: "AcademicRecord",
       entityId: recordId,
       oldValue: existing,
-      newValue: input,
+      newValue: data,
     });
     return updated;
   },
@@ -382,16 +455,29 @@ export const studentProfileService = {
   async updateEnglishProficiency(
     studentId: string,
     recordId: string,
-    input: Record<string, unknown>,
+    input: EnglishProficiencyUpdate,
     actorId: string,
   ): Promise<EnglishProficiency> {
     const existing = await prisma.englishProficiency.findFirst({
       where: { id: recordId, studentId },
     });
     if (!existing) throw new HttpError(404, "NOT_FOUND", "English proficiency record not found");
+    // Build a type-safe Prisma update payload — only fields that exist
+    // on the EnglishProficiency model are passed. Catches schema drift
+    // at compile time rather than runtime.
+    const data: Prisma.EnglishProficiencyUpdateInput = {};
+    if (input.testType !== undefined) data.testType = input.testType;
+    if (input.overallScore !== undefined) data.overallScore = input.overallScore;
+    if (input.readingScore !== undefined) data.readingScore = input.readingScore;
+    if (input.writingScore !== undefined) data.writingScore = input.writingScore;
+    if (input.listeningScore !== undefined) data.listeningScore = input.listeningScore;
+    if (input.speakingScore !== undefined) data.speakingScore = input.speakingScore;
+    if (input.testDate !== undefined) data.testDate = input.testDate;
+    if (input.expiryDate !== undefined) data.expiryDate = input.expiryDate;
+    if (input.certificateUrl !== undefined) data.certificateUrl = input.certificateUrl;
     const updated = await prisma.englishProficiency.update({
       where: { id: recordId },
-      data: input,
+      data,
     });
     await auditLog.record({
       userId: actorId,
@@ -399,7 +485,7 @@ export const studentProfileService = {
       entity: "EnglishProficiency",
       entityId: recordId,
       oldValue: existing,
-      newValue: input,
+      newValue: data,
     });
     return updated;
   },
