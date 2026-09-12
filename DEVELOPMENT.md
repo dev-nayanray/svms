@@ -4661,3 +4661,145 @@ never from a query param or request body.
 **Payment method labels (3 tests)**:
 - Correct human-readable labels for all 6 methods (CASH, BANK_TRANSFER,
   BKASH, NAGAD, CARD, OTHER).
+
+---
+
+## 60. Student Panel — Module 12: Student Invoices (v2)
+
+**Routes**: `/student/invoices` (list) + `/student/invoices/[id]`
+(detail) — transparent invoice viewing with print/PDF support.
+
+**Goal**: Let students view their invoices (number, dates, items,
+totals, payment status) and print or save as PDF — all calculations
+from trusted server-side data.
+
+### API surface
+
+Two new student-scoped GET-only endpoints, all guarded by
+`studentApiGuard()` — the student record is derived from the session,
+never from a query param or request body.
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| GET | `/api/student/invoices` | List ALL student-visible invoices for the caller. DRAFT invoices are excluded (internal drafts not yet finalized). Each includes: invoiceNumber, status, total, paidAmount, dueAmount, discount, issueDate, dueDate, application. |
+| GET | `/api/student/invoices/[id]` | Full detail: items (line-item breakdown), subtotal, discount, total, paidAmount, dueAmount, student info, linked application, payment history. Payment `transactionReference` masked for PENDING/CANCELLED. IDOR-safe. |
+
+### Service (`lib/services/student-invoices.ts`)
+
+- `list(studentId)` — returns invoices scoped by `studentId` from
+  the session. DRAFT invoices excluded. Newest-first (by createdAt).
+- `getById(studentId, invoiceId)` — full detail with items parsed
+  from the JSON `items` field (each line has `description`, `quantity`,
+  `unitPrice`, and a computed `lineTotal = quantity × unitPrice`).
+  Includes student info, application, and payment history. Payment
+  `transactionReference` masked for PENDING/CANCELLED payments.
+  Ownership verified: query scoped by `studentId`. Foreign invoiceId
+  → null → route 404s.
+
+### Invoice status visibility
+
+Only these statuses are student-visible:
+- **ISSUED** — the invoice has been finalized and sent to the student.
+- **PARTIAL** — partially paid.
+- **PAID** — fully paid.
+- **OVERDUE** — past the due date with an outstanding balance.
+- **CANCELLED** — cancelled (retained for audit trail).
+
+**DRAFT** is explicitly excluded — it's an internal draft the
+counselor hasn't finalized yet. The where clause uses
+`status: { in: ["ISSUED", "PARTIAL", "PAID", "OVERDUE", "CANCELLED"] }`.
+
+### Security model
+
+1. **Identity from session only** — `studentApiGuard()` resolves
+   `studentId` from the session. All queries are scoped by it.
+2. **IDOR-safe** — foreign `invoiceId` returns 404 (NOT_FOUND, never
+   403 — the existence of another student's invoice is never
+   confirmed).
+3. **Read-only** — students CANNOT create, update, delete, or modify
+   invoices. All routes are GET-only. Invoice management goes through
+   the admin `/api/invoices` routes (ADMIN only, `finance.manage`).
+4. **Server-side calculations** — all financial values (subtotal,
+   discount, total, paidAmount, dueAmount) come from the Invoice row
+   in the DB — they were computed server-side when the invoice was
+   created/updated. The client NEVER sends or recomputes totals.
+5. **DRAFT exclusion** — DRAFT invoices are excluded from both the
+   list and detail queries. A student can never see a draft invoice.
+6. **Payment reference masking** — `transactionReference` shown for
+   PAID/PARTIAL/REFUNDED payments, masked (null) for PENDING/CANCELLED.
+7. **Internal fields stripped** — `deletedAt`, `deletedBy` are never
+   on the wire.
+
+### UI/UX
+
+**List page** (`components/student/invoices/invoices-view.tsx`):
+- Summary card: 3 tiles (Total, Paid, Balance) with tone-based colors.
+- Invoice cards: each shows invoice number, status badge, issue/due
+  dates, total/paid/balance amounts, application link. Color-coded
+  border by status (green=PAID, red=OVERDUE, amber=PARTIAL, etc.).
+- Tap an invoice card → navigates to the detail page.
+- States: loading skeleton, server error, offline, empty.
+
+**Detail page** (`components/student/invoices/invoice-detail-view.tsx`):
+- Invoice header: invoice number, status badge, student ID, issue/due
+  dates.
+- Bill-to section: student name, email.
+- Line items: card list with description, qty × unit price, line total.
+- Summary: subtotal, discount, total, paid, balance due. Payment
+  progress bar (paid/total %).
+- Payment history: card list with amount, method, date, reference,
+  status badge. Reference masked for PENDING/CANCELLED.
+- **Print/PDF**: a "Print / Save PDF" button calls `window.print()`.
+  CSS `@media print` styles hide navigation and show a clean, signed
+  invoice layout with company info footer. No external PDF library
+  needed — the browser's native print-to-PDF is the secure approach.
+- States: loading skeleton, not found/offline (with retry), error.
+
+### Print/PDF architecture
+
+No external PDF generation library is used. Instead:
+
+1. The detail view injects a `<style>` tag with `@media print` rules
+   that:
+   - Hide navigation, headers, footers, action buttons (`.print:hidden`)
+   - Show the print-only footer with company info (`.print:block`)
+   - Reset card borders to clean black borders (`.print:border-2`)
+   - Set `@page { margin: 1.5cm }` for proper print margins
+2. The "Print / Save PDF" button calls `window.print()`.
+3. The browser's native print dialog lets the student "Save as PDF"
+   or print to paper.
+
+This is the most secure approach:
+- No external file generation (no library dependencies, no file I/O)
+- The print layout is entirely CSS-driven (no server round-trip)
+- The student sees exactly what they print (no template mismatch)
+
+### Tests
+
+`tests/student-invoices.test.ts` (19 tests):
+
+**List (7 tests)**:
+- 401 on unauthenticated, 403 on non-STUDENT.
+- Returns only the caller's invoices (scoped by studentId).
+- Scopes findMany by studentId from the session.
+- Excludes DRAFT invoices (where clause has `status: { in: [...] }`
+  without DRAFT).
+- Never exposes internal fields (deletedAt, deletedBy).
+- Includes statusLabel (human-readable).
+- All financial values from the server (total, paidAmount, dueAmount,
+  discount).
+
+**Detail (12 tests)**:
+- 401 on unauthenticated.
+- 404 (IDOR-safe) when invoice doesn't belong to caller.
+- 404 for DRAFT invoices (not student-visible).
+- Full detail with items + payments.
+- All financial values from the server (subtotal, discount, total,
+  paid, balance).
+- Line items have computed lineTotal (quantity × unitPrice).
+- transactionReference masked for PENDING payments in the detail.
+- transactionReference shown for PAID payments in the detail.
+- Internal fields stripped.
+- findFirst scoped by studentId (ownership check).
+- Student information included (firstName, lastName, email, studentId).
+- Linked application included.
