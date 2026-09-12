@@ -1,16 +1,35 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X, ArrowRight, ChevronDown, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { APP_NAME } from "@/lib/constants/app";
 import { MarketingButton } from "./ui";
+import { EuroscopeLogo } from "./logo";
+
+/**
+ * Navigation structure — grouped into top-level links + a dropdown
+ * for "Study in Europe" with the most popular European destinations.
+ *
+ * The active state uses `pathname === href || pathname.startsWith(href + "/")`
+ * so sub-routes (e.g. /study-in-europe/germany) activate the parent
+ * link — this is the standard SaaS navbar pattern.
+ */
+const DESTINATIONS = [
+  { href: "/study-in-europe/germany", label: "Germany", flag: "🇩🇪" },
+  { href: "/study-in-europe/france", label: "France", flag: "🇫🇷" },
+  { href: "/study-in-europe/italy", label: "Italy", flag: "🇮🇹" },
+  { href: "/study-in-europe/spain", label: "Spain", flag: "🇪🇸" },
+  { href: "/study-in-europe/netherlands", label: "Netherlands", flag: "🇳🇱" },
+  { href: "/study-in-europe/sweden", label: "Sweden", flag: "🇸🇪" },
+  { href: "/study-in-europe/finland", label: "Finland", flag: "🇫🇮" },
+  { href: "/study-in-europe/ireland", label: "Ireland", flag: "🇮🇪" },
+];
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
-  { href: "/study-in-europe", label: "Study in Europe" },
+  { href: "/study-in-europe", label: "Study in Europe", hasDropdown: true },
   { href: "/universities", label: "Universities" },
   { href: "/courses", label: "Courses" },
   { href: "/features", label: "Features" },
@@ -19,10 +38,18 @@ const NAV_LINKS = [
   { href: "/contact", label: "Contact" },
 ];
 
+function isActive(pathname: string, href: string): boolean {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(href + "/");
+}
+
 export function MarketingNavbar() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [destinationsOpen, setDestinationsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [mobileDestinationsOpen, setMobileDestinationsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLLIElement | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -31,17 +58,53 @@ export function MarketingNavbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close mobile menu when a link is clicked — avoids the
-  // setState-in-effect anti-pattern that fires on route change.
-  const closeMobile = () => setOpen(false);
+  // Close desktop dropdown on outside click
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDestinationsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
+  // Close mobile menu on Escape
+  useEffect(() => {
+    const onEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+        setDestinationsOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onEscape);
+    return () => document.removeEventListener("keydown", onEscape);
+  }, []);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
+  const closeMobile = () => {
+    setMobileOpen(false);
+    setMobileDestinationsOpen(false);
+  };
 
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 w-full transition-all",
+        "sticky top-0 z-50 w-full transition-all duration-300",
         scrolled
-          ? "border-b border-border bg-background/85 backdrop-blur-lg supports-[backdrop-filter]:bg-background/75"
-          : "border-b border-transparent bg-transparent",
+          ? "border-b border-border bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 shadow-sm"
+          : "border-b border-transparent bg-background/0",
       )}
     >
       <nav
@@ -51,33 +114,77 @@ export function MarketingNavbar() {
         {/* Logo */}
         <Link
           href="/"
-          className="flex items-center gap-2 rounded-md focus-visible:outline-2 focus-visible:outline-ring"
-          aria-label={`${APP_NAME} home`}
+          className="rounded-lg focus-visible:outline-2 focus-visible:outline-ring"
+          aria-label="Euroscope home"
         >
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground">
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
-              {/* European star + arc — subtle brand mark */}
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" opacity="0.4" />
-              <path d="M4 14c4-6 12-6 16 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              <path
-                d="M12 4l1.2 3.6h3.8l-3.1 2.3 1.2 3.6-3.1-2.3-3.1 2.3 1.2-3.6-3.1-2.3h3.8z"
-                fill="currentColor"
-              />
-            </svg>
-          </span>
-          <span className="font-display text-lg font-bold tracking-tight">{APP_NAME}</span>
+          <EuroscopeLogo size="default" />
         </Link>
 
         {/* Desktop links */}
-        <ul className="hidden items-center gap-1 lg:flex">
+        <ul className="hidden items-center gap-0.5 xl:flex">
           {NAV_LINKS.map((link) => {
-            const active = pathname === link.href;
+            const active = isActive(pathname, link.href);
+            if (link.hasDropdown) {
+              return (
+                <li key={link.href} className="relative" ref={dropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setDestinationsOpen((o) => !o)}
+                    className={cn(
+                      "flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-ring",
+                      active || destinationsOpen ? "text-primary" : "text-foreground/80",
+                    )}
+                    aria-expanded={destinationsOpen}
+                    aria-haspopup="true"
+                  >
+                    {link.label}
+                    <ChevronDown
+                      className={cn(
+                        "h-3.5 w-3.5 transition-transform",
+                        destinationsOpen && "rotate-180",
+                      )}
+                      aria-hidden
+                    />
+                  </button>
+                  {/* Dropdown */}
+                  {destinationsOpen && (
+                    <div className="absolute left-0 top-full pt-2">
+                      <div className="w-72 rounded-2xl border border-border bg-card p-2 shadow-xl shadow-primary/5">
+                        <div className="grid grid-cols-2 gap-1">
+                          {DESTINATIONS.map((dest) => (
+                            <Link
+                              key={dest.href}
+                              href={dest.href}
+                              onClick={() => setDestinationsOpen(false)}
+                              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted hover:text-primary"
+                            >
+                              <span className="text-base" aria-hidden>{dest.flag}</span>
+                              {dest.label}
+                            </Link>
+                          ))}
+                        </div>
+                        <div className="mt-2 border-t border-border pt-2">
+                          <Link
+                            href="/study-in-europe"
+                            onClick={() => setDestinationsOpen(false)}
+                            className="flex items-center justify-between rounded-lg bg-primary/5 px-3 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+                          >
+                            <span>All destinations</span>
+                            <ArrowRight className="h-4 w-4" aria-hidden />
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </li>
+              );
+            }
             return (
               <li key={link.href}>
                 <Link
                   href={link.href}
                   className={cn(
-                    "rounded-md px-3 py-2 text-sm font-medium transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-ring",
+                    "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-ring",
                     active ? "text-primary" : "text-foreground/80",
                   )}
                   aria-current={active ? "page" : undefined}
@@ -90,7 +197,7 @@ export function MarketingNavbar() {
         </ul>
 
         {/* Desktop CTAs */}
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden items-center gap-2 xl:flex">
           <Link
             href="/login"
             className="rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
@@ -103,32 +210,96 @@ export function MarketingNavbar() {
           </MarketingButton>
         </div>
 
+        {/* Tablet/desktop menu (lg to xl) — compact CTA only */}
+        <div className="hidden items-center gap-2 lg:flex xl:hidden">
+          <Link
+            href="/login"
+            className="rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:text-primary"
+          >
+            Login
+          </Link>
+          <MarketingButton href="/contact" size="sm">Get Started</MarketingButton>
+        </div>
+
         {/* Mobile menu toggle */}
         <button
           type="button"
-          onClick={() => setOpen((o) => !o)}
-          className="grid h-11 w-11 place-items-center rounded-md text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring lg:hidden"
-          aria-label={open ? "Close menu" : "Open menu"}
-          aria-expanded={open}
+          onClick={() => setMobileOpen((o) => !o)}
+          className="grid h-11 w-11 place-items-center rounded-lg text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring lg:hidden"
+          aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          aria-expanded={mobileOpen}
         >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </nav>
 
-      {/* Mobile menu */}
-      {open && (
-        <div className="border-t border-border bg-background lg:hidden">
-          <div className="euroscope-container py-4">
+      {/* Mobile menu — full-screen slide-down */}
+      {mobileOpen && (
+        <div className="fixed inset-0 top-16 z-40 overflow-y-auto bg-background lg:hidden">
+          <div className="euroscope-container py-6">
             <ul className="flex flex-col gap-1">
               {NAV_LINKS.map((link) => {
-                const active = pathname === link.href;
+                const active = isActive(pathname, link.href);
+                if (link.hasDropdown) {
+                  return (
+                    <li key={link.href}>
+                      <button
+                        type="button"
+                        onClick={() => setMobileDestinationsOpen((o) => !o)}
+                        className={cn(
+                          "flex w-full items-center justify-between rounded-lg px-3 py-3 text-sm font-medium",
+                          active ? "text-primary" : "text-foreground/80 hover:bg-muted",
+                        )}
+                        aria-expanded={mobileDestinationsOpen}
+                      >
+                        <span className="flex items-center gap-2">
+                          <Globe className="h-4 w-4" aria-hidden />
+                          {link.label}
+                        </span>
+                        <ChevronDown
+                          className={cn(
+                            "h-4 w-4 transition-transform",
+                            mobileDestinationsOpen && "rotate-180",
+                          )}
+                          aria-hidden
+                        />
+                      </button>
+                      {mobileDestinationsOpen && (
+                        <ul className="ml-3 mt-1 space-y-0.5 border-l-2 border-border pl-3">
+                          {DESTINATIONS.map((dest) => (
+                            <li key={dest.href}>
+                              <Link
+                                href={dest.href}
+                                onClick={closeMobile}
+                                className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-foreground/70 hover:bg-muted hover:text-primary"
+                              >
+                                <span aria-hidden>{dest.flag}</span>
+                                {dest.label}
+                              </Link>
+                            </li>
+                          ))}
+                          <li>
+                            <Link
+                              href="/study-in-europe"
+                              onClick={closeMobile}
+                              className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-primary hover:bg-primary/10"
+                            >
+                              All destinations
+                              <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                            </Link>
+                          </li>
+                        </ul>
+                      )}
+                    </li>
+                  );
+                }
                 return (
                   <li key={link.href}>
                     <Link
                       href={link.href}
                       onClick={closeMobile}
                       className={cn(
-                        "block rounded-md px-3 py-2.5 text-sm font-medium",
+                        "block rounded-lg px-3 py-3 text-sm font-medium",
                         active
                           ? "bg-primary/10 text-primary"
                           : "text-foreground/80 hover:bg-muted",
@@ -140,14 +311,15 @@ export function MarketingNavbar() {
                 );
               })}
             </ul>
-            <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
+            <div className="mt-6 flex flex-col gap-2 border-t border-border pt-6">
               <Link
                 href="/login"
-                className="rounded-lg border border-border px-3 py-2.5 text-center text-sm font-medium hover:bg-muted"
+                onClick={closeMobile}
+                className="rounded-lg border border-border px-3 py-3 text-center text-sm font-medium hover:bg-muted"
               >
                 Login
               </Link>
-              <MarketingButton href="/contact" size="default" className="w-full">
+              <MarketingButton href="/contact" size="default" className="w-full" onClick={closeMobile}>
                 Start Your Journey
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </MarketingButton>

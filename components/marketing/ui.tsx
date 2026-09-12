@@ -35,11 +35,11 @@ export function Section({
 }: React.HTMLAttributes<HTMLElement> & { tone?: "default" | "muted" | "dark" }) {
   const tones = {
     default: "bg-background text-foreground",
-    muted: "bg-muted/50 text-foreground",
+    muted: "bg-muted/40 text-foreground",
     dark: "bg-ink text-white",
   };
   return (
-    <section className={cn("py-16 md:py-24", tones[tone], className)} {...props} />
+    <section className={cn("py-20 md:py-28", tones[tone], className)} {...props} />
   );
 }
 
@@ -61,7 +61,7 @@ export function Eyebrow({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em]",
+        "inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em]",
         tones[tone],
         className,
       )}
@@ -78,6 +78,7 @@ export function MarketingButton({
   variant = "primary",
   size = "default",
   className,
+  onClick,
   ...props
 }: {
   href?: string;
@@ -85,10 +86,11 @@ export function MarketingButton({
   variant?: "primary" | "secondary" | "ghost" | "outline" | "accent";
   size?: "default" | "sm" | "lg";
   className?: string;
+  onClick?: () => void;
 } & React.AnchorHTMLAttributes<HTMLAnchorElement> &
   React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const base =
-    "inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50";
+    "inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50";
   const sizes = {
     default: "h-11 px-5 text-sm",
     sm: "h-9 px-3.5 text-sm",
@@ -96,25 +98,25 @@ export function MarketingButton({
   };
   const variants = {
     primary:
-      "bg-primary text-primary-foreground hover:bg-primary-hover shadow-sm hover:shadow-md",
+      "bg-primary text-primary-foreground shadow-sm shadow-primary/30 hover:bg-primary-hover hover:shadow-md hover:shadow-primary/40 hover:-translate-y-0.5",
     secondary:
-      "bg-white text-ink hover:bg-muted border border-border shadow-sm",
+      "bg-white text-ink border border-border shadow-sm hover:bg-muted hover:-translate-y-0.5",
     ghost: "text-foreground hover:bg-muted",
     outline:
-      "border border-border bg-transparent text-foreground hover:bg-muted",
+      "border border-border bg-transparent text-foreground hover:bg-muted hover:-translate-y-0.5",
     accent:
-      "bg-accent text-accent-foreground hover:bg-accent-hover shadow-sm hover:shadow-md",
+      "bg-accent text-accent-foreground shadow-sm shadow-accent/30 hover:bg-accent-hover hover:shadow-md hover:-translate-y-0.5",
   };
   const classes = cn(base, sizes[size], variants[variant], className);
   if (href) {
     return (
-      <a href={href} className={classes} {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}>
+      <a href={href} className={classes} onClick={onClick} {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}>
         {children}
       </a>
     );
   }
   return (
-    <button className={classes} {...props}>
+    <button className={classes} onClick={onClick} {...props}>
       {children}
     </button>
   );
@@ -135,14 +137,19 @@ export function FeatureCard({
   return (
     <div
       className={cn(
-        "group rounded-2xl border border-border bg-card p-6 transition-all hover:border-primary/30 hover:shadow-md",
+        "group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5",
         className,
       )}
     >
-      <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+      {/* Subtle gradient on hover */}
+      <div
+        className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        aria-hidden
+      />
+      <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
         <Icon className="h-5 w-5" aria-hidden />
       </div>
-      <h3 className="font-display text-lg font-semibold tracking-tight">{title}</h3>
+      <h3 className="font-display text-lg font-bold tracking-tight">{title}</h3>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{children}</p>
     </div>
   );

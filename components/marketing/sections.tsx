@@ -151,42 +151,61 @@ export function SolutionSection() {
  * ════════════════════════════════════════════════════════════ */
 
 const JOURNEY_STEPS = [
-  { label: "Lead", icon: "📝" },
-  { label: "Counselling", icon: "💬" },
-  { label: "Registration", icon: "✏️" },
-  { label: "Profile Assessment", icon: "📋" },
-  { label: "Country Selection", icon: "🌍" },
-  { label: "University Selection", icon: "🏛️" },
-  { label: "Course Selection", icon: "📚" },
-  { label: "Document Collection", icon: "📁" },
-  { label: "University Application", icon: "📤" },
-  { label: "Offer Letter", icon: "✉️" },
-  { label: "Deposit", icon: "💳" },
-  { label: "Visa Preparation", icon: "🛂" },
-  { label: "Visa Submission", icon: "📨" },
-  { label: "Biometrics", icon: "🔐" },
-  { label: "Interview", icon: "🎤" },
-  { label: "Visa Decision", icon: "✅" },
-  { label: "Travel Preparation", icon: "🧳" },
-  { label: "Europe", icon: "🇪🇺" },
+  { label: "Lead", icon: "📝", phase: "Start" },
+  { label: "Counselling", icon: "💬", phase: "Start" },
+  { label: "Registration", icon: "✏️", phase: "Start" },
+  { label: "Profile Assessment", icon: "📋", phase: "Start" },
+  { label: "Country Selection", icon: "🌍", phase: "Plan" },
+  { label: "University Selection", icon: "🏛️", phase: "Plan" },
+  { label: "Course Selection", icon: "📚", phase: "Plan" },
+  { label: "Document Collection", icon: "📁", phase: "Plan" },
+  { label: "University Application", icon: "📤", phase: "Apply" },
+  { label: "Offer Letter", icon: "✉️", phase: "Apply" },
+  { label: "Deposit", icon: "💳", phase: "Apply" },
+  { label: "Visa Preparation", icon: "🛂", phase: "Visa" },
+  { label: "Visa Submission", icon: "📨", phase: "Visa" },
+  { label: "Biometrics", icon: "🔐", phase: "Visa" },
+  { label: "Interview", icon: "🎤", phase: "Visa" },
+  { label: "Visa Decision", icon: "✅", phase: "Visa" },
+  { label: "Travel Preparation", icon: "🧳", phase: "Travel" },
+  { label: "Europe", icon: "🇪🇺", phase: "Travel" },
 ];
+
+const PHASE_COLORS: Record<string, string> = {
+  Start: "border-sky-400/40 bg-sky-400/5",
+  Plan: "border-violet-400/40 bg-violet-400/5",
+  Apply: "border-amber-400/40 bg-amber-400/5",
+  Visa: "border-rose-400/40 bg-rose-400/5",
+  Travel: "border-emerald-400/40 bg-emerald-400/5",
+};
 
 export function JourneyTimeline() {
   return (
     <Section tone="dark" className="relative overflow-hidden">
-      <div className="absolute inset-0 euroscope-grid-bg opacity-30" aria-hidden />
+      {/* Background — dual radial glows + grid */}
+      <div className="absolute inset-0" aria-hidden>
+        <div
+          className="absolute -top-40 left-1/4 h-[500px] w-[600px] rounded-full opacity-25 blur-[120px]"
+          style={{ background: "radial-gradient(circle, #1e40af 0%, transparent 65%)" }}
+        />
+        <div
+          className="absolute -bottom-40 right-1/4 h-[400px] w-[500px] rounded-full opacity-15 blur-[100px]"
+          style={{ background: "radial-gradient(circle, #f59e0b 0%, transparent 70%)" }}
+        />
+        <div className="absolute inset-0 euroscope-grid-bg opacity-20" />
+      </div>
       <Container className="relative">
         <div className="mx-auto max-w-2xl text-center">
           <MarketingReveal>
             <Eyebrow tone="accent" className="justify-center">The Complete Journey</Eyebrow>
           </MarketingReveal>
           <MarketingReveal delay={80}>
-            <h2 className="mt-4 font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <h2 className="mt-4 font-display text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
               From lead to Europe — every step managed
             </h2>
           </MarketingReveal>
           <MarketingReveal delay={160}>
-            <p className="mt-4 text-base leading-relaxed text-white/70">
+            <p className="mt-5 text-base leading-relaxed text-white/70 md:text-lg">
               {APP_NAME} is built around the European student journey — every stage,
               from the first counselling session to landing in Europe.
             </p>
@@ -199,13 +218,18 @@ export function JourneyTimeline() {
             {JOURNEY_STEPS.map((step, i) => (
               <li
                 key={step.label}
-                className="relative rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition-colors hover:border-accent/40 hover:bg-white/10"
+                className={`group relative rounded-xl border p-4 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${PHASE_COLORS[step.phase]}`}
               >
-                <span className="absolute left-4 top-4 text-xs font-mono text-white/40">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <div className="mt-6 flex items-center gap-2">
-                  <span className="text-2xl" aria-hidden>{step.icon}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold text-white/30">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="text-[9px] font-semibold uppercase tracking-wider text-white/40">
+                    {step.phase}
+                  </span>
+                </div>
+                <div className="mt-4 flex items-center gap-2.5">
+                  <span className="text-2xl transition-transform group-hover:scale-110" aria-hidden>{step.icon}</span>
                   <span className="text-sm font-semibold text-white">{step.label}</span>
                 </div>
               </li>
@@ -213,7 +237,7 @@ export function JourneyTimeline() {
           </ol>
         </MarketingReveal>
 
-        <div className="mt-12 text-center">
+        <div className="mt-14 text-center">
           <MarketingButton href="/how-it-works" variant="primary" size="lg">
             See how it works
             <ArrowRight className="h-4 w-4" aria-hidden />
@@ -352,31 +376,47 @@ export function TrustSection() {
 export function CTASection() {
   return (
     <Section tone="dark" className="relative overflow-hidden">
-      <div
-        className="absolute inset-0 opacity-30"
-        style={{ background: "radial-gradient(circle at 50% 0%, #1e40af 0%, transparent 60%)" }}
-        aria-hidden
-      />
+      {/* Multi-layer background */}
+      <div className="absolute inset-0" aria-hidden>
+        <div
+          className="absolute -top-40 left-1/2 h-[600px] w-[800px] -translate-x-1/2 rounded-full opacity-40 blur-[120px]"
+          style={{ background: "radial-gradient(circle, #1e40af 0%, transparent 60%)" }}
+        />
+        <div
+          className="absolute -bottom-20 right-0 h-[400px] w-[400px] rounded-full opacity-20 blur-[100px]"
+          style={{ background: "radial-gradient(circle, #f59e0b 0%, transparent 70%)" }}
+        />
+        <div className="absolute inset-0 euroscope-grid-bg opacity-20" />
+      </div>
       <Container className="relative">
-        <div className="mx-auto max-w-2xl text-center">
+        <div className="mx-auto max-w-3xl text-center">
           <MarketingReveal>
-            <h2 className="font-display text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
-              Your European Future Starts Here.
+            <Eyebrow tone="accent" className="justify-center">Get Started</Eyebrow>
+          </MarketingReveal>
+          <MarketingReveal delay={80}>
+            <h2 className="mt-5 font-display text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
+              Your European Future{" "}
+              <span className="euroscope-gradient-text">Starts Here.</span>
             </h2>
           </MarketingReveal>
-          <MarketingReveal delay={120}>
-            <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-white/70">
+          <MarketingReveal delay={160}>
+            <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-white/70 md:text-lg">
               Plan your studies, manage your application and move forward with confidence.
               {APP_NAME} is your complete European study companion.
             </p>
           </MarketingReveal>
-          <MarketingReveal delay={200}>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <MarketingButton href="/contact" variant="primary" size="lg">
+          <MarketingReveal delay={240}>
+            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+              <MarketingButton href="/contact" variant="primary" size="lg" className="w-full sm:w-auto">
                 Start Your Journey
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </MarketingButton>
-              <MarketingButton href="/contact" variant="secondary" size="lg" className="bg-white/10 text-white border-white/20 hover:bg-white/20">
+              <MarketingButton
+                href="/contact"
+                variant="secondary"
+                size="lg"
+                className="w-full bg-white/10 text-white border-white/20 hover:bg-white/20 sm:w-auto"
+              >
                 Book a Consultation
               </MarketingButton>
             </div>
