@@ -5,7 +5,8 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: APP_NAME,
     short_name: APP_SHORT_NAME,
-    description: "Track your student visa application, documents, payments and messages.",
+    description:
+      "Euroscope — your complete journey to studying in Europe. Manage university applications, documents, visas and travel preparation in one place.",
     start_url: "/student",
     scope: "/",
     display: "standalone",
@@ -20,8 +21,6 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
       { src: "/icons/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
-    // PWA shortcuts — surface common destinations on the install icon's
-    // context menu (long-press on Android, right-click on desktop).
     shortcuts: [
       { name: "Dashboard", short_name: "Home", url: "/student" },
       { name: "Messages", short_name: "Chat", url: "/student/messages" },

@@ -113,11 +113,25 @@ async function main() {
   }
 
   console.log("Seeding countries…");
+  // European focus — Euroscope is a European education platform.
+  // We seed the major European study destinations so the marketing
+  // site and panels show real, accurate destination data.
   const countryData = [
-    { name: "United Kingdom", code: "GB", currency: "GBP" },
-    { name: "Canada", code: "CA", currency: "CAD" },
-    { name: "Australia", code: "AU", currency: "AUD" },
-    { name: "USA", code: "US", currency: "USD" },
+    { name: "Germany", code: "DE", currency: "EUR" },
+    { name: "France", code: "FR", currency: "EUR" },
+    { name: "Italy", code: "IT", currency: "EUR" },
+    { name: "Spain", code: "ES", currency: "EUR" },
+    { name: "Netherlands", code: "NL", currency: "EUR" },
+    { name: "Sweden", code: "SE", currency: "SEK" },
+    { name: "Finland", code: "FI", currency: "EUR" },
+    { name: "Denmark", code: "DK", currency: "DKK" },
+    { name: "Ireland", code: "IE", currency: "EUR" },
+    { name: "Poland", code: "PL", currency: "PLN" },
+    { name: "Hungary", code: "HU", currency: "HUF" },
+    { name: "Portugal", code: "PT", currency: "EUR" },
+    { name: "Austria", code: "AT", currency: "EUR" },
+    { name: "Belgium", code: "BE", currency: "EUR" },
+    { name: "Czech Republic", code: "CZ", currency: "CZK" },
   ];
   const countries: Record<string, string> = {};
   for (const c of countryData) {
@@ -131,9 +145,16 @@ async function main() {
 
   console.log("Seeding universities and courses…");
   const uniData = [
-    { name: "University of Manchester", country: "United Kingdom", ranking: 32, applicationFee: 0 },
-    { name: "University of Toronto", country: "Canada", ranking: 25, applicationFee: 125 },
-    { name: "University of Melbourne", country: "Australia", ranking: 14, applicationFee: 100 },
+    { name: "Technical University of Munich", country: "Germany", ranking: 37, applicationFee: 0 },
+    { name: "Heidelberg University", country: "Germany", ranking: 47, applicationFee: 0 },
+    { name: "Sorbonne University", country: "France", ranking: 88, applicationFee: 0 },
+    { name: "University of Bologna", country: "Italy", ranking: 154, applicationFee: 0 },
+    { name: "University of Amsterdam", country: "Netherlands", ranking: 60, applicationFee: 100 },
+    { name: "KTH Royal Institute of Technology", country: "Sweden", ranking: 73, applicationFee: 90 },
+    { name: "University of Helsinki", country: "Finland", ranking: 104, applicationFee: 100 },
+    { name: "University of Copenhagen", country: "Denmark", ranking: 76, applicationFee: 0 },
+    { name: "Trinity College Dublin", country: "Ireland", ranking: 81, applicationFee: 55 },
+    { name: "University of Vienna", country: "Austria", ranking: 137, applicationFee: 75 },
   ];
   const universities: Record<string, string> = {};
   for (const u of uniData) {
@@ -149,10 +170,17 @@ async function main() {
     universities[u.name] = found.id;
   }
   const courseData = [
-    { uni: "University of Manchester", name: "MSc Computer Science", level: "MASTER", fee: 32000, english: "IELTS 6.5 overall, no band below 6.0" },
-    { uni: "University of Manchester", name: "BEng Mechanical Engineering", level: "BACHELOR", fee: 27000, english: "IELTS 6.0 overall" },
-    { uni: "University of Toronto", name: "MBA", level: "MASTER", fee: 45000, english: "IELTS 7.0 overall" },
-    { uni: "University of Melbourne", name: "Bachelor of Science", level: "BACHELOR", fee: 35000, english: "IELTS 6.5 overall" },
+    { uni: "Technical University of Munich", name: "MSc Computer Science", level: "MASTER", fee: 0, english: "IELTS 6.5 overall, no band below 6.0" },
+    { uni: "Technical University of Munich", name: "BEng Mechanical Engineering", level: "BACHELOR", fee: 0, english: "IELTS 6.0 overall" },
+    { uni: "Heidelberg University", name: "MA Medical Sciences", level: "MASTER", fee: 1500, english: "IELTS 7.0 overall" },
+    { uni: "Sorbonne University", name: "MSc Data Science", level: "MASTER", fee: 3000, english: "IELTS 6.5 or French B2" },
+    { uni: "University of Bologna", name: "BSc International Relations", level: "BACHELOR", fee: 1000, english: "IELTS 5.5 overall" },
+    { uni: "University of Amsterdam", name: "BSc Business Administration", level: "BACHELOR", fee: 12000, english: "IELTS 6.5 overall" },
+    { uni: "KTH Royal Institute of Technology", name: "MSc Sustainable Technology", level: "MASTER", fee: 15500, english: "IELTS 6.5 overall" },
+    { uni: "University of Helsinki", name: "MSc Computer Science", level: "MASTER", fee: 18000, english: "IELTS 6.5 overall" },
+    { uni: "University of Copenhagen", name: "MSc Bioinformatics", level: "MASTER", fee: 10500, english: "IELTS 6.5 overall" },
+    { uni: "Trinity College Dublin", name: "BA Business", level: "BACHELOR", fee: 22000, english: "IELTS 6.5 overall" },
+    { uni: "University of Vienna", name: "MA European Studies", level: "MASTER", fee: 750, english: "IELTS 7.0 or German C1" },
   ];
   for (const c of courseData) {
     const slug = c.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -168,14 +196,15 @@ async function main() {
   }
 
   console.log("Seeding visa requirements…");
-  const ukVisa = ["Valid Passport", "CAS Letter", "Financial Documents", "TB Test Certificate", "Academic Documents", "English Certificate", "Visa Application Form", "Biometrics Appointment"];
-  for (let i = 0; i < ukVisa.length; i++) {
+  // German student visa requirements — Euroscope is European-focused.
+  const deVisa = ["Valid Passport", "Admission Letter", "Financial Proof (Blocked Account)", "Health Insurance", "Academic Documents", "Language Certificate", "Visa Application Form", "Biometrics Appointment"];
+  for (let i = 0; i < deVisa.length; i++) {
     const existing = await prisma.visaRequirement.findFirst({
-      where: { countryId: countries["United Kingdom"], name: ukVisa[i] },
+      where: { countryId: countries["Germany"], name: deVisa[i] },
     });
     if (!existing) {
       await prisma.visaRequirement.create({
-        data: { countryId: countries["United Kingdom"], name: ukVisa[i], sortOrder: i },
+        data: { countryId: countries["Germany"], name: deVisa[i], sortOrder: i },
       });
     }
   }
@@ -199,11 +228,11 @@ async function main() {
     const year = new Date().getFullYear();
     const app = await prisma.application.create({
       data: {
-        applicationNumber: `SV-${year}-000001`,
+        applicationNumber: `ES-${year}-000001`,
         studentId: student.id,
         employeeId: employee.id,
-        countryId: countries["United Kingdom"],
-        universityId: universities["University of Manchester"],
+        countryId: countries["Germany"],
+        universityId: universities["Technical University of Munich"],
         stageKey: "DOCUMENT_COLLECTION",
         priority: "HIGH",
         statusHistory: {
@@ -266,11 +295,11 @@ async function main() {
   console.log("Seeding demo students, applications, invoices and payments…");
   const year = new Date().getFullYear();
   const demo = [
-    { first: "Ayesha", last: "Rahman", country: "Canada", uni: "University of Toronto", stage: "APPLICATION_SUBMITTED", intake: "January 2027", status: "ACTIVE", fee: 1250, paid: 1250 },
-    { first: "Tanvir", last: "Hossain", country: "Australia", uni: "University of Melbourne", stage: "CONDITIONAL_OFFER", intake: "May 2027", status: "ACTIVE", fee: 2000, paid: 1000 },
-    { first: "Nusrat", last: "Jahan", country: "United Kingdom", uni: "University of Manchester", stage: "VISA_SUBMITTED", intake: "September 2026", status: "ACTIVE", fee: 1500, paid: 1500 },
-    { first: "Rafiul", last: "Islam", country: "Canada", uni: "University of Toronto", stage: "COMPLETED", intake: "January 2026", status: "COMPLETED", fee: 900, paid: 900 },
-    { first: "Sadia", last: "Akter", country: "USA", uni: "University of Melbourne", stage: "UNIVERSITY_SELECTION", intake: "September 2027", status: "ACTIVE", fee: 800, paid: 0 },
+    { first: "Ayesha", last: "Rahman", country: "Germany", uni: "Technical University of Munich", stage: "APPLICATION_SUBMITTED", intake: "Winter 2026", status: "ACTIVE", fee: 1250, paid: 1250 },
+    { first: "Tanvir", last: "Hossain", country: "Netherlands", uni: "University of Amsterdam", stage: "CONDITIONAL_OFFER", intake: "September 2026", status: "ACTIVE", fee: 2000, paid: 1000 },
+    { first: "Nusrat", last: "Jahan", country: "France", uni: "Sorbonne University", stage: "VISA_SUBMITTED", intake: "September 2026", status: "ACTIVE", fee: 1500, paid: 1500 },
+    { first: "Rafiul", last: "Islam", country: "Italy", uni: "University of Bologna", stage: "COMPLETED", intake: "September 2025", status: "COMPLETED", fee: 900, paid: 900 },
+    { first: "Sadia", last: "Akter", country: "Sweden", uni: "KTH Royal Institute of Technology", stage: "UNIVERSITY_SELECTION", intake: "September 2027", status: "ACTIVE", fee: 800, paid: 0 },
   ];
   for (let i = 0; i < demo.length; i++) {
     const d = demo[i];

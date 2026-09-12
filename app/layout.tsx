@@ -1,13 +1,48 @@
 import type { Metadata, Viewport } from "next";
+import { Inter, Sora } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/shared/providers";
-import { APP_NAME, APP_THEME_COLOR } from "@/lib/constants/app";
+import { APP_NAME, APP_THEME_COLOR, APP_TAGLINE, APP_DESCRIPTION, APP_URL } from "@/lib/constants/app";
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+});
+
+const sora = Sora({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-sora",
+  weight: ["400", "500", "600", "700", "800"],
+});
 
 export const metadata: Metadata = {
+  metadataBase: new URL(APP_URL),
   applicationName: APP_NAME,
-  title: { default: `${APP_NAME} — Student Visa Management System`, template: `%s | ${APP_NAME}` },
-  description: "Manage the complete student visa consultancy lifecycle.",
+  title: {
+    default: `${APP_NAME} — ${APP_TAGLINE}`,
+    template: `%s | ${APP_NAME}`,
+  },
+  description: APP_DESCRIPTION,
   manifest: "/manifest.webmanifest",
+  keywords: [
+    "study in europe",
+    "study abroad europe",
+    "european universities",
+    "study in germany",
+    "study in france",
+    "study in italy",
+    "student visa europe",
+    "european university applications",
+    "study abroad consultancy",
+    "student application management",
+    "student visa management system",
+    "euroscope",
+  ],
+  authors: [{ name: APP_NAME }],
+  creator: APP_NAME,
+  publisher: APP_NAME,
   appleWebApp: {
     capable: true,
     title: APP_NAME,
@@ -17,7 +52,23 @@ export const metadata: Metadata = {
     icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
   },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: APP_URL,
+    siteName: APP_NAME,
+    title: `${APP_NAME} — ${APP_TAGLINE}`,
+    description: APP_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${APP_NAME} — ${APP_TAGLINE}`,
+    description: APP_DESCRIPTION,
+  },
   formatDetection: { telephone: false },
+  alternates: {
+    canonical: APP_URL,
+  },
 };
 
 export const viewport: Viewport = {
@@ -30,11 +81,37 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${inter.variable} ${sora.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{
             __html: `try{const t=localStorage.getItem('svms-theme');if(t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}`,
+          }}
+        />
+        {/* Structured data — Organization. Helps search engines understand
+            that Euroscope is an educational / visa services organization. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "EducationalOrganization",
+              name: APP_NAME,
+              url: APP_URL,
+              description: APP_DESCRIPTION,
+              slogan: APP_TAGLINE,
+              knowsAbout: [
+                "European university admissions",
+                "Student visa preparation",
+                "Study abroad Europe",
+                "Application management",
+                "Document management",
+              ],
+            }),
           }}
         />
       </head>
