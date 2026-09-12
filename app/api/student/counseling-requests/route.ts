@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { counselingRequestSchema } from "@/lib/validations";
 import { isUniversityVisibleToStudent } from "@/lib/constants/universities";
 import { auditLog } from "@/lib/services/audit";
+import { rateLimit, RATE_LIMIT_PRESETS } from "@/lib/security/rate-limit";
 
 /**
  * POST — student-initiated counseling request tied to a university. The
@@ -21,6 +22,11 @@ import { auditLog } from "@/lib/services/audit";
  */
 export async function POST(req: NextRequest) {
   try {
+    // Rate-limit counseling requests to prevent spam — 10 bursts per
+    // IP, +1 token / 30s.
+    const limited = rateLimit(req, RATE_LIMIT_PRESETS.counselingRequest, "counseling");
+    if (limited) return limited as Response;
+
     const g = await guard("student.counseling");
     if (g.error) return g.error;
 

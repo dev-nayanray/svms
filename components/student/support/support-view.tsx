@@ -322,6 +322,7 @@ export function SupportView() {
           size="sm"
           variant="ghost"
           onClick={() => activeTab === "faq" ? faqQ.refetch() : ticketsQ.refetch()}
+          aria-label="Refresh list"
         >
           <RefreshCw className="h-3.5 w-3.5" aria-hidden />
         </Button>

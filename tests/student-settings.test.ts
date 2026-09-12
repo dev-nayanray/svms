@@ -36,7 +36,10 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 vi.mock("@/lib/services/audit", () => ({
-  auditLog: { record: (input: unknown) => mockAuditRecord(input) },
+  auditLog: {
+    record: (input: unknown) => mockAuditRecord(input),
+    fromRequest: () => ({ ipAddress: "127.0.0.1", userAgent: "test" }),
+  },
 }));
 vi.mock("bcryptjs", () => ({
   default: {
@@ -282,11 +285,11 @@ describe("POST /api/student/settings/password", () => {
     expect(res.status).toBe(422);
   });
 
-  it("returns 403 when current password is incorrect", async () => {
+  it("returns 422 when current password is incorrect", async () => {
     mockAuthResolved({ id: "user-1", role: "STUDENT" });
     mockBcryptCompare.mockResolvedValue(false);
     const res = await POST_password(makePostReq({ currentPassword: "wrong", newPassword: "newpass1" }));
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(422);
   });
 
   it("changes the password when current password is correct", async () => {

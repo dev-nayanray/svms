@@ -339,7 +339,7 @@ export function SettingsView() {
             <WifiOff className="h-3 w-3" aria-hidden /> Offline
           </span>
         )}
-        <Button size="sm" variant="ghost" onClick={() => settingsQ.refetch()} disabled={settingsQ.isFetching}>
+        <Button size="sm" variant="ghost" onClick={() => settingsQ.refetch()} disabled={settingsQ.isFetching} aria-label="Refresh list">
           <RefreshCw className={cn("h-3.5 w-3.5", settingsQ.isFetching && "animate-spin")} aria-hidden />
         </Button>
       </div>

@@ -19,6 +19,23 @@ const eslintConfig = defineConfig([
     "upload/**",
     "scripts/**",
   ]),
+  {
+    rules: {
+      // Next.js Route Handlers need to declare `req: NextRequest` in
+      // the function signature even when unused, because Next.js
+      // detects the route by the parameter arity (0/1/2 args). The
+      // `_req` underscore prefix is the standard convention for
+      // "intentionally unused", so don't flag it.
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

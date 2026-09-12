@@ -4,9 +4,14 @@ import { ok, handleApiError } from "@/lib/api";
 import { prisma } from "@/lib/db";
 import { registerSchema } from "@/lib/validations/auth";
 import { auditLog } from "@/lib/services/audit";
+import { rateLimit, RATE_LIMIT_PRESETS } from "@/lib/security/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate-limit account-creation flood — 5 signups / IP / min.
+    const limited = rateLimit(req, RATE_LIMIT_PRESETS.register, "register");
+    if (limited) return limited as Response;
+
     const body = registerSchema.parse(await req.json());
     const email = body.email.toLowerCase();
 
@@ -39,11 +44,14 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    const { ipAddress, userAgent } = auditLog.fromRequest(req);
     await auditLog.record({
       userId: user.id,
       action: "user.registered",
       entity: "User",
       entityId: user.id,
+      ipAddress,
+      userAgent,
     });
     return ok({ id: user.id }, { status: 201 });
   } catch (err) {

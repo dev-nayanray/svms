@@ -3,6 +3,7 @@ import { handleApiError, fail } from "@/lib/api";
 import { studentApiGuard } from "@/lib/student/guard";
 import { studentDocumentService } from "@/lib/services/student-document";
 import { stat } from "node:fs/promises";
+import { rateLimit, RATE_LIMIT_PRESETS } from "@/lib/security/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -36,8 +37,13 @@ type Ctx = { params: Promise<{ id: string }> };
  * limiter is plumbed in the proxy/middleware layer — the endpoint
  * itself is just the access point.
  */
-export async function GET(_req: NextRequest, { params }: Ctx) {
+export async function GET(req: NextRequest, { params }: Ctx) {
   try {
+    // Rate-limit downloads to protect against file-read DoS and
+    // audit-log flooding — 60 bursts / IP, +1 token / sec.
+    const limited = rateLimit(req, RATE_LIMIT_PRESETS.download, "dl");
+    if (limited) return limited as Response;
+
     const g = await studentApiGuard();
     if (!g.ok) return g.error;
 

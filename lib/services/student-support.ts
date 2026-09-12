@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { STUDENT_LIST_MAX_ROWS } from "@/lib/constants/pagination";
 import { auditLog } from "./audit";
 import { FAQ_ITEMS, type FAQItem } from "@/lib/constants/support";
 
@@ -85,6 +86,7 @@ export const studentSupportService = {
     const rows = await prisma.supportRequest.findMany({
       where,
       orderBy: { createdAt: "desc" },
+      take: STUDENT_LIST_MAX_ROWS,
     });
     return rows.map(buildView);
   },

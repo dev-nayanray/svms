@@ -6,5 +6,5 @@ export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME?.trim() || "SVMS Studen
 export const APP_SHORT_NAME = process.env.NEXT_PUBLIC_APP_SHORT_NAME?.trim() || "SVMS";
 export const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") || "http://localhost:3000";
-export const APP_THEME_COLOR = process.env.NEXT_PUBLIC_APP_THEME_COLOR?.trim() || "#0f766e";
+export const APP_THEME_COLOR = process.env.NEXT_PUBLIC_APP_THEME_COLOR?.trim() || "#6366f1";
 export const APP_BACKGROUND_COLOR = process.env.NEXT_PUBLIC_APP_BACKGROUND_COLOR?.trim() || "#f8fafc";

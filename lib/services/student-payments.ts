@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { STUDENT_LIST_MAX_ROWS } from "@/lib/constants/pagination";
 import type { Payment as PrismaPayment } from "@prisma/client";
 
 /**
@@ -149,6 +150,7 @@ export const studentPaymentService = {
         },
       },
       orderBy: [{ paymentDate: "desc" }, { createdAt: "desc" }],
+      take: STUDENT_LIST_MAX_ROWS,
     });
     return rows.map((r) => buildSummary(r as never));
   },

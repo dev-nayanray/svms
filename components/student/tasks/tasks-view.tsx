@@ -264,7 +264,7 @@ export function TasksView() {
             <WifiOff className="h-3 w-3" aria-hidden /> Offline
           </span>
         )}
-        <Button size="sm" variant="ghost" onClick={() => listQ.refetch()} disabled={listQ.isFetching}>
+        <Button size="sm" variant="ghost" onClick={() => listQ.refetch()} disabled={listQ.isFetching} aria-label="Refresh list">
           <RefreshCw className={cn("h-3.5 w-3.5", listQ.isFetching && "animate-spin")} aria-hidden />
         </Button>
       </div>

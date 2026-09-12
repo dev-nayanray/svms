@@ -3,6 +3,7 @@ import { ok, handleApiError, fail } from "@/lib/api";
 import { studentApiGuard } from "@/lib/student/guard";
 import { studentMessageService } from "@/lib/services/student-messages";
 import { z } from "zod";
+import { rateLimit, RATE_LIMIT_PRESETS } from "@/lib/security/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,11 @@ const sendBodySchema = z.object({
  */
 export async function POST(req: NextRequest, { params }: Ctx) {
   try {
+    // Rate-limit message sends to protect against notification spam
+    // to the counselor — 30 bursts per IP, +1 token / 2s.
+    const limited = rateLimit(req, RATE_LIMIT_PRESETS.messageSend, "msgsend");
+    if (limited) return limited as Response;
+
     const g = await studentApiGuard();
     if (!g.ok) return g.error;
 

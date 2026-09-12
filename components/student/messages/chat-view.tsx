@@ -100,7 +100,7 @@ export function ChatView({ conversationId }: { conversationId: string }) {
 
   if (detailQ.isLoading && !detailQ.data) {
     return (
-      <div className="flex h-[calc(100dvh-3.5rem)] flex-col">
+      <div className="flex h-[calc(100dvh-3.5rem-2rem)] md:h-[calc(100dvh-3.5rem-3rem)] flex-col">
         <ChatHeader name="" initials="" onBack={() => router.push("/student/messages")} />
         <div className="flex-1 space-y-3 p-4">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -113,7 +113,7 @@ export function ChatView({ conversationId }: { conversationId: string }) {
 
   if (detailQ.isError || !detailQ.data?.conversation) {
     return (
-      <div className="flex h-[calc(100dvh-3.5rem)] flex-col">
+      <div className="flex h-[calc(100dvh-3.5rem-2rem)] md:h-[calc(100dvh-3.5rem-3rem)] flex-col">
         <ChatHeader name="" initials="" onBack={() => router.push("/student/messages")} />
         <div className="flex flex-1 items-center justify-center p-4">
           <MobileCard className="py-6 text-center">
@@ -215,7 +215,7 @@ export function ChatView({ conversationId }: { conversationId: string }) {
   }
 
   return (
-    <div className="flex h-[calc(100dvh-3.5rem)] flex-col bg-muted/20">
+    <div className="flex h-[calc(100dvh-3.5rem-2rem)] md:h-[calc(100dvh-3.5rem-3rem)] flex-col bg-muted/20">
       {/* Chat header */}
       <ChatHeader
         name={conversation.counselorName}

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { STUDENT_LIST_MAX_ROWS } from "@/lib/constants/pagination";
 import {
   VISA_STATUS_LABELS,
   type VisaStatus,
@@ -179,6 +180,7 @@ export const studentVisaService = {
         },
       },
       orderBy: { updatedAt: "desc" },
+      take: STUDENT_LIST_MAX_ROWS,
     });
 
     return rows.map((r) => ({

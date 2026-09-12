@@ -167,6 +167,7 @@ export function ApplicationView() {
         <Button
           size="sm"
           variant="ghost"
+          aria-label="Refresh list"
           onClick={() => listQ.refetch()}
           disabled={listQ.isFetching}
         >

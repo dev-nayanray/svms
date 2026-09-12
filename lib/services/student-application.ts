@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { STUDENT_LIST_MAX_ROWS } from "@/lib/constants/pagination";
 import { auditLog } from "./audit";
 import {
   computeStageStates,
@@ -419,6 +420,7 @@ export const studentApplicationService = {
         intake: true,
       },
       orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
+      take: STUDENT_LIST_MAX_ROWS,
     });
     return rows.map((r) => buildSummary(r as never));
   },

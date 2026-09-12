@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { STUDENT_LIST_MAX_ROWS } from "@/lib/constants/pagination";
 import { HttpError } from "@/lib/api";
 import { auditLog } from "./audit";
 import { notifications } from "./notification";
@@ -102,6 +103,7 @@ export const studentMessageService = {
         },
       },
       orderBy: { lastMessageAt: "desc" },
+      take: STUDENT_LIST_MAX_ROWS,
     });
 
     // Count unread messages (messages from the counselor that the

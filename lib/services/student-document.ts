@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { STUDENT_LIST_MAX_ROWS } from "@/lib/constants/pagination";
 import { HttpError } from "@/lib/api";
 import { auditLog } from "./audit";
 import { notifications } from "./notification";
@@ -96,7 +97,14 @@ function buildStudentSafeView(row: PrismaDocument & {
     uploadedAt: row.uploadedAt,
     reviewedAt: row.reviewedAt,
     expiresAt: row.expiresAt,
-    reviewNote: row.reviewNote,
+    // Internal reviewer notes are only shown to the student when the
+    // document has been REJECTED — so the student understands what to
+    // fix. For all other statuses (UPLOADED, UNDER_REVIEW, APPROVED,
+    // EXPIRED), the reviewer's commentary is hidden to avoid leaking
+    // internal opinions (e.g. "passport looks suspicious — verifying
+    // authenticity"). Mirrors the masking already applied in
+    // student-application.ts:buildApplicationDocumentView.
+    reviewNote: row.status === "REJECTED" ? row.reviewNote : null,
     applicationId: row.applicationId,
     requirementId: row.requirementId,
     requirement: row.requirement ? { id: row.requirement.id, name: row.requirement.name } : null,
@@ -121,7 +129,8 @@ function buildListItem(row: PrismaDocument & {
     uploadedAt: row.uploadedAt,
     reviewedAt: row.reviewedAt,
     expiresAt: row.expiresAt,
-    reviewNote: row.reviewNote,
+    // Same masking as the detail view: only expose reviewNote on REJECTED.
+    reviewNote: row.status === "REJECTED" ? row.reviewNote : null,
     requirement: row.requirement ? { id: row.requirement.id, name: row.requirement.name } : null,
     replacesId: row.replacesId,
     createdAt: row.createdAt,
@@ -157,6 +166,7 @@ export const studentDocumentService = {
         requirement: { select: { id: true, name: true } },
       },
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      take: STUDENT_LIST_MAX_ROWS,
     });
     return rows.map(buildListItem);
   },

@@ -136,12 +136,23 @@ export const studentSettingsService = {
    * Change the caller's password. Verifies the current password
    * against the stored hash before updating. The new password is
    * hashed with bcrypt (10 rounds).
+   *
+   * `ipAddress` / `userAgent` are captured from the request and
+   * stored on the audit log row for security traceability.
+   *
+   * Throws 422 VALIDATION_ERROR (with field=currentPassword) when
+   * the current password is wrong — this is a form-field validation
+   * error, NOT an authorization failure. Using 403 here would be
+   * misleading because it would suggest the user is not allowed to
+   * change their password, when in fact they just typed the wrong
+   * current password.
    */
   async changePassword(
     studentId: string,
     currentPassword: string,
     newPassword: string,
     actorId: string,
+    ctx?: { ipAddress?: string | null; userAgent?: string | null },
   ): Promise<void> {
     const student = await prisma.student.findFirst({
       where: { id: studentId, deletedAt: null },
@@ -152,7 +163,10 @@ export const studentSettingsService = {
     const user = student.user;
     const valid = await bcrypt.compare(currentPassword, user.passwordHash);
     if (!valid) {
-      throw new HttpError(403, "FORBIDDEN", "Current password is incorrect");
+      // 422 + field=currentPassword so the client can surface the
+      // error on the right input. Not 403 (not an authorization
+      // failure) and not 401 (user IS authenticated, just mistyped).
+      throw new HttpError(422, "VALIDATION_ERROR", "Current password is incorrect");
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
@@ -166,6 +180,8 @@ export const studentSettingsService = {
       action: "student.password_changed",
       entity: "User",
       entityId: user.id,
+      ipAddress: ctx?.ipAddress ?? undefined,
+      userAgent: ctx?.userAgent ?? undefined,
     });
   },
 };

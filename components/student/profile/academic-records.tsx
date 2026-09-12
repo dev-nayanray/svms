@@ -235,7 +235,7 @@ export function AcademicRecordsSection({ profile }: { profile: ProfileView }) {
             />
           </Field>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Group" hint="e.g. Science">
               <Input {...form.register("group")} placeholder="Science" />
             </Field>
@@ -244,7 +244,7 @@ export function AcademicRecordsSection({ profile }: { profile: ProfileView }) {
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Passing Year" hint="e.g. 2024">
               <Input
                 type="number"

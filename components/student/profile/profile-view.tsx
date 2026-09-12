@@ -321,7 +321,7 @@ export function ProfileView() {
             <WifiOff className="h-3 w-3" aria-hidden /> Offline
           </span>
         )}
-        <Button size="sm" variant="ghost" onClick={handleRefresh} disabled={isFetching}>
+        <Button size="sm" variant="ghost" onClick={handleRefresh} disabled={isFetching} aria-label="Refresh list">
           <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} aria-hidden />
         </Button>
       </div>
@@ -437,7 +437,7 @@ function PersonalSection({
         saving={saving}
       >
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="First Name" required error={form.formState.errors.firstName?.message as string}>
               <Input {...form.register("firstName")} autoComplete="given-name" />
             </Field>
@@ -661,7 +661,7 @@ function AddressSection({
           <Field label="Country" error={form.formState.errors.country?.message as string}>
             <Input {...form.register("country")} autoComplete="country-name" placeholder="Bangladesh" />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Division / State">
               <Input {...form.register("division")} placeholder="Dhaka" />
             </Field>
@@ -770,7 +770,7 @@ function PassportSection({
           <Field label="Passport Number" hint="Stored securely; masked on display." error={form.formState.errors.passportNumber?.message as string}>
             <Input {...form.register("passportNumber")} placeholder="AB1234567" autoComplete="off" />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Issue Date">
               <Input type="date" {...form.register("passportIssueDate")} />
             </Field>

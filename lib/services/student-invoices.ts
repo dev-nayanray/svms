@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { STUDENT_LIST_MAX_ROWS } from "@/lib/constants/pagination";
 
 /**
  * Student-scoped Invoice service for Module 12 (Student Invoices).
@@ -133,6 +134,7 @@ export const studentInvoiceService = {
         application: { select: { id: true, applicationNumber: true } },
       },
       orderBy: { createdAt: "desc" },
+      take: STUDENT_LIST_MAX_ROWS,
     });
 
     return rows.map((r) => ({

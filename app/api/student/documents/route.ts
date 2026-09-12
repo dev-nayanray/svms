@@ -4,6 +4,7 @@ import { studentApiGuard } from "@/lib/student/guard";
 import { studentDocumentService } from "@/lib/services/student-document";
 import { studentDocumentUploadSchema } from "@/lib/validations";
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from "@/lib/constants/documents";
+import { rateLimit, RATE_LIMIT_PRESETS } from "@/lib/security/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +69,11 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
+    // Rate-limit uploads to protect against storage DoS — 20 bursts
+    // per IP, +1 token / 3s.
+    const limited = rateLimit(req, RATE_LIMIT_PRESETS.upload, "upload");
+    if (limited) return limited as Response;
+
     const g = await studentApiGuard();
     if (!g.ok) return g.error;
 

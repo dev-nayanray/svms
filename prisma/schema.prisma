@@ -136,6 +136,7 @@ model Student {
   @@index([assignedEmployeeId])
   @@index([branchId])
   @@index([status])
+  @@index([email])
 }
 
 model Employee {
@@ -450,6 +451,11 @@ model Document {
   @@index([status])
   @@index([category])
   @@index([replacesId])
+  @@index([requirementId])
+  @@index([uploadedById])
+  @@index([reviewedById])
+  // Composite: typical list query filters by student + status together.
+  @@index([studentId, status])
 }
 
 // ─────────────────────────────────────────────
@@ -469,6 +475,9 @@ model VisaRequirement {
   updatedAt   DateTime @updatedAt
 
   @@index([countryId])
+  @@index([status])
+  // Composite: list queries filter by country + status together.
+  @@index([countryId, status])
 }
 
 model VisaApplication {
@@ -517,6 +526,10 @@ model Task {
   @@index([dueDate])
   @@index([status])
   @@index([priority])
+  // studentId index — student dashboard aggregates by this column.
+  @@index([studentId])
+  // Composite: typical student-dashboard query is by student + status.
+  @@index([studentId, status])
 }
 
 // ─────────────────────────────────────────────
@@ -548,6 +561,8 @@ model Appointment {
   @@index([employeeId])
   @@index([scheduledAt])
   @@index([status])
+  // Composite: student list endpoint filters by student + status.
+  @@index([studentId, status])
 }
 
 model Note {
@@ -605,6 +620,8 @@ model Notification {
 
   @@index([userId])
   @@index([createdAt])
+  // Composite: unread-count queries filter by userId + readAt IS NULL.
+  @@index([userId, readAt])
 }
 
 // ─────────────────────────────────────────────
@@ -680,6 +697,8 @@ model Invoice {
 
   @@index([studentId])
   @@index([status])
+  // Composite: student list endpoint filters by student + status.
+  @@index([studentId, status])
 }
 
 model Payment {
@@ -705,6 +724,8 @@ model Payment {
   @@index([studentId])
   @@index([invoiceId])
   @@index([status])
+  // Composite: student list endpoint filters by student + status.
+  @@index([studentId, status])
 }
 
 // ─────────────────────────────────────────────
@@ -726,6 +747,9 @@ model AuditLog {
   @@index([entityId])
   @@index([userId])
   @@index([action])
+  // Audit log pagination / sort by createdAt desc — without this index,
+  // every paginated query does a collection scan + in-memory sort.
+  @@index([createdAt])
 }
 
 model SystemSetting {
@@ -760,6 +784,8 @@ model SupportRequest {
   @@index([studentId])
   @@index([status])
   @@index([category])
+  // Composite: student list endpoint filters by student + status.
+  @@index([studentId, status])
 }
 
 // ─────────────────────────────────────────────

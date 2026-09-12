@@ -276,7 +276,7 @@ export function EnglishProficiencySection({ profile }: { profile: ProfileView })
             />
           </Field>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Listening">
               <Input
                 type="number"
@@ -315,7 +315,7 @@ export function EnglishProficiencySection({ profile }: { profile: ProfileView })
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Test Date">
               <Input type="date" {...form.register("testDate")} />
             </Field>

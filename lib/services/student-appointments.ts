@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { STUDENT_LIST_MAX_ROWS } from "@/lib/constants/pagination";
 import { HttpError } from "@/lib/api";
 import { auditLog } from "./audit";
 import { notifications } from "./notification";
@@ -145,6 +146,7 @@ export const studentAppointmentService = {
         },
       },
       orderBy: filter === "past" ? { scheduledAt: "desc" } : { scheduledAt: "asc" },
+      take: STUDENT_LIST_MAX_ROWS,
     });
 
     return rows.map((r) => buildView(r as never));

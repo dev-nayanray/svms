@@ -238,6 +238,7 @@ export function PaymentsView() {
         <Button
           size="sm"
           variant="ghost"
+          aria-label="Refresh list"
           onClick={() => { summaryQ.refetch(); listQ.refetch(); }}
           disabled={listQ.isFetching || summaryQ.isFetching}
         >

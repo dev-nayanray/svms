@@ -1,9 +1,29 @@
 import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "node:crypto";
 import { HttpError } from "@/lib/api";
 import type { AuthUser } from "@/lib/auth/guards";
 import { auditLog } from "./audit";
 import { slugify } from "@/lib/utils/slug";
+
+/**
+ * Generate a random 12-char temporary password (lowercase + digits).
+ * Used by `convertLead` so the new student account has a non-default
+ * credential that the counselor communicates out-of-band.
+ *
+ * The character set is `abcdefghijkmnpqrstuvwxyz23456789` — ambiguous
+ * characters (l, 1, 0, O) are excluded so the password is readable
+ * when spoken over the phone.
+ */
+function randomTempPassword(length = 12): string {
+  const alphabet = "abcdefghijkmnpqrstuvwxyz23456789";
+  const bytes = randomBytes(length);
+  let out = "";
+  for (let i = 0; i < length; i++) {
+    out += alphabet[bytes[i] % alphabet.length];
+  }
+  return out;
+}
 
 export const studentService = {
   /** Scope: employees only see assigned students; admins see all. */
@@ -100,7 +120,16 @@ export const studentService = {
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) throw new HttpError(409, "CONFLICT", "A user with this email already exists");
 
-    const passwordHash = await bcrypt.hash(input.password ?? "ChangeMe@123", 10);
+    // SECURITY: do not fall back to a hardcoded default password. The
+    // caller MUST supply one. Lead conversion passes a random temp
+    // password (see `convertLead`), and the admin student-create UI
+    // requires the field. A missing password is a programmer error
+    // and surfaces as a 400 so it can be fixed at the call site
+    // rather than silently creating an insecure account.
+    if (!input.password) {
+      throw new HttpError(400, "BAD_REQUEST", "A password is required to create a student");
+    }
+    const passwordHash = await bcrypt.hash(input.password, 10);
     const studentId = await this.nextStudentId();
 
     const user = await prisma.user.create({
@@ -158,6 +187,12 @@ export const studentService = {
         email: lead.email,
         phone: lead.phone ?? undefined,
         assignedEmployeeId: lead.assignedEmployeeId ?? undefined,
+        // Generate a random temp password — the counselor must
+        // communicate it to the student out-of-band and the student
+        // is forced to change it on first login (the front-end can
+        // detect this via a `mustChangePassword` flag on User, but
+        // for now we rely on the counselor telling them).
+        password: randomTempPassword(),
       },
       actor
     );
