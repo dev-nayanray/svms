@@ -4923,3 +4923,114 @@ without overwhelming the server.
 - 404 (IDOR-safe) when conversation doesn't belong to caller.
 - Marks messages from the counselor as read.
 - Returns the count of messages marked.
+
+---
+
+## 62. Student Panel — Module 14: Student Notifications (v2)
+
+**Route**: `/student/notifications` — professional notification center
+with category filters, read/unread visual distinction, tap-to-navigate,
+and bulk mark-all-read.
+
+### API surface
+
+Three new student-scoped endpoints, all guarded by `studentApiGuard()`.
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| GET | `/api/student/notifications?category=<category>` | List the caller's notifications with optional category filter. Categories: all, unread, application, documents, visa, payments, messages, tasks. Returns items + unreadCount (total across all categories for the badge) + totalCount. |
+| PATCH | `/api/student/notifications/[id]/read` | Mark one notification as read. IDOR-safe: foreign id → 404. No-op if already read. Audit-logged. |
+| POST | `/api/student/notifications/read-all` | Mark ALL unread notifications as read. Returns count. Audit-logged. |
+
+### Notification categories
+
+The 13 notification types are grouped into 7 student-facing categories:
+
+| Category | Types |
+| -------- | ----- |
+| application | APPLICATION_STAGE_CHANGED, COUNSELING_REQUEST |
+| documents | DOCUMENT_UPLOADED, DOCUMENT_APPROVED, DOCUMENT_REJECTED, DOCUMENT_REUPLOAD_REQUESTED |
+| visa | VISA_STAGE_CHANGED |
+| payments | PAYMENT_RECORDED, PAYMENT_DUE |
+| messages | NEW_MESSAGE |
+| tasks | TASK_ASSIGNED, TASK_COMPLETED, TASK_CANCELLED |
+
+### Security model
+
+1. **Identity from session only** — `studentApiGuard()` resolves `userId`
+   from the session. All queries are scoped by it.
+2. **IDOR-safe** — foreign `notificationId` returns 404 (NOT_FOUND,
+   never 403).
+3. **Students can only mark their own notifications** — the update is
+   scoped by `userId`. Foreign notifications can't be marked read.
+4. **unreadCount is total across all categories** — even when filtering
+   by `?category=documents`, the `unreadCount` field reflects the
+   total across ALL notification types (for the header/nav badge).
+5. **Audit-logged** — `notification.marked_read` (single) and
+   `notification.marked_all_read` (bulk).
+
+### UI/UX (`components/student/notifications/notifications-view.tsx`)
+
+- **Filter tabs** — horizontal scrollable chips: All, Unread (with
+  badge), Application, Documents, Visa, Payments, Messages, Tasks.
+  Active tab highlighted, sticky on mobile.
+- **Notification cards** — each card has:
+  - Icon (lucide-react, resolved by notification type)
+  - Title (bold when unread, medium when read)
+  - Message (2-line clamp)
+  - Relative timestamp ("just now", "5m ago", "2h ago", "yesterday", "Sep 3")
+  - "View →" link indicator (if the notification has a `link`)
+  - Unread dot (top-right, primary color)
+  - Unread cards have primary-tinted border + background
+  - Read cards have default border + card background
+- **Tap to navigate** — clicking a notification marks it as read
+  (optimistic) and navigates to its `link` field (e.g.,
+  /student/documents, /student/messages, /student/tasks, /student/visa).
+- **Mark all read** — button in the header (shown when unreadCount > 0).
+  Optimistic: marks all as read locally, then calls the API. Shows
+  toast with count.
+- **Auto-refresh** — polls every 30 seconds (TanStack Query
+  `refetchInterval`) for unread badge updates.
+- **States**: loading skeleton, server error, offline, empty (per-tab
+  custom messages).
+
+### Badges (existing integration)
+
+The app shell header (Module 01) already has a notification badge that
+polls `/api/notifications` (the admin endpoint, which auto-scopes by
+`user.id`). The bottom-nav "More" section also shows the badge. These
+existing badges are NOT changed by Module 14 — the student notification
+routes are additive, giving the student a dedicated notification center
+page with richer filtering and navigation.
+
+### Tests
+
+`tests/student-notifications.test.ts` (23 tests):
+
+**List (12 tests)**:
+- 401 on unauthenticated, 403 on non-STUDENT.
+- Returns notifications with unread count + totalCount.
+- Each notification has icon, typeLabel, isRead, category, link.
+- Scopes findMany by userId from the session.
+- Supports ?category=unread (readAt: null filter).
+- Supports ?category=documents (type in DOCUMENT_* types).
+- Supports ?category=messages (type in [NEW_MESSAGE]).
+- Supports ?category=visa (type in [VISA_STAGE_CHANGED]).
+- Supports ?category=payments (type in [PAYMENT_*]).
+- Supports ?category=application (type in [APPLICATION_STAGE_CHANGED, COUNSELING_REQUEST]).
+- unreadCount is total across ALL categories (not filtered).
+
+**Mark read (6 tests)**:
+- 401 on unauthenticated.
+- 404 (IDOR-safe) when notification doesn't belong to caller.
+- Marks the notification as read (updateMany with readAt: now).
+- Scopes findFirst by userId (ownership check).
+- Audit-logs the read action.
+- No-op when already read (no update call).
+
+**Mark all read (5 tests)**:
+- 401 on unauthenticated.
+- Marks all unread as read (updateMany scoped by userId + readAt: null).
+- Returns the count of notifications marked.
+- Audit-logs the bulk read action.
+- Does NOT audit-log when count is 0 (no-op).
