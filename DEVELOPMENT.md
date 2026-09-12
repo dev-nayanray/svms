@@ -4803,3 +4803,123 @@ This is the most secure approach:
 - findFirst scoped by studentId (ownership check).
 - Student information included (firstName, lastName, email, studentId).
 - Linked application included.
+
+---
+
+## 61. Student Panel — Module 13: Student Messages (v2)
+
+**Routes**: `/student/messages` (inbox) + `/student/messages/[conversationId]`
+(chat) — mobile-app-style messaging between student and assigned
+counselor.
+
+**Goal**: Give the student a modern messaging experience with inbox
+(counselor avatar, name, latest message, timestamp, unread count) and
+full chat view (message bubbles, date separators, read receipts, sticky
+composer with optimistic send).
+
+### API surface
+
+Four new student-scoped endpoints, all guarded by `studentApiGuard()`.
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| GET | `/api/student/messages` | List the caller's conversations (inbox). Each includes counselor name, initials, latest message preview, timestamp, unread count. Scoped by `studentId`. |
+| GET | `/api/student/messages/[id]` | Full conversation with all messages. Marks counselor messages as read on access. IDOR-safe. Messages have `isMine` flag. |
+| POST | `/api/student/messages/[id]/messages` | Send a message. Body validated (1–5000 chars). Creates message, updates lastMessageAt, notifies counselor, audit-logs. IDOR-safe. |
+| PATCH | `/api/student/messages/[id]/read` | Mark all messages from the counselor as read. IDOR-safe. Returns count. |
+
+### Real-time architecture
+
+No WebSocket/Socket.io infrastructure is introduced. Instead, the UI
+uses TanStack Query's `refetchInterval` for clean polling:
+
+- **Inbox**: polls every 30 seconds (`refetchInterval: 30_000`) for
+  unread-count badge updates.
+- **Chat view**: polls every 5 seconds (`refetchInterval: 5_000`) for
+  near-real-time message delivery when the chat is active.
+
+This is simpler than WebSockets and doesn't require additional server
+infrastructure. The polling frequency is tuned to feel responsive
+without overwhelming the server.
+
+### Security model
+
+1. **Identity from session only** — `studentApiGuard()` resolves
+   `studentId` from the session.
+2. **IDOR-safe** — foreign `conversationId` returns 404 (NOT_FOUND,
+   never 403 — the existence of another student's conversation is
+   never confirmed). The query is scoped by `studentId`.
+3. **Students can only send messages to their own conversations** —
+   the service verifies `conversation.studentId === session studentId`
+   before creating a message.
+4. **No visibility field leaks** — the admin POST route has a
+   `visibility` field (INTERNAL/STUDENT), but the student route
+   doesn't accept it. Students can only send student-visible messages.
+5. **Internal fields stripped** — the service returns only
+   student-safe message fields (id, senderId, body, attachmentUrl,
+   readAt, createdAt, isMine). No `deletedAt`, `deletedBy`, or other
+   internal fields.
+
+### UI/UX
+
+**Inbox** (`components/student/messages/messages-view.tsx`):
+- Search bar (filters by counselor name or message content).
+- Conversation cards: counselor avatar (initials), name, latest
+  message preview, relative timestamp ("now", "5m", "2h", "yesterday",
+  "Sep 3"), unread badge (red, positioned on the avatar).
+- Auto-refreshes every 30 seconds.
+- States: loading skeleton, server error, offline, empty.
+
+**Chat view** (`components/student/messages/chat-view.tsx`):
+- Full-height chat (occupies the viewport below the app shell header).
+- Chat header: back button, counselor avatar, name, "Auto-refreshes
+  every 5s" hint.
+- Message bubbles: right-aligned for student (primary color), left-
+  aligned for counselor (card border). Each bubble shows body text,
+  time, and read receipts (✓ sent, ✓✓ read).
+- Date separators: "Today", "Yesterday", "MMM d, yyyy".
+- Sticky composer: [+ attach button (disabled placeholder), textarea
+  input, Send button]. Enter to send (Shift+Enter for newline). Send
+  button disabled when input is empty or sending.
+- Optimistic UI: message appears locally immediately on send; if the
+  API fails, the optimistic message is removed and the input text is
+  restored. On success, the temp message is replaced with the real one
+  (with proper id + readAt).
+- Auto-scroll to bottom on new messages.
+- Empty state: "Start the conversation" with guidance.
+- Offline indicator: "Offline — messages will be queued" above the
+  composer.
+- Polls every 5 seconds for new messages.
+
+### Tests
+
+`tests/student-messages.test.ts` (22 tests):
+
+**List (5 tests)**:
+- 401 on unauthenticated, 403 on non-STUDENT.
+- Returns conversations with counselor name + initials + unread count.
+- Scopes findMany by studentId from the session.
+- Includes latest message preview + timestamp.
+
+**Detail (5 tests)**:
+- 401 on unauthenticated.
+- 404 (IDOR-safe) when conversation doesn't belong to caller.
+- Returns conversation with all messages (isMine flag correct).
+- Marks counselor messages as read on access.
+- Scopes findFirst by studentId (ownership check).
+
+**Send (8 tests)**:
+- 401 on unauthenticated.
+- 404 (IDOR-safe) when conversation doesn't belong to caller.
+- Creates message with student as senderId.
+- Updates conversation lastMessageAt.
+- Notifies the counselor (NEW_MESSAGE notification).
+- Audit-logs the message send.
+- 422 when body is empty.
+- 422 when body is too long (>5000 chars).
+
+**Mark read (4 tests)**:
+- 401 on unauthenticated.
+- 404 (IDOR-safe) when conversation doesn't belong to caller.
+- Marks messages from the counselor as read.
+- Returns the count of messages marked.
