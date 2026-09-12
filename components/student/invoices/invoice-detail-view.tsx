@@ -317,7 +317,7 @@ export function InvoiceDetailView({ id }: { id: string }) {
       {/* Print-only footer (company info placeholder) */}
       <div className="hidden print:block">
         <div className="mt-8 border-t border-black pt-4 text-center text-xs text-gray-600">
-          <p className="font-semibold">SVMS Student Visa Management System</p>
+          <p className="font-semibold">Euroscope</p>
           <p>This is a system-generated invoice and does not require a signature.</p>
           <p>For questions about this invoice, contact your assigned counselor.</p>
         </div>

@@ -21,10 +21,19 @@ import { FAQ } from "@/components/marketing/faq";
  * see the full marketing experience with the hero, destinations,
  * problem/solution, journey timeline, features, product showcase,
  * trust, FAQ and final CTA.
+ *
+ * Pass `?preview=1` to bypass the redirect for authenticated users
+ * who want to preview the marketing homepage without logging out.
+ * Useful for admins checking the marketing site from their session.
  */
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ preview?: string }>;
+}) {
+  const { preview } = await searchParams;
   const session = await getSession();
-  if (session.user.role) {
+  if (session.user.role && preview !== "1") {
     const role = session.user.role;
     redirect(role === "ADMIN" ? "/admin" : role === "EMPLOYEE" ? "/employee" : "/student");
   }

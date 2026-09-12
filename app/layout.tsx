@@ -80,42 +80,58 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Pre-serialize the JSON-LD so we don't reconstruct it on every render
+  // (avoids potential hydration mismatches from object key ordering).
+  const orgJsonLd = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    name: APP_NAME,
+    url: APP_URL,
+    description: APP_DESCRIPTION,
+    slogan: APP_TAGLINE,
+    knowsAbout: [
+      "European university admissions",
+      "Student visa preparation",
+      "Study abroad Europe",
+      "Application management",
+      "Document management",
+    ],
+  });
+
   return (
     <html
       lang="en"
       className={`${inter.variable} ${sora.variable} h-full antialiased`}
+      // suppressHydrationWarning — browser extensions (Bitdefender,
+      // Grammarly, password managers) inject `bis_*`, `data-*`, `class`
+      // attributes into <html> and <body> AFTER server render but BEFORE
+      // React hydrates. This causes harmless but noisy hydration
+      // mismatch warnings in dev. The attribute tells React to skip
+      // attribute-diff checking on this element only (not children).
+      // This is the official React-recommended workaround:
+      // https://react.dev/reference/react-dom/components/common#suppressing-unavoidable-hydration-mismatch-warnings
       suppressHydrationWarning
     >
       <head>
+        {/* Theme bootstrap — runs before paint to avoid FOUC. */}
         <script
           dangerouslySetInnerHTML={{
             __html: `try{const t=localStorage.getItem('svms-theme');if(t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}`,
           }}
         />
-        {/* Structured data — Organization. Helps search engines understand
-            that Euroscope is an educational / visa services organization. */}
+        {/* Structured data — Organization. Helps search engines
+            understand that Euroscope is an educational organization.
+            suppressHydrationWarning because some browser extensions
+            (Bitdefender) replace JSON-LD scripts with their own. */}
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "EducationalOrganization",
-              name: APP_NAME,
-              url: APP_URL,
-              description: APP_DESCRIPTION,
-              slogan: APP_TAGLINE,
-              knowsAbout: [
-                "European university admissions",
-                "Student visa preparation",
-                "Study abroad Europe",
-                "Application management",
-                "Document management",
-              ],
-            }),
-          }}
+          dangerouslySetInnerHTML={{ __html: orgJsonLd }}
+          suppressHydrationWarning
         />
       </head>
-      <body className="min-h-full flex flex-col font-sans">
+      {/* suppressHydrationWarning on body — same reason as html.
+          Extensions add bis_register, __processed_* attributes here. */}
+      <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
         <a href="#main-content" className="skip-to-content">Skip to content</a>
         <Providers>{children}</Providers>
       </body>

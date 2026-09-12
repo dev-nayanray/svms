@@ -138,7 +138,7 @@ export const SETTING_SECTIONS: SettingSection[] = [
     description: "Email server configuration. Secrets are masked in the UI.",
     settings: [
       { key: "email_from", label: "From address", type: "text", placeholder: "noreply@example.com", defaultValue: "" },
-      { key: "email_from_name", label: "From name", type: "text", placeholder: "SVMS System", defaultValue: "" },
+      { key: "email_from_name", label: "From name", type: "text", placeholder: "Euroscope", defaultValue: "" },
       { key: "email_server_host", label: "SMTP host", type: "text", placeholder: "smtp.gmail.com", defaultValue: "" },
       { key: "email_server_port", label: "SMTP port", type: "number", placeholder: "587", defaultValue: 587 },
       { key: "email_server_user", label: "SMTP username", type: "text", placeholder: "user@example.com", defaultValue: "" },

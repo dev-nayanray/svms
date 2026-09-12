@@ -3,7 +3,7 @@ import { EMPLOYEE_NAV } from "@/config/navigation";
 
 export default async function EmployeeLayout({ children }: { children: React.ReactNode }) {
   return (
-    <RoleLayout allowedRoles={["ADMIN", "EMPLOYEE"]} items={EMPLOYEE_NAV} title="SVMS Workspace">
+    <RoleLayout allowedRoles={["ADMIN", "EMPLOYEE"]} items={EMPLOYEE_NAV} title="Euroscope Workspace">
       {children}
     </RoleLayout>
   );

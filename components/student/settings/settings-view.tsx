@@ -328,7 +328,7 @@ export function SettingsView() {
 
       {/* App version */}
       <p className="text-center text-[11px] text-muted-foreground">
-        SVMS Student Portal · v0.1.0
+        Euroscope · v0.1.0
       </p>
 
       {/* Refresh + offline */}

@@ -41,7 +41,7 @@ async function main() {
     where: { email: "admin@example.com" },
     update: {},
     create: {
-      name: "SVMS Admin", email: "admin@example.com", passwordHash: adminHash,
+      name: "Euroscope Admin", email: "admin@example.com", passwordHash: adminHash,
       roleName: "ADMIN", status: "ACTIVE", branchId: branch.id, emailVerifiedAt: new Date(),
     },
   });

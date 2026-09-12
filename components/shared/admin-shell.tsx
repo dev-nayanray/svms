@@ -22,6 +22,7 @@ import {
   Bell,
   ChevronsLeft,
   ChevronsRight,
+  ExternalLink,
   LogOut,
   Menu,
   Search,
@@ -168,7 +169,7 @@ export function AdminShell({
           </span>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="truncate text-sm font-bold tracking-tight">SVMS</p>
+              <p className="truncate text-sm font-bold tracking-tight">Euroscope</p>
               <p className="truncate text-[10px] text-muted-foreground">Admin Console</p>
             </div>
           )}
@@ -206,7 +207,7 @@ export function AdminShell({
                 SV
               </span>
               <div>
-                <p className="text-sm font-bold">SVMS</p>
+                <p className="text-sm font-bold">Euroscope</p>
                 <p className="text-[10px] text-muted-foreground">Admin Console</p>
               </div>
             </div>
@@ -264,6 +265,22 @@ export function AdminShell({
               </kbd>
             </button>
 
+            {/* View marketing site — opens the public Euroscope
+                marketing site in a new tab. The ?preview=1 param
+                bypasses the authenticated-user redirect so admins
+                can see the full marketing homepage with the hero. */}
+            <Link
+              href="/?preview=1"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden h-9 items-center gap-1.5 rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted sm:flex"
+              aria-label="View marketing site (opens in new tab)"
+              title="View marketing site"
+            >
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+              <span className="hidden lg:inline">View Site</span>
+            </Link>
+
             {/* Theme toggle */}
             <Button
               variant="ghost"
@@ -311,6 +328,11 @@ export function AdminShell({
                 </div>
                 <DropdownMenuItem onSelect={() => router.push("/admin/settings")}>
                   <Settings className="h-4 w-4" aria-hidden /> Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => window.open("/?preview=1", "_blank", "noopener,noreferrer")}
+                >
+                  <ExternalLink className="h-4 w-4" aria-hidden /> View Marketing Site
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => signOut({ callbackUrl: "/login" })}
