@@ -663,7 +663,7 @@ export const supportRequestSchema = z.object({
     "PAYMENTS", "APPOINTMENTS", "ACCOUNT", "OTHER",
   ]),
   description: z.string().min(10, "Description must be at least 10 characters").max(5000, "Description too long"),
-  attachmentUrl: z.string().max(500).optional(),
+  attachmentUrl: z.string().url("Must be a valid URL").refine(u => /^https?:\/\//.test(u), "Must be http(s) URL").optional().or(z.literal("")),
   attachmentName: z.string().max(255).optional(),
 });
 

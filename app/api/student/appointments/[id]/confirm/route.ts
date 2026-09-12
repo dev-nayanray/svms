@@ -24,7 +24,7 @@ export async function POST(_req: NextRequest, { params }: Ctx) {
     if (!g.ok) return g.error;
 
     const { id } = await params;
-    const appointment = await studentAppointmentService.confirm(g.student.id, id);
+    const appointment = await studentAppointmentService.confirm(g.student.id, id, g.userId);
     return ok({ appointment });
   } catch (err) {
     return handleApiError(err);

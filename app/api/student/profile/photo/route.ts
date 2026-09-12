@@ -25,11 +25,11 @@ const EXT_BY_MIME: Record<string, string> = {
 /** Hard cap on photo size — 5 MiB. */
 const MAX_SIZE = 5 * 1024 * 1024;
 
-/** Public base path where photos are served from /public/uploads/profile-photos/. */
-const UPLOAD_DIR = join(process.cwd(), "public", "uploads", "profile-photos");
+/** Private base path where photos are stored — NOT under /public/. */
+const UPLOAD_DIR = join(process.cwd(), "private-uploads", "profile-photos");
 
-/** Public URL prefix matching the upload dir. */
-const UPLOAD_URL_PREFIX = "/uploads/profile-photos";
+/** Private URL prefix — distinguishes from legacy public URLs. */
+const UPLOAD_URL_PREFIX = "private:";
 
 /**
  * POST /api/student/profile/photo (multipart/form-data with field `file`)
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     await writeFile(filePath, bytes);
 
     // Commit the URL to the student record.
-    const fileUrl = `${UPLOAD_URL_PREFIX}/${g.student.id}/${fileName}`;
+    const fileUrl = `${UPLOAD_URL_PREFIX}${g.student.id}/${fileName}`;
     const previous = g.student.profilePhotoUrl;
     const updated = await studentProfileService.setProfilePhoto(g.student, fileUrl, g.userId);
 
@@ -99,7 +99,10 @@ export async function POST(req: NextRequest) {
     // updated; orphan files are a janitorial problem, not a user-visible
     // failure.
     if (previous && previous.startsWith(UPLOAD_URL_PREFIX) && previous !== fileUrl) {
-      const oldPath = join(process.cwd(), "public", previous.slice(1));
+      const oldRelPath = previous.slice(UPLOAD_URL_PREFIX.length);
+      const oldPath = join(UPLOAD_DIR, oldRelPath);
+      // Path containment check — prevent traversal
+      if (!oldPath.startsWith(UPLOAD_DIR)) return ok(studentProfileService.toView(updated), { status: 201 });
       try {
         await stat(oldPath);
         await unlink(oldPath);
@@ -129,12 +132,16 @@ export async function DELETE() {
     const updated = await studentProfileService.removeProfilePhoto(g.student, g.userId);
 
     if (previous && previous.startsWith(UPLOAD_URL_PREFIX)) {
-      const oldPath = join(process.cwd(), "public", previous.slice(1));
-      try {
-        await stat(oldPath);
-        await unlink(oldPath);
-      } catch {
-        // best-effort
+      const oldRelPath = previous.slice(UPLOAD_URL_PREFIX.length);
+      const oldPath = join(UPLOAD_DIR, oldRelPath);
+      // Path containment check — prevent traversal
+      if (oldPath.startsWith(UPLOAD_DIR)) {
+        try {
+          await stat(oldPath);
+          await unlink(oldPath);
+        } catch {
+          // best-effort
+        }
       }
     }
 

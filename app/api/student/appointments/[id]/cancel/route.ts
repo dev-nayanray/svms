@@ -35,6 +35,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
       g.student.id,
       id,
       body.cancelReason,
+      g.userId,
     );
     return ok({ appointment });
   } catch (err) {

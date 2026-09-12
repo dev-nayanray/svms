@@ -447,7 +447,7 @@ export const studentApplicationService = {
    * (`where: { visibility: "STUDENT" }`) so they never reach the
    * student-safe view builder.
    */
-  async getById(studentId: string, applicationId: string) {
+  async getById(studentId: string, applicationId: string, userId?: string) {
     const [row, stages] = await Promise.all([
       prisma.application.findFirst({
         where: { id: applicationId, studentId, deletedAt: null },
@@ -499,7 +499,7 @@ export const studentApplicationService = {
       // Best-effort: don't block the read if audit fails.
       auditLog
         .record({
-          userId: undefined, // resolved by the route layer if needed; here we just mark the entity
+          userId: userId, // the caller's userId (from session) — H4 fix
           action: "student_application.viewed",
           entity: "Application",
           entityId: row.id,

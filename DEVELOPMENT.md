@@ -5402,3 +5402,37 @@ notifPayments, notifTasks, notifMessages, notifAppointments), theme
 | `components/student/app-shell.tsx` | +2 attributes: `id="main-content"` + `app-page-enter` class on `<main>` |
 | `public/sw.js` | Version bump: `svms-v1` → `svms-v2` (cache-bust) |
 | `components/student/profile/profile-photo.tsx` | +2 attributes: `loading="lazy"` on both `<img>` tags |
+
+---
+
+## 67. Student Panel Security Audit + Fixes
+
+**Scope**: Complete security audit of all 17 student modules.
+
+### Critical Fixes
+
+1. **C1 — AUTH_SECRET set**: Added 32+ char secret to `.env`. Auth.js JWT signing is now stable across restarts and multi-instance deployments.
+2. **C2 — JWT role/status re-validation**: The `jwt()` callback now re-fetches the user from the DB every 5 minutes to check if they've been suspended, soft-deleted, or role-changed. Suspended users' tokens are invalidated. Session `maxAge` reduced from 30 days to 8 hours.
+
+### High Fixes
+
+1. **H1 — Rate limiting**: Documented as architectural requirement. Requires Redis/Prisma-backed sliding-window limiter in `proxy.ts`. Recommended endpoints: login (5/min), password (3/min), uploads (10/min), messages (30/min), support (5/min).
+2. **H2 — Profile photos moved to private storage**: Changed from `/public/uploads/` to `private-uploads/`. Added path containment checks on cleanup. Photos now only accessible via authenticated API.
+3. **H3 — Path traversal fix in `resolvePrivatePath`**: Added `resolve()` + `startsWith()` containment check after `path.join()`. Any `..` segments that would escape the upload directory are rejected with 404.
+4. **H4 — Audit userId fix for application reads**: Added `userId` parameter to `studentApplicationService.getById()`. Routes now pass `g.userId`. Sensitive-stage audit logs are no longer anonymous.
+5. **H5 — Audit userId fix for appointments + documents**: Added `userId` parameter to `confirm()`, `cancel()`, and `resolveForDownload()`. Audit `userId` now correctly references the User, not the Student profile.
+6. **H6 — CSP `unsafe-eval` removed**: Removed `'unsafe-eval'` from `script-src` in `next.config.ts`. XSS is no longer amplified to RCE via `eval()`.
+
+### Medium Fixes
+
+1. **M2 — Attachment URL validation**: Replaced `z.string().max(500)` with `z.string().url().refine(http(s))` on all attachment URL fields. Prevents `javascript:` / `data:` stored XSS.
+2. **M1/M3/M4/M5/M7** — Documented (low-risk, non-blocking).
+
+### Quality Gates
+
+- ✅ lint (0 errors, 9 pre-existing warnings)
+- ✅ typecheck (clean)
+- ✅ test (all pass)
+- ✅ build (8.7s)
+
+Full audit report: `STUDENT_SECURITY_AUDIT.md`

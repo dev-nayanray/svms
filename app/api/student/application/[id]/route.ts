@@ -31,7 +31,7 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
     if (!g.ok) return g.error;
 
     const { id } = await params;
-    const view = await studentApplicationService.getById(g.student.id, id);
+    const view = await studentApplicationService.getById(g.student.id, id, g.userId);
     if (!view) {
       return fail("NOT_FOUND", "Application not found", 404);
     }

@@ -42,7 +42,7 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
     if (!g.ok) return g.error;
 
     const { id } = await params;
-    const resolved = await studentDocumentService.resolveForDownload(g.student.id, id);
+    const resolved = await studentDocumentService.resolveForDownload(g.student.id, id, g.userId);
     if (!resolved) {
       return fail("NOT_FOUND", "Document not found or file is missing", 404);
     }

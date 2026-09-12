@@ -12,7 +12,7 @@ import {
 } from "@/lib/constants/documents";
 import { createHash } from "node:crypto";
 import { mkdir, writeFile, stat, unlink } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 import { createReadStream } from "node:fs";
 import type { ReadStream } from "node:fs";
 import type { Document as PrismaDocument } from "@prisma/client";
@@ -261,7 +261,15 @@ export const studentDocumentService = {
       throw new HttpError(404, "NOT_FOUND", "File is not available for download");
     }
     const relPath = fileUrl.slice(PRIVATE_URL_PREFIX.length);
-    return join(PRIVATE_UPLOAD_DIR, relPath);
+    const filePath = join(PRIVATE_UPLOAD_DIR, relPath);
+    // Path containment check — prevent path traversal (H3 fix).
+    // After join, the resolved path must start with UPLOAD_DIR.
+    // This catches any ".." segments that could escape the upload directory.
+    const resolved = resolve(filePath);
+    if (!resolved.startsWith(PRIVATE_UPLOAD_DIR + sep) && resolved !== PRIVATE_UPLOAD_DIR) {
+      throw new HttpError(404, "NOT_FOUND", "File is not available for download");
+    }
+    return resolved;
   },
 
   /**
@@ -427,7 +435,7 @@ export const studentDocumentService = {
    * Returns null when the document doesn't exist or doesn't belong
    * to the caller. The route 404s in that case.
    */
-  async resolveForDownload(studentId: string, documentId: string): Promise<{
+  async resolveForDownload(studentId: string, documentId: string, userId?: string): Promise<{
     filePath: string;
     fileName: string;
     mimeType: string;
@@ -475,7 +483,7 @@ export const studentDocumentService = {
     // audit log write fails.
     auditLog
       .record({
-        userId: studentId,
+        userId: userId ?? undefined, // H5 fix — use session userId
         action: "student_document.downloaded",
         entity: "Document",
         entityId: documentId,

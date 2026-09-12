@@ -39,7 +39,7 @@ import { z } from "zod";
 
 const sendMessageSchema = z.object({
   body: z.string().min(1, "Message body is required").max(5000, "Message too long"),
-  attachmentUrl: z.string().max(500).optional(),
+  attachmentUrl: z.string().url("Must be a valid URL").refine(u => /^https?:\/\//.test(u), "Must be http(s) URL").optional().or(z.literal("")),
 });
 
 export type ConversationSummary = {

@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     const requestedId = sp.get("id");
 
     if (requestedId) {
-      const view = await studentApplicationService.getById(g.student.id, requestedId);
+      const view = await studentApplicationService.getById(g.student.id, requestedId, g.userId);
       if (!view) {
         // Foreign/missing records both 404 — never confirm another
         // student's application exists.

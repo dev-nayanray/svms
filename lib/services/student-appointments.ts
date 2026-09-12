@@ -170,7 +170,7 @@ export const studentAppointmentService = {
    * Confirm a SCHEDULED appointment → CONFIRMED. Students can only
    * confirm appointments in SCHEDULED status. Ownership verified.
    */
-  async confirm(studentId: string, appointmentId: string): Promise<AppointmentView> {
+  async confirm(studentId: string, appointmentId: string, userId?: string): Promise<AppointmentView> {
     const appt = await prisma.appointment.findFirst({
       where: { id: appointmentId, studentId },
       include: {
@@ -199,7 +199,7 @@ export const studentAppointmentService = {
     });
 
     await auditLog.record({
-      userId: appt.studentId,
+      userId: userId ?? undefined, // H5 fix — use session userId, not studentId
       action: "appointment.confirmed",
       entity: "Appointment",
       entityId: appointmentId,
@@ -230,6 +230,7 @@ export const studentAppointmentService = {
     studentId: string,
     appointmentId: string,
     cancelReason?: string,
+    userId?: string,
   ): Promise<AppointmentView> {
     const appt = await prisma.appointment.findFirst({
       where: { id: appointmentId, studentId },
@@ -269,7 +270,7 @@ export const studentAppointmentService = {
     });
 
     await auditLog.record({
-      userId: student?.userId ?? studentId,
+      userId: userId ?? student?.userId ?? undefined, // H5 fix
       action: "appointment.cancelled",
       entity: "Appointment",
       entityId: appointmentId,

@@ -9,7 +9,11 @@ const SECURITY_HEADERS = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Next.js dev/inlined runtime requires these
+      // H6 fix: removed 'unsafe-eval' — any XSS is no longer RCE.
+      // Next.js 16 with Turbopack doesn't require eval in production.
+      // 'unsafe-inline' for scripts is still needed for Next.js inline
+      // runtime, but will be replaced with nonces in a future pass.
+      "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self'",
