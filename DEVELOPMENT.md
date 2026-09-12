@@ -5249,3 +5249,156 @@ notifPayments, notifTasks, notifMessages, notifAppointments), theme
 - Changes password when correct.
 - Audit-logged.
 - Never exposes passwordHash in response.
+
+---
+
+## 66. Mobile + PWA Optimization Pass (Final Polish)
+
+**Scope**: Non-breaking optimization pass across all 17 student modules. No features rebuilt — only CSS, accessibility, performance, and PWA polish.
+
+### 1. Mobile CSS Foundation (globals.css)
+
+**Added:**
+- `-webkit-text-size-adjust: 100%` — prevents iOS orientation-change zoom
+- `-webkit-tap-highlight-color: transparent` — removes gray tap highlight on mobile
+- `overscroll-behavior-y: none` on html + body — prevents pull-to-refresh interfering with in-app scrolling
+- `-webkit-user-select: none` on body — prevents accidental text selection on UI controls
+- Re-enabled `user-select: text` for `input`, `textarea`, `[contenteditable]`, `select`
+- `@media (pointer: coarse)` — enforces 44px minimum touch targets on all interactive elements (buttons, links, switches, checkboxes) with exemptions for inline links
+- `@media (pointer: coarse)` — hides scrollbars on touch devices (native momentum scrolling)
+- `@media (hover: hover)` — shows scrollbars only on devices with hover (desktop)
+- `@media (max-width: 768px)` — forces 16px font size on inputs to prevent iOS input zoom
+- `.skip-to-content` — accessible skip link for keyboard/screen reader users
+- `.app-page-enter` — subtle fadeInUp animation (0.2s ease-out) on page content, disabled with `prefers-reduced-motion: reduce`
+- `scroll-behavior: smooth` on html, disabled with `prefers-reduced-motion`
+- Safe area utility classes: `.pt-safe`, `.pb-safe`, `.pl-safe`, `.pr-safe`
+- Improved `prefers-reduced-motion` — also disables `scroll-behavior: smooth`
+
+**Verified existing:**
+- Theme system: `localStorage('svms-theme')` + `.dark` class on `documentElement` — works correctly
+- Focus ring: `*:focus-visible` with 2px outline + 2px offset — consistent across all elements
+- Color contrast: semantic CSS variables (--foreground, --muted-foreground, --primary, --destructive, --success, --warning, --info) — WCAG AA compliant
+
+### 2. App-Like Experience (app-shell.tsx + layout.tsx)
+
+**Added:**
+- `id="main-content"` on `<main>` — anchors the skip-to-content link
+- `.app-page-enter` class on `<main>` — subtle page-load animation
+- Skip-to-content link (`<a href="#main-content" class="skip-to-content">`) in root layout — visible on focus, hidden otherwise
+
+**Verified existing:**
+- Mobile header: sticky top, 14px height, safe-area top padding, back button, page title, notification bell with badge, profile avatar
+- Bottom navigation: fixed, 56px rows, safe-area bottom padding, active indicator + unread badge, 4 primary tabs + "More" bottom sheet
+- Desktop: compact left sidebar (w-56), bottom nav hidden on md+
+- All touch targets ≥ 44px (enforced by CSS + existing component sizes)
+
+### 3. PWA Verification
+
+**Manifest (app/manifest.ts):**
+- ✅ `display: standalone` — opens without browser chrome
+- ✅ `orientation: portrait` — locks to portrait on mobile
+- ✅ `start_url: /student` — deep-links to the student portal
+- ✅ Icons: 192px, 512px, maskable 512px (all purposes covered)
+- ✅ `theme_color` + `background_color` from app constants
+- ✅ Categories: education, productivity
+
+**Service Worker (public/sw.js):**
+- ✅ Version bumped to `svms-v2` (cache-bust on update)
+- ✅ Never intercepts `/api/*` or `/login` — student data never cached
+- ✅ Never intercepts POST/PUT/DELETE — only GET
+- ✅ Static assets (`/_next/static/`, icons, CSS, JS, SVG, PNG, WOFF2) — cache-first
+- ✅ Navigations — network-first with `/offline` fallback
+- ✅ `skipWaiting()` on install — activates immediately
+- ✅ Old caches deleted on activate — no stale data
+
+**Install Experience (components/pwa/install-prompt.tsx):**
+- ✅ Non-intrusive — only shows when not already installed + not dismissed (14-day cooldown)
+- ✅ Android Chrome: captures `beforeinstallprompt`, native install dialog
+- ✅ iOS Safari: platform-specific instructions (Share → Add to Home Screen)
+- ✅ Other browsers: generic instructions (browser menu → Install app)
+- ✅ Never forces installation — dismiss button always available
+- ✅ Position: bottom on mobile (above bottom nav), bottom-right on desktop
+
+**Offline (components/pwa/offline-banner.tsx + app/offline/page.tsx):**
+- ✅ Offline banner: sticky top, warning color, retry button, `role="status"` + `aria-live="polite"`
+- ✅ Offline page: clean card with WifiOff icon + "Try again" link
+- ✅ No sensitive data cached — service worker never caches API responses or authenticated HTML
+
+### 4. Performance
+
+**Images:**
+- ✅ All `<img>` tags have `loading="lazy"` — deferred loading until viewport
+- ✅ University logos: `loading="lazy"` (already set in existing code)
+- ✅ Profile photos: `loading="lazy"` (added in this pass)
+
+**Fonts:**
+- ✅ System font stack (`ui-sans-serif, system-ui, -apple-system, ...`) — no web font downloads
+- ✅ `font-feature-settings: "cv11", "ss01"` — OpenType features for rendering quality
+- ✅ `-webkit-font-smoothing: antialiased` — sub-pixel rendering on macOS
+
+**JavaScript Bundle:**
+- ✅ No heavy client-side libraries added (no charting, no animation frameworks)
+- ✅ TanStack Query for server state — dedupes + caches API calls
+- ✅ Polling intervals tuned: inbox 30s, chat 5s, notifications 30s, appointments 60s — no excessive refetches
+
+**API Calls:**
+- ✅ All student routes use `studentApiGuard` — single session lookup, no N+1
+- ✅ Services use `Promise.all` for parallel queries (e.g., invoices + payments in summary)
+- ✅ `staleTime` set on all queries — prevents unnecessary refetches within the stale window
+
+### 5. Accessibility
+
+**Keyboard Navigation:**
+- ✅ Skip-to-content link — Tab once → Enter → jumps to main content
+- ✅ All interactive elements have `focus-visible` outline (2px solid ring)
+- ✅ Bottom navigation: `aria-label="Primary"` + `aria-current="page"` on active tab
+- ✅ Bottom sheet (More): `aria-haspopup="dialog"` + `aria-expanded`
+
+**Screen Reader:**
+- ✅ Semantic HTML: `<main>`, `<header>`, `<nav>`, `<aside>`, `<article>` where appropriate
+- ✅ `sr-only` class available for screen-reader-only content
+- ✅ `aria-label` on all icon-only buttons (back, close, notification, profile)
+- ✅ `role="progressbar"` + `aria-valuenow/min/max` on all progress bars
+- ✅ `role="status"` + `aria-live="polite"` on offline banner
+- ✅ `aria-expanded` on all expandable sections (accordions, bottom sheets)
+- ✅ `aria-pressed` on toggle switches and filter tabs
+
+**Contrast:**
+- ✅ Light theme: `--foreground: #18181b` on `--background: #fafafa` — ratio ~17:1 (WCAG AAA)
+- ✅ Dark theme: `--foreground: #fafafa` on `--background: #09090b` — ratio ~18:1 (WCAG AAA)
+- ✅ Muted text: `#71717a` on `#fafafa` — ratio ~5:1 (WCAG AA for normal text)
+- ✅ Primary (indigo): sufficient contrast on both light and dark backgrounds
+
+**Touch Targets:**
+- ✅ CSS enforcement: `@media (pointer: coarse)` sets `min-height: 44px; min-width: 44px` on all interactive elements
+- ✅ Exemptions for inline links within text content
+- ✅ Bottom nav rows: 56px (exceeds 44px minimum)
+- ✅ All buttons in student components: ≥ 40px (most ≥ 44px)
+
+**Reduced Motion:**
+- ✅ `@media (prefers-reduced-motion: reduce)` — disables all animations, transitions, and smooth scrolling
+- ✅ `.app-page-enter` animation disabled under reduced motion
+- ✅ Existing `motion-reduce:transition-none` classes in components
+
+### 6. Responsive Layout Verification
+
+**Breakpoints tested (via CSS audit):**
+- **320px** (iPhone SE): bottom nav 4 tabs + More fit (flex-1 each), cards stack 1-col, search bar full-width, accordions expand/collapse, no horizontal overflow
+- **375px** (iPhone 13): same as 320px with more breathing room, 2-col date cards grid fits
+- **390px** (iPhone 14 Pro): same pattern, filter chips scroll horizontally
+- **414px** (iPhone 14 Pro Max): same, slightly wider cards
+- **768px** (iPad): bottom nav hides, desktop sidebar appears (w-56), cards stay 1-col (sm: breakpoint is 640px, so 768px = md: → 2-col grids where used)
+- **1024px** (iPad Pro): desktop layout, sidebar + main content, multi-column card grids
+- **1440px+** (Desktop): max-width constraints on sheet/drawer widths, content doesn't stretch absurdly
+
+**No overflow issues found** — all student views use `min-w-0` + `truncate` patterns, `overflow-x-auto` on horizontal chip rows, and `flex-1` distribution.
+
+### 7. Files Changed
+
+| File | Change |
+| ---- | ------ |
+| `app/globals.css` | +90 lines: app-like foundation (tap highlight, overscroll, touch targets, scrollbar, skip link, page transitions, input zoom, safe areas, reduced motion) |
+| `app/layout.tsx` | +1 line: skip-to-content link |
+| `components/student/app-shell.tsx` | +2 attributes: `id="main-content"` + `app-page-enter` class on `<main>` |
+| `public/sw.js` | Version bump: `svms-v1` → `svms-v2` (cache-bust) |
+| `components/student/profile/profile-photo.tsx` | +2 attributes: `loading="lazy"` on both `<img>` tags |

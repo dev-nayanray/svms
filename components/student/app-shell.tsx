@@ -132,7 +132,7 @@ export function StudentAppShell({
           <DesktopNav pathname={pathname} unread={unread} onSignOut={() => signOut({ callbackUrl: "/login" })} />
         </aside>
 
-        <main className="min-w-0 flex-1 px-4 py-4 md:p-6">{children}</main>
+        <main id="main-content" className="app-page-enter min-w-0 flex-1 px-4 py-4 md:p-6">{children}</main>
       </div>
 
       {/* Mobile bottom navigation */}

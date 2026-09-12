@@ -127,7 +127,7 @@ export function ProfilePhoto({
       >
         {displayedUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={displayedUrl} alt="Profile photo" className="h-full w-full object-cover" />
+          <img src={displayedUrl} alt="Profile photo" className="h-full w-full object-cover" loading="lazy" />
         ) : (
           <span className="grid h-full w-full place-items-center bg-primary/10 text-2xl font-bold text-primary">
             {initials}
@@ -220,7 +220,7 @@ export function ProfileAvatar({
     .toUpperCase();
   if (photoUrl) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={photoUrl} alt={name} className={cn("rounded-full object-cover", sizes[size])} />;
+    return <img src={photoUrl} alt={name} loading="lazy" className={cn("rounded-full object-cover", sizes[size])} />;
   }
   return (
     <span

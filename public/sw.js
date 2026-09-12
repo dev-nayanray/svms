@@ -9,7 +9,7 @@
  *  - Cache only build-hashed static assets (_next/static), icons, and the
  *    offline page — all safe, non-sensitive resources.
  */
-const VERSION = "svms-v1";
+const VERSION = "svms-v2";
 const STATIC_CACHE = `${VERSION}-static`;
 const OFFLINE_URL = "/offline";
 

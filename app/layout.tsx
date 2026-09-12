@@ -39,6 +39,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body className="min-h-full flex flex-col font-sans">
+        <a href="#main-content" className="skip-to-content">Skip to content</a>
         <Providers>{children}</Providers>
       </body>
     </html>
