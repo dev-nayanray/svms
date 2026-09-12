@@ -651,3 +651,18 @@ export const studentDocumentUploadSchema = z.object({
  * the "history" link on the new document.
  */
 export const studentDocumentReplaceSchema = studentDocumentUploadSchema;
+
+// ─────────────────────────────────────────────
+// Support Requests (Module 16 — Help & Support)
+// ─────────────────────────────────────────────
+
+export const supportRequestSchema = z.object({
+  subject: z.string().min(3, "Subject must be at least 3 characters").max(200, "Subject too long"),
+  category: z.enum([
+    "APPLICATION", "DOCUMENTS", "UNIVERSITY", "VISA",
+    "PAYMENTS", "APPOINTMENTS", "ACCOUNT", "OTHER",
+  ]),
+  description: z.string().min(10, "Description must be at least 10 characters").max(5000, "Description too long"),
+  attachmentUrl: z.string().max(500).optional(),
+  attachmentName: z.string().max(255).optional(),
+});

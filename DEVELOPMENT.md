@@ -5080,3 +5080,91 @@ SCHEDULED→CONFIRMED, 409 on non-SCHEDULED, audit-logged, counselor
 notified), cancel (401, IDOR-safe 404, SCHEDULED/CONFIRMED→CANCELLED,
 409 on COMPLETED/CANCELLED, audit-logged, counselor notified, optional
 reason).
+
+---
+
+## 64. Student Panel — Module 16: Help & Support (v2)
+
+**Route**: `/student/support` — help center with searchable FAQ,
+support request submission, and ticket tracking.
+
+### Prisma schema addition
+
+New `SupportRequest` model with: studentId, subject, category,
+description, attachmentUrl, attachmentName, status (OPEN | IN_PROGRESS |
+RESOLVED | CLOSED), priority (LOW | MEDIUM | HIGH | URGENT), response,
+respondedAt, respondedById. Relation to Student. 3 indexes.
+
+### API surface
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| GET | `/api/student/support?status=<status>` | List caller's support requests. Optional status filter. Scoped by studentId. |
+| POST | `/api/student/support` | Submit a new request. Body validated by `supportRequestSchema` (subject 3-200, category enum, description 10-5000, optional attachment). studentId from session. |
+| GET | `/api/student/support/[id]` | Detail. IDOR-safe. |
+| GET | `/api/student/support/faq?search=<search>&category=<category>` | Static FAQ items. Search + category filter. |
+
+### FAQ architecture
+
+17 FAQ items across 7 categories (Application, Documents, University,
+Visa, Payments, Appointments, Account). Defined as a static constant
+in `lib/constants/support.ts` — no DB table needed. If the FAQ ever
+needs to be admin-managed, this constant can be migrated to a DB-backed
+model with no UI changes (the API route would just fetch from DB).
+
+### Ticket statuses
+
+- OPEN (student submitted, awaiting response)
+- IN_PROGRESS (admin is working on it)
+- RESOLVED (admin responded, issue resolved)
+- CLOSED (ticket closed, no further action)
+
+Students can only submit and view — they cannot update, resolve, or
+close tickets (admin only).
+
+### UI/UX
+
+- **Help cards grid** — 6 large tap targets: Application Help, Document
+  Help, Visa Help, Payment Help, Contact Counselor, Appointments.
+- **Tab switcher** — FAQ / My Tickets (with unread badge count).
+- **FAQ tab** — search bar + category filter chips (7 categories +
+  All). Expandable FAQ cards with question + answer.
+- **Tickets tab** — list of support requests with status badges
+  (Open=warning, In Progress=info, Resolved=success, Closed=default).
+  Expandable ticket cards showing description, attachment, and admin
+  response. "New Request" button → bottom-sheet form.
+- **Form** — subject (3-200 chars), category dropdown (8 options),
+  description (10-5000 chars with char counter). Submit button
+  disabled until valid. Toast on success/failure.
+- States: loading skeleton, error, offline, empty.
+
+### Tests
+
+`tests/student-support.test.ts` (22 tests):
+
+**List (6 tests)**:
+- 401 on unauthenticated, 403 on non-STUDENT.
+- Returns caller's requests scoped by studentId.
+- Supports ?status=OPEN filter.
+- Internal fields stripped (studentId, respondedById).
+
+**Create (7 tests)**:
+- 401 on unauthenticated.
+- 422 on subject too short (<3 chars).
+- 422 on description too short (<10 chars).
+- 422 on invalid category.
+- Creates with studentId from session (not body).
+- Audit-logged.
+
+**Detail (4 tests)**:
+- 401 on unauthenticated.
+- 404 (IDOR-safe) when request doesn't belong to caller.
+- Full detail returned.
+- Ownership check (findFirst scoped by studentId).
+
+**FAQ (5 tests)**:
+- 401 on unauthenticated.
+- Returns all items when no filter.
+- Supports ?category=Documents filter.
+- Supports ?search=upload filter.
+- Returns empty array on no match.
