@@ -5,30 +5,36 @@ import { CTASection } from "@/components/marketing/sections";
 import { APP_NAME } from "@/lib/constants/app";
 
 export const metadata: Metadata = {
-  title: "About Euroscope — Our Mission for European Education",
+  title: "About Euroscope — European Education Consultancy",
   description:
-    "Euroscope is a European education and student visa management platform. Learn about our mission, what we stand for and who we serve.",
+    "Euroscope is a European education consultancy. Learn about our mission, our counselors and how we help students study in Europe.",
 };
 
 export default function AboutPage() {
   return (
     <>
       <Section tone="dark" className="relative overflow-hidden">
-        <div className="absolute inset-0 euroscope-grid-bg opacity-30" aria-hidden />
+        <div className="absolute inset-0" aria-hidden>
+          <div
+            className="absolute -top-40 left-1/2 h-[600px] w-[800px] -translate-x-1/2 rounded-full opacity-35 blur-[120px]"
+            style={{ background: "radial-gradient(circle, #1e40af 0%, transparent 60%)" }}
+          />
+          <div className="absolute inset-0 euroscope-grid-bg opacity-20" />
+        </div>
         <Container className="relative">
           <div className="mx-auto max-w-3xl text-center">
             <MarketingReveal>
               <Eyebrow tone="accent" className="justify-center">About {APP_NAME}</Eyebrow>
             </MarketingReveal>
             <MarketingReveal delay={80}>
-              <h1 className="mt-5 font-display text-4xl font-bold tracking-tight text-white sm:text-5xl">
-                We make the European study journey manageable
+              <h1 className="mt-5 font-display text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
+                We make the European dream achievable
               </h1>
             </MarketingReveal>
             <MarketingReveal delay={160}>
-              <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/70">
-                {APP_NAME} is built around one belief: that every student deserves a clear,
-                organized path to European education — not a maze of paperwork and uncertainty.
+              <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/70 md:text-lg">
+                {APP_NAME} is a European education consultancy built on one belief:
+                that every student deserves personal guidance — not a faceless portal.
               </p>
             </MarketingReveal>
           </div>
@@ -40,23 +46,31 @@ export default function AboutPage() {
           <div className="mx-auto max-w-3xl euroscope-prose">
             <MarketingReveal>
               <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-                Our mission
+                Our story
               </h2>
             </MarketingReveal>
             <MarketingReveal delay={80}>
               <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-                {APP_NAME} exists to remove the friction from European education. For too long,
-                students have struggled with scattered information, complicated application
-                processes and unclear visa requirements. We bring the entire journey — discovery,
-                counselling, application, document management, visa preparation and travel — into
-                one organized, transparent platform.
+                {APP_NAME} started with a simple observation: students trying to
+                study in Europe face a maze of information, deadlines and
+                requirements — and most agencies treat them as numbers, not people.
+                We set out to do things differently.
               </p>
             </MarketingReveal>
             <MarketingReveal delay={160}>
               <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-                We don&apos;t promise guaranteed visas or fake success rates. We promise a
-                well-organized process, transparent communication and a real product that helps
-                students, counselors and education consultancies work together effectively.
+                We&apos;re a consultancy, not a software company. Yes, we use
+                technology to keep things organized — but the heart of what we do
+                is personal counseling. When you work with us, you get a dedicated
+                counselor who knows your case, understands your goals and walks
+                with you from the first consultation to your arrival in Europe.
+              </p>
+            </MarketingReveal>
+            <MarketingReveal delay={240}>
+              <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+                We don&apos;t promise guaranteed visas or fake success rates. We
+                promise honest guidance, a transparent process and a counselor who
+                genuinely cares about getting you to Europe the right way.
               </p>
             </MarketingReveal>
           </div>
@@ -65,24 +79,34 @@ export default function AboutPage() {
 
       <Section tone="muted">
         <Container>
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="mx-auto max-w-2xl text-center">
+            <MarketingReveal>
+              <Eyebrow className="justify-center">What We Stand For</Eyebrow>
+            </MarketingReveal>
+            <MarketingReveal delay={80}>
+              <h2 className="mt-4 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+                Our values
+              </h2>
+            </MarketingReveal>
+          </div>
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
             {[
               {
-                title: "For Students",
-                body: "A personal dashboard with application pipeline, documents, visa progress, deadlines, payments and direct messaging with your counselor.",
+                title: "Personal, not transactional",
+                body: "Every student gets a dedicated counselor. We know your name, your case and your goals — not just your file number.",
               },
               {
-                title: "For Counselors",
-                body: "A dedicated panel to manage assigned students, review documents, schedule appointments and track performance.",
+                title: "Honest, not salesy",
+                body: "We tell you the truth, even when it's not what you want to hear. No guaranteed visas, no fake success rates.",
               },
               {
-                title: "For Consultancies",
-                body: "Full admin oversight — branches, employees, finance, reports, roles, permissions and audit logs — in one platform.",
+                title: "European, not generic",
+                body: "We specialize in Europe. Our counselors understand each country's universities, visa processes and culture.",
               },
             ].map((item, i) => (
               <MarketingReveal key={item.title} delay={i * 100}>
                 <div className="h-full rounded-2xl border border-border bg-card p-6">
-                  <h3 className="font-display text-lg font-semibold tracking-tight">{item.title}</h3>
+                  <h3 className="font-display text-lg font-bold tracking-tight">{item.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.body}</p>
                 </div>
               </MarketingReveal>

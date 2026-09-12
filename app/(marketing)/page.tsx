@@ -4,27 +4,25 @@ import { HeroSection } from "@/components/marketing/hero";
 import { DestinationSection } from "@/components/marketing/destinations";
 import {
   ProblemSection,
-  SolutionSection,
   JourneyTimeline,
-  HowItWorks,
   TrustSection,
   CTASection,
 } from "@/components/marketing/sections";
-import { FeatureGrid, ProductShowcase } from "@/components/marketing/showcase";
+import { ServicesSection, WhyEuroscopeSection, HowWeHelp } from "@/components/marketing/services";
 import { FAQ } from "@/components/marketing/faq";
 
 /**
- * Marketing homepage — the public face of Euroscope.
+ * Marketing homepage — the public face of Euroscope as a company.
  *
- * Authenticated users are redirected to their role's panel so they
- * don't see the marketing site on every visit. Unauthenticated users
- * see the full marketing experience with the hero, destinations,
- * problem/solution, journey timeline, features, product showcase,
- * trust, FAQ and final CTA.
+ * The page positions Euroscope as a European education consultancy:
+ *  - Hero with company positioning (not a product mockup)
+ *  - Services the company offers (not software features)
+ *  - Why choose the company (not why use the platform)
+ *  - How the company helps (not how the software works)
+ *  - Destinations, journey timeline, trust, FAQ, CTA
  *
- * Pass `?preview=1` to bypass the redirect for authenticated users
- * who want to preview the marketing homepage without logging out.
- * Useful for admins checking the marketing site from their session.
+ * Authenticated users are redirected to their role's panel.
+ * Pass `?preview=1` to bypass the redirect for previewing.
  */
 export default async function HomePage({
   searchParams,
@@ -41,13 +39,12 @@ export default async function HomePage({
   return (
     <>
       <HeroSection />
+      <ServicesSection />
+      <WhyEuroscopeSection />
       <DestinationSection />
       <ProblemSection />
-      <SolutionSection />
       <JourneyTimeline />
-      <FeatureGrid />
-      <ProductShowcase />
-      <HowItWorks />
+      <HowWeHelp />
       <TrustSection />
       <FAQ />
       <CTASection />

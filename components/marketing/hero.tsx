@@ -1,274 +1,220 @@
-import { ArrowRight, Sparkles, PlayCircle, Star } from "lucide-react";
-import { Container, Eyebrow, MarketingButton } from "./ui";
+import { ArrowRight, Sparkles, MapPin, Compass, GraduationCap } from "lucide-react";
+import { Container, MarketingButton } from "./ui";
 import { MarketingReveal } from "./reveal";
 import { APP_NAME } from "@/lib/constants/app";
 
 /**
- * HeroSection — the first thing visitors see.
+ * HeroSection — editorial company positioning, not a SaaS product page.
  *
- * Premium dark hero with:
- *  - Multi-layer mesh gradient background (blue + gold radial glows)
- *  - Subtle grid pattern overlay
- *  - Bold gradient headline (6xl on desktop)
- *  - 3 CTAs with clear hierarchy
- *  - Trust indicators (stars, "Trusted by students" badge)
- *  - Realistic product UI mockup with floating cards
+ * The hero positions Euroscope as a European education consultancy:
+ *  - Left: company headline + supporting message + CTAs
+ *  - Right: visual collage of European destinations + journey snippet
+ *
+ * This feels like a premium agency website, not a software landing page.
  */
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden bg-ink text-white">
       {/* ── Background layers ── */}
       <div className="absolute inset-0" aria-hidden>
-        {/* Base gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-ink via-ink to-ink-surface" />
-        {/* Blue radial glow — top center */}
+        <div className="absolute inset-0 bg-gradient-to-br from-ink via-ink to-ink-surface" />
+        {/* Blue glow — top right */}
         <div
-          className="absolute -top-40 left-1/2 h-[700px] w-[900px] -translate-x-1/2 rounded-full opacity-40 blur-[120px]"
+          className="absolute -top-40 right-1/4 h-[600px] w-[700px] rounded-full opacity-35 blur-[120px]"
           style={{ background: "radial-gradient(circle, #1e40af 0%, transparent 65%)" }}
         />
-        {/* Gold radial glow — bottom left */}
+        {/* Gold glow — bottom left */}
         <div
           className="absolute -bottom-20 -left-20 h-[500px] w-[500px] rounded-full opacity-15 blur-[100px]"
           style={{ background: "radial-gradient(circle, #f59e0b 0%, transparent 70%)" }}
         />
-        {/* Grid pattern */}
-        <div className="absolute inset-0 euroscope-grid-bg opacity-30" />
+        <div className="absolute inset-0 euroscope-grid-bg opacity-25" />
       </div>
 
       <Container className="relative py-20 md:py-28 lg:py-32">
-        <div className="mx-auto max-w-4xl text-center">
-          {/* Trust badge */}
-          <MarketingReveal>
-            <div className="mb-8 inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 backdrop-blur-sm">
-              <div className="flex -space-x-1" aria-hidden>
-                {[0,1,2,3,4].map((i) => (
-                  <span
-                    key={i}
-                    className="grid h-5 w-5 place-items-center rounded-full border-2 border-ink bg-gradient-to-br from-primary to-primary-hover text-[8px] font-bold"
-                  >
-                    {["🇩🇪","🇫🇷","🇮🇹","🇳🇱","🇸🇪"][i]}
-                  </span>
-                ))}
+        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+          {/* Left — company positioning */}
+          <div>
+            {/* Trust badge */}
+            <MarketingReveal>
+              <div className="inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 backdrop-blur-sm">
+                <Sparkles className="h-3.5 w-3.5 text-accent" aria-hidden />
+                <span className="text-xs font-medium text-white/80">
+                  European Education Consultancy
+                </span>
               </div>
-              <span className="text-xs font-medium text-white/80">
-                Your European study journey starts here
-              </span>
-            </div>
-          </MarketingReveal>
+            </MarketingReveal>
 
-          {/* Eyebrow */}
-          <MarketingReveal delay={60}>
-            <Eyebrow tone="accent" className="justify-center">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden />
-              Study in Europe
-            </Eyebrow>
-          </MarketingReveal>
-
-          {/* Headline */}
-          <MarketingReveal delay={120}>
-            <h1 className="mt-6 font-display text-5xl font-bold leading-[1.05] tracking-tight sm:text-6xl md:text-7xl lg:text-[5.5rem]">
-              Study in Europe.{" "}
-              <span className="block sm:inline">
+            {/* Headline */}
+            <MarketingReveal delay={80}>
+              <h1 className="mt-6 font-display text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
+                Study in Europe.{" "}
                 <span className="euroscope-gradient-text">Start Your Future.</span>
-              </span>
-            </h1>
-          </MarketingReveal>
+              </h1>
+            </MarketingReveal>
 
-          {/* Subheadline */}
-          <MarketingReveal delay={200}>
-            <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-white/70 md:text-xl">
-              From choosing the right European university to preparing your
-              application and visa, {APP_NAME} helps students manage their entire
-              journey from one place.
-            </p>
-          </MarketingReveal>
+            {/* Subheadline */}
+            <MarketingReveal delay={160}>
+              <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/70 md:text-xl">
+                {APP_NAME} is a European education consultancy that guides students
+                through every step — from choosing the right university to preparing
+                your visa. We don&apos;t just give you a portal — we walk with you.
+              </p>
+            </MarketingReveal>
 
-          {/* CTAs */}
-          <MarketingReveal delay={280}>
-            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-              <MarketingButton href="/contact" variant="primary" size="lg" className="w-full sm:w-auto">
-                Start Your Journey
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </MarketingButton>
-              <MarketingButton href="/study-in-europe" variant="secondary" size="lg" className="w-full sm:w-auto">
-                Explore Europe
-              </MarketingButton>
-              <MarketingButton
-                href="/contact"
-                variant="ghost"
-                size="lg"
-                className="w-full text-white/80 hover:text-white hover:bg-white/10 sm:w-auto"
-              >
-                <PlayCircle className="h-4 w-4" aria-hidden />
-                Book a Free Consultation
-              </MarketingButton>
-            </div>
-          </MarketingReveal>
-
-          {/* Star rating */}
-          <MarketingReveal delay={360}>
-            <div className="mt-10 flex items-center justify-center gap-2 text-sm text-white/50">
-              <div className="flex" aria-hidden>
-                {[0,1,2,3,4].map((i) => (
-                  <Star key={i} className="h-4 w-4 fill-accent text-accent" />
-                ))}
+            {/* CTAs */}
+            <MarketingReveal delay={240}>
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:gap-4">
+                <MarketingButton href="/contact" variant="primary" size="lg" className="w-full sm:w-auto">
+                  Book a Free Consultation
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </MarketingButton>
+                <MarketingButton href="/study-in-europe" variant="secondary" size="lg" className="w-full sm:w-auto">
+                  Explore Europe
+                </MarketingButton>
               </div>
-              <span>Built for students, trusted by consultancies</span>
-            </div>
+            </MarketingReveal>
+
+            {/* Trust line */}
+            <MarketingReveal delay={320}>
+              <p className="mt-8 text-sm text-white/50">
+                Personalized guidance · End-to-end support · European expertise
+              </p>
+            </MarketingReveal>
+          </div>
+
+          {/* Right — visual collage */}
+          <MarketingReveal delay={400}>
+            <HeroCollage />
           </MarketingReveal>
         </div>
-
-        {/* Product UI mockup */}
-        <MarketingReveal delay={440}>
-          <ProductUIMockup />
-        </MarketingReveal>
       </Container>
     </section>
   );
 }
 
 /**
- * ProductUIMockup — an HTML/CSS recreation of the student dashboard.
- * NOT a stock image — matches the actual Euroscope student panel
- * layout. Loaded instantly, crisp on any DPI.
+ * HeroCollage — a visual composition that feels editorial, not technical.
+ *
+ * Combines:
+ *  - A stylized European map card with destination pins
+ *  - A "current student" status card
+ *  - A counselor quote card
+ *
+ * All HTML/CSS — loads instantly, crisp on any DPI.
  */
-function ProductUIMockup() {
+function HeroCollage() {
+  const destinations = [
+    { flag: "🇩🇪", name: "Germany", x: "42%", y: "35%" },
+    { flag: "🇫🇷", name: "France", x: "32%", y: "52%" },
+    { flag: "🇮🇹", name: "Italy", x: "48%", y: "68%" },
+    { flag: "🇳🇱", name: "Netherlands", x: "38%", y: "30%" },
+    { flag: "🇪🇸", name: "Spain", x: "30%", y: "70%" },
+    { flag: "🇸🇪", name: "Sweden", x: "52%", y: "18%" },
+  ];
+
   return (
-    <div className="relative mx-auto mt-16 max-w-5xl">
-      {/* Glow behind mockup */}
+    <div className="relative">
+      {/* Glow behind */}
       <div
-        className="absolute inset-x-8 -top-4 bottom-0 -z-10 rounded-3xl opacity-60 blur-3xl"
+        className="absolute inset-x-4 -bottom-4 -top-4 -z-10 rounded-3xl opacity-40 blur-3xl"
         style={{ background: "linear-gradient(135deg, #1e40af 0%, #f59e0b 100%)" }}
         aria-hidden
       />
 
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-white shadow-2xl shadow-black/20">
-        {/* Browser chrome */}
-        <div className="flex items-center gap-2 border-b border-border bg-muted/50 px-4 py-3">
-          <span className="h-3 w-3 rounded-full bg-[#ff5f57]" aria-hidden />
-          <span className="h-3 w-3 rounded-full bg-[#febc2e]" aria-hidden />
-          <span className="h-3 w-3 rounded-full bg-[#28c840]" aria-hidden />
-          <span className="ml-3 flex-1 truncate rounded-md bg-card px-3 py-1 text-xs text-muted-foreground">
-            euroscope.app/student/dashboard
+      {/* Main map card */}
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-ink-surface to-ink p-6 shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-accent">
+              European Destinations
+            </p>
+            <p className="font-display text-lg font-bold text-white">
+              Where we place students
+            </p>
+          </div>
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/5 text-white">
+            <Compass className="h-5 w-5" aria-hidden />
           </span>
         </div>
 
-        {/* App content */}
-        <div className="grid gap-4 bg-muted/30 p-4 md:grid-cols-12 md:p-6">
-          {/* Sidebar */}
-          <aside className="hidden md:col-span-2 md:block">
-            <div className="space-y-1 rounded-xl border border-border bg-card p-3">
-              {[
-                { label: "Home", active: true, dot: "bg-primary" },
-                { label: "Application", dot: "bg-muted-foreground/30" },
-                { label: "Documents", dot: "bg-muted-foreground/30" },
-                { label: "Tasks", dot: "bg-muted-foreground/30" },
-                { label: "Messages", dot: "bg-accent" },
-                { label: "Visa", dot: "bg-muted-foreground/30" },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-xs ${
-                    item.active ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground"
-                  }`}
-                >
-                  <span className={`h-2.5 w-2.5 rounded-sm ${item.dot}`} aria-hidden />
-                  {item.label}
-                </div>
-              ))}
+        {/* Stylized map area */}
+        <div className="relative my-6 h-56 overflow-hidden rounded-xl bg-gradient-to-b from-white/5 to-transparent">
+          {/* Dotted background pattern */}
+          <div className="absolute inset-0 euroscope-dot-bg opacity-40" aria-hidden />
+          {/* Destination pins */}
+          {destinations.map((dest) => (
+            <div
+              key={dest.name}
+              className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1"
+              style={{ left: dest.x, top: dest.y }}
+            >
+              <span className="text-2xl drop-shadow-lg" aria-hidden>{dest.flag}</span>
+              <span className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-medium text-white/80 backdrop-blur-sm">
+                {dest.name}
+              </span>
             </div>
-          </aside>
+          ))}
+          {/* Connecting lines (decorative) */}
+          <svg className="absolute inset-0 h-full w-full" aria-hidden>
+            <defs>
+              <linearGradient id="line-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#1e40af" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.4" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M120 80 Q 200 60, 280 140 T 400 180"
+              stroke="url(#line-grad)"
+              strokeWidth="1.5"
+              fill="none"
+              strokeDasharray="4 4"
+            />
+          </svg>
+        </div>
 
-          {/* Main panel */}
-          <div className="space-y-4 md:col-span-10">
-            {/* Pipeline header */}
-            <div className="rounded-xl border border-border bg-card p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Application Pipeline
-                  </p>
-                  <p className="font-display text-base font-semibold text-foreground">
-                    TU Munich · MSc Computer Science
-                  </p>
-                </div>
-                <span className="rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
-                  Stage 6 of 12
-                </span>
-              </div>
-              {/* Pipeline progress */}
-              <div className="mt-4 flex items-center gap-1">
-                {["Lead", "Counseling", "Profile", "Country", "University", "Course", "Documents", "Application", "Offer", "Visa", "Travel", "Europe"].map((stage, i) => (
-                  <div key={stage} className="flex-1">
-                    <div
-                      className={`h-1.5 rounded-full ${i < 6 ? "bg-primary" : i === 6 ? "bg-accent" : "bg-border"}`}
-                      aria-hidden
-                    />
-                    <p className={`mt-1 hidden truncate text-[9px] sm:block ${i < 6 ? "text-primary font-medium" : "text-muted-foreground"}`}>
-                      {stage}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Cards row */}
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-border bg-card p-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">Documents</p>
-                  <span className="text-xs font-semibold text-success">78%</span>
-                </div>
-                <p className="mt-1 font-display text-2xl font-bold text-foreground">7 / 9</p>
-                <div className="mt-2 h-1.5 rounded-full bg-muted">
-                  <div className="h-1.5 rounded-full bg-success" style={{ width: "78%" }} aria-hidden />
-                </div>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-4">
-                <p className="text-xs text-muted-foreground">Visa Progress</p>
-                <p className="mt-1 font-display text-xl font-bold text-foreground">Preparation</p>
-                <div className="mt-2 flex items-center gap-1">
-                  {["Prep", "Submit", "Biometric", "Decision"].map((s, i) => (
-                    <span
-                      key={s}
-                      className={`flex-1 rounded-md px-1.5 py-0.5 text-center text-[10px] ${
-                        i === 0 ? "bg-primary text-white" : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {s}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">Tasks</p>
-                  <span className="rounded-full bg-destructive/10 px-1.5 py-0.5 text-[10px] font-semibold text-destructive">2 urgent</span>
-                </div>
-                <p className="mt-1 font-display text-2xl font-bold text-foreground">3 active</p>
-                <div className="mt-2 space-y-1">
-                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                    <span className="h-2 w-2 rounded-full bg-warning" aria-hidden /> Passport renewal
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                    <span className="h-2 w-2 rounded-full bg-destructive" aria-hidden /> IELTS test booking
-                  </div>
-                </div>
-              </div>
-            </div>
+        {/* Footer stats */}
+        <div className="grid grid-cols-3 gap-3 border-t border-white/10 pt-4">
+          <div>
+            <p className="font-display text-2xl font-bold text-white">15+</p>
+            <p className="text-[10px] text-white/50">Countries</p>
+          </div>
+          <div>
+            <p className="font-display text-2xl font-bold text-white">10+</p>
+            <p className="text-[10px] text-white/50">Universities</p>
+          </div>
+          <div>
+            <p className="font-display text-2xl font-bold text-white">18</p>
+            <p className="text-[10px] text-white/50">Journey steps</p>
           </div>
         </div>
       </div>
 
-      {/* Floating accent badge — bottom-right */}
-      <div className="absolute -bottom-4 -right-4 hidden rounded-xl border border-accent/30 bg-card p-3 shadow-lg md:block">
-        <div className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-accent/15 text-accent">
-            <Sparkles className="h-4 w-4" aria-hidden />
+      {/* Floating counselor card — bottom-left */}
+      <div className="absolute -bottom-6 -left-4 hidden max-w-[200px] rounded-xl border border-white/10 bg-card p-4 shadow-xl md:block">
+        <div className="flex items-start gap-2.5">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+            <GraduationCap className="h-4 w-4" aria-hidden />
           </span>
           <div>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Live update</p>
-            <p className="text-xs font-semibold text-foreground">Document approved</p>
+            <p className="text-xs font-semibold text-foreground">Personal counselor</p>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">
+              Dedicated expert guiding you through every step
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating journey card — top-right */}
+      <div className="absolute -top-4 -right-2 hidden rounded-xl border border-accent/30 bg-card p-3 shadow-xl md:block">
+        <div className="flex items-center gap-2">
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-accent/15 text-accent">
+            <MapPin className="h-4 w-4" aria-hidden />
+          </span>
+          <div>
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Current stage</p>
+            <p className="text-xs font-semibold text-foreground">Visa Preparation</p>
           </div>
         </div>
       </div>

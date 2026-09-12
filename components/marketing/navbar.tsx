@@ -32,9 +32,9 @@ const NAV_LINKS = [
   { href: "/study-in-europe", label: "Study in Europe", hasDropdown: true },
   { href: "/universities", label: "Universities" },
   { href: "/courses", label: "Courses" },
-  { href: "/features", label: "Features" },
-  { href: "/how-it-works", label: "How It Works" },
-  { href: "/about", label: "About" },
+  { href: "/features", label: "Services" },
+  { href: "/how-it-works", label: "How We Help" },
+  { href: "/about", label: "About Us" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -202,10 +202,10 @@ export function MarketingNavbar() {
             href="/login"
             className="rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
           >
-            Login
+            Student Login
           </Link>
           <MarketingButton href="/contact" size="sm">
-            Start Your Journey
+            Book a Consultation
             <ArrowRight className="h-4 w-4" aria-hidden />
           </MarketingButton>
         </div>
@@ -218,7 +218,7 @@ export function MarketingNavbar() {
           >
             Login
           </Link>
-          <MarketingButton href="/contact" size="sm">Get Started</MarketingButton>
+          <MarketingButton href="/contact" size="sm">Book a Consultation</MarketingButton>
         </div>
 
         {/* Mobile menu toggle */}
@@ -317,10 +317,10 @@ export function MarketingNavbar() {
                 onClick={closeMobile}
                 className="rounded-lg border border-border px-3 py-3 text-center text-sm font-medium hover:bg-muted"
               >
-                Login
+                Student Login
               </Link>
               <MarketingButton href="/contact" size="default" className="w-full" onClick={closeMobile}>
-                Start Your Journey
+                Book a Consultation
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </MarketingButton>
             </div>

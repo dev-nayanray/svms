@@ -67,8 +67,8 @@ export function ProblemSection() {
           </MarketingReveal>
           <MarketingReveal delay={160}>
             <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-              International students face real challenges when planning European education.
-              {APP_NAME} exists to solve them.
+              Students come to us when the journey feels overwhelming. Here&apos;s
+              what we help them navigate.
             </p>
           </MarketingReveal>
         </div>
@@ -101,17 +101,17 @@ export function SolutionSection() {
       <Container>
         <div className="mx-auto max-w-2xl text-center">
           <MarketingReveal>
-            <Eyebrow className="justify-center">The Euroscope Solution</Eyebrow>
+            <Eyebrow className="justify-center">How We Work</Eyebrow>
           </MarketingReveal>
           <MarketingReveal delay={80}>
             <h2 className="mt-4 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-              One journey. One platform.
+              Personal guidance, organized process
             </h2>
           </MarketingReveal>
           <MarketingReveal delay={160}>
             <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-              {APP_NAME} brings your European study journey together in one organized experience —
-              from discovery to visa, all in one place.
+              We combine personal counseling with a clear, organized process —
+              so you always know where you are and what&apos;s next.
             </p>
           </MarketingReveal>
         </div>
@@ -119,15 +119,15 @@ export function SolutionSection() {
         <MarketingReveal delay={240}>
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              "Centralized student management",
+              "Personal counselor for every student",
               "Application tracking from start to finish",
-              "Document organization with version history",
-              "Visa workflow with requirements checklist",
-              "Team collaboration between students and counselors",
-              "Financial visibility with invoices and payments",
-              "Real-time messaging between students and staff",
-              "Live progress tracking with timeline view",
-              "Role-based access for Admin, Employee and Student",
+              "Document guidance with review and feedback",
+              "Visa preparation with country-specific checklists",
+              "Direct messaging with your counselor",
+              "Transparent financial tracking and invoices",
+              "Real-time updates on your application status",
+              "Live progress timeline you can check anytime",
+              "Secure access for students, counselors and admins",
             ].map((item) => (
               <div
                 key={item}
@@ -401,23 +401,23 @@ export function CTASection() {
           </MarketingReveal>
           <MarketingReveal delay={160}>
             <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-white/70 md:text-lg">
-              Plan your studies, manage your application and move forward with confidence.
-              {APP_NAME} is your complete European study companion.
+              Talk to our counselors and get a personalized plan for your European
+              study journey. No pressure, no obligation — just honest guidance.
             </p>
           </MarketingReveal>
           <MarketingReveal delay={240}>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
               <MarketingButton href="/contact" variant="primary" size="lg" className="w-full sm:w-auto">
-                Start Your Journey
+                Book a Free Consultation
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </MarketingButton>
               <MarketingButton
-                href="/contact"
+                href="/study-in-europe"
                 variant="secondary"
                 size="lg"
                 className="w-full bg-white/10 text-white border-white/20 hover:bg-white/20 sm:w-auto"
               >
-                Book a Consultation
+                Explore Destinations
               </MarketingButton>
             </div>
           </MarketingReveal>

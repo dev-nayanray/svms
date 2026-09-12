@@ -7,14 +7,20 @@ import { CTASection } from "@/components/marketing/sections";
 export const metadata: Metadata = {
   title: "Study in Europe — European Study Destinations",
   description:
-    "Explore European study destinations — Germany, France, Italy, Netherlands, Sweden, Finland, Ireland and more. Find universities, courses and admission requirements.",
+    "Explore European study destinations with Euroscope. Germany, France, Italy, Netherlands, Sweden, Finland, Ireland and more — find the right university for you.",
 };
 
 export default function StudyInEuropePage() {
   return (
     <>
       <Section tone="dark" className="relative overflow-hidden">
-        <div className="absolute inset-0 euroscope-grid-bg opacity-30" aria-hidden />
+        <div className="absolute inset-0" aria-hidden>
+          <div
+            className="absolute -top-40 left-1/2 h-[600px] w-[800px] -translate-x-1/2 rounded-full opacity-35 blur-[120px]"
+            style={{ background: "radial-gradient(circle, #1e40af 0%, transparent 60%)" }}
+          />
+          <div className="absolute inset-0 euroscope-grid-bg opacity-20" />
+        </div>
         <Container className="relative">
           <div className="mx-auto max-w-3xl text-center">
             <MarketingReveal>
@@ -22,13 +28,14 @@ export default function StudyInEuropePage() {
             </MarketingReveal>
             <MarketingReveal delay={80}>
               <h1 className="mt-5 font-display text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
-                Your gateway to European education
+                Where will you study?
               </h1>
             </MarketingReveal>
             <MarketingReveal delay={160}>
-              <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-white/70 md:text-lg">
+              <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/70 md:text-lg">
                 Europe is home to some of the world&apos;s oldest universities and most
-                innovative research institutions. Explore where Euroscope can take you.
+                innovative research institutions. Our counselors help you find the
+                right destination for your goals.
               </p>
             </MarketingReveal>
             <MarketingReveal delay={240}>
@@ -53,7 +60,7 @@ export default function StudyInEuropePage() {
               </h2>
             </MarketingReveal>
           </div>
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
             {[
               {
                 title: "World-Class Education",
@@ -82,7 +89,7 @@ export default function StudyInEuropePage() {
             ].map((item, i) => (
               <MarketingReveal key={item.title} delay={i * 80}>
                 <div className="h-full rounded-2xl border border-border bg-card p-6">
-                  <h3 className="font-display text-lg font-semibold tracking-tight">{item.title}</h3>
+                  <h3 className="font-display text-lg font-bold tracking-tight">{item.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.body}</p>
                 </div>
               </MarketingReveal>
