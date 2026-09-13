@@ -397,11 +397,20 @@ export async function getApplicationById(
     studentId: string;
     email: string;
     phone: string | null;
+    country: string | null;
+    nationality: string | null;
+    avatar: string | null;
+    academicRecords: {
+      id: string; level: string; institution: string; passingYear: number | null; result: string | null;
+    }[];
+    englishProficiencies: {
+      id: string; testType: string; overallScore: number | null; testDate: Date | null;
+    }[];
   };
   country: { id: string; name: string } | null;
-  university: { id: string; name: string } | null;
-  course: { id: string; name: string } | null;
-  intake: { id: string; name: string; deadline: Date | null } | null;
+  university: { id: string; name: string; city: string | null; website: string | null } | null;
+  course: { id: string; name: string; degreeLevel: string; duration: string | null; tuitionFee: number | null; currency: string } | null;
+  intake: { id: string; name: string; deadline: Date | null; month: number; year: number } | null;
   assignedEmployee: { id: string; title: string | null; user: { name: string; email: string } } | null;
   documents: {
     id: string; name: string; status: string; uploadedAt: Date | null; reviewedAt: Date | null;
@@ -418,9 +427,15 @@ export async function getApplicationById(
   invoices: {
     id: string; invoiceNumber: string; amount: number; currency: string; status: string; dueDate: Date | null;
   }[];
-  stageHistory: {
-    id: string; fromStage: string | null; toStage: string; note: string | null; changedById: string; createdAt: Date;
+  conversations: {
+    id: string; subject: string | null; createdAt: Date; updatedAt: Date;
+    messages: { id: string; body: string; senderId: string; createdAt: Date }[];
   }[];
+  stageHistory: {
+    id: string; fromStage: string | null; toStage: string; note: string | null;
+    changedById: string; changedByName: string; createdAt: Date;
+  }[];
+  nextAction: { title: string; dueDate: Date | null; assigneeName: string | null; status: string } | null;
 } | null> {
   const owner = applicationCaseScope(scope);
 
@@ -437,11 +452,25 @@ export async function getApplicationById(
       notes: true,
       createdAt: true,
       updatedAt: true,
-      student: { select: { id: true, firstName: true, lastName: true, studentId: true, email: true, phone: true } },
+      student: {
+        select: {
+          id: true, firstName: true, lastName: true, studentId: true, email: true, phone: true,
+          country: true, nationality: true,
+          user: { select: { avatar: true } },
+          academicRecords: {
+            orderBy: { createdAt: "desc" },
+            select: { id: true, level: true, institution: true, passingYear: true, result: true },
+          },
+          englishProficiencies: {
+            orderBy: { testDate: "desc" },
+            select: { id: true, testType: true, overallScore: true, testDate: true },
+          },
+        },
+      },
       country: { select: { id: true, name: true } },
-      university: { select: { id: true, name: true } },
-      course: { select: { id: true, name: true } },
-      intake: { select: { id: true, name: true, deadline: true } },
+      university: { select: { id: true, name: true, city: true, website: true } },
+      course: { select: { id: true, name: true, degreeLevel: true, duration: true, tuitionFee: true, currency: true } },
+      intake: { select: { id: true, name: true, deadline: true, month: true, year: true } },
       assignedEmployee: { select: { id: true, title: true, user: { select: { name: true, email: true } } } },
       documents: {
         orderBy: { createdAt: "desc" },
@@ -449,7 +478,7 @@ export async function getApplicationById(
       },
       tasks: {
         orderBy: { createdAt: "desc" },
-        select: { id: true, title: true, status: true, priority: true, dueDate: true, createdAt: true },
+        select: { id: true, title: true, status: true, priority: true, dueDate: true, createdAt: true, assignedToId: true },
       },
       visaApplications: {
         orderBy: { createdAt: "desc" },
@@ -465,13 +494,83 @@ export async function getApplicationById(
       },
       stageHistory: {
         orderBy: { createdAt: "desc" },
-        take: 20,
+        take: 50,
         select: { id: true, fromStage: true, toStage: true, note: true, changedById: true, createdAt: true },
       },
     },
   });
 
-  return app;
+  if (!app) return null;
+
+  // Resolve actor names for stage history — single batched query so we don't
+  // N+1 when rendering the Timeline tab.
+  const actorIds = Array.from(new Set(app.stageHistory.map((h) => h.changedById)));
+  const actors = actorIds.length > 0
+    ? await prisma.user.findMany({
+        where: { id: { in: actorIds } },
+        select: { id: true, name: true },
+      })
+    : [];
+  const actorMap = new Map(actors.map((u) => [u.id, u.name]));
+
+  // Resolve task assignee names for the Next Action panel
+  const taskAssigneeIds = Array.from(new Set(
+    app.tasks
+      .filter((t) => t.assignedToId && t.status !== "COMPLETED" && t.status !== "CANCELLED")
+      .map((t) => t.assignedToId as string),
+  ));
+  const assignees = taskAssigneeIds.length > 0
+    ? await prisma.user.findMany({
+        where: { id: { in: taskAssigneeIds } },
+        select: { id: true, name: true },
+      })
+    : [];
+  const assigneeMap = new Map(assignees.map((u) => [u.id, u.name]));
+
+  // Resolve conversation messages
+  const conversations = await prisma.conversation.findMany({
+    where: { studentId: app.student.id },
+    orderBy: { updatedAt: "desc" },
+    select: {
+      id: true, subject: true, createdAt: true, updatedAt: true,
+      messages: {
+        orderBy: { createdAt: "desc" },
+        take: 10,
+        select: { id: true, body: true, senderId: true, createdAt: true },
+      },
+    },
+  });
+
+  // Derive the "next action" — earliest non-completed task with a due date
+  const openTasks = app.tasks
+    .filter((t) => t.status !== "COMPLETED" && t.status !== "CANCELLED")
+    .sort((a, b) => (a.dueDate?.getTime() ?? Infinity) - (b.dueDate?.getTime() ?? Infinity));
+  const nextTask = openTasks[0] ?? null;
+  const nextAction = nextTask
+    ? {
+        title: nextTask.title,
+        dueDate: nextTask.dueDate,
+        assigneeName: nextTask.assignedToId ? assigneeMap.get(nextTask.assignedToId) ?? null : null,
+        status: nextTask.status,
+      }
+    : null;
+
+  // Restructure the student (destructure user.avatar to student.avatar)
+  const { user: _userRow, ...studentRest } = app.student;
+
+  return {
+    ...app,
+    student: {
+      ...studentRest,
+      avatar: _userRow?.avatar ?? null,
+    },
+    stageHistory: app.stageHistory.map((h) => ({
+      ...h,
+      changedByName: actorMap.get(h.changedById) ?? "Unknown",
+    })),
+    conversations,
+    nextAction,
+  };
 }
 
 export async function requireApplication(scope: EmployeeScope, id: string) {
