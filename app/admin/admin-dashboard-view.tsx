@@ -8,6 +8,7 @@ import { SimpleBarChart, SimplePieChart } from "@/components/charts";
 import { ChartCard, DateRangeFilter, KpiGrid, WidgetCard, type RangeValue } from "@/components/dashboard";
 import { formatMoney, formatDate } from "@/lib/utils";
 import Link from "next/link";
+import { AlertCircle, RefreshCw } from "lucide-react";
 
 type Point = { name: string; value: number };
 
@@ -64,54 +65,55 @@ export function AdminDashboardView() {
   const k = data?.kpis;
   const c = data?.charts;
   const w = data?.widgets;
+  const loading = isPending && !data;
 
   return (
     <div className="space-y-6">
-      {/* Header + filters */}
+      {/* ── Header + filters ── */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-xl font-semibold">Business Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-xl font-bold tracking-tight">Business Dashboard</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Live overview of your consultancy operations
             {data?.range ? ` · ${data.range}` : ""}
-            .
           </p>
         </div>
         <DateRangeFilter value={filter} onChange={setFilter} isPending={isPending} />
       </div>
 
-      {/* Global error state */}
+      {/* ── Error state ── */}
       {isError && (
-        <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
-          Failed to load dashboard: {(error as Error).message}
-          <Button variant="outline" size="sm" className="ml-3" onClick={() => refetch()}>
-            Retry
+        <div role="alert" className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          <AlertCircle className="h-5 w-5 shrink-0" aria-hidden />
+          <span>Failed to load dashboard: {(error as Error).message}</span>
+          <Button variant="outline" size="sm" className="ml-auto" onClick={() => refetch()}>
+            <RefreshCw className="h-3.5 w-3.5" /> Retry
           </Button>
         </div>
       )}
 
-      {/* KPI cards */}
+      {/* ── KPI Cards — grouped into 2 rows of 5 ── */}
       <KpiGrid
-        isPending={isPending && !data}
+        isPending={loading}
         kpis={
           !k
             ? Array.from({ length: 10 }, (_, i) => ({ label: `kpi-${i}`, value: "" }))
             : [
-                { label: "Total Students", value: k.totalStudents },
-                { label: "Active Students", value: k.activeStudents },
-                { label: "New Leads", value: k.newLeads },
-                { label: "Active Applications", value: k.activeApplications },
-                { label: "Visa Submitted", value: k.visaSubmitted },
-                { label: "Visa Approved", value: k.visaApproved, tone: "success" },
-                { label: "Visa Refused", value: k.visaRefused, tone: "danger" },
-                { label: "Pending Documents", value: k.pendingDocuments, tone: k.pendingDocuments > 0 ? "warning" : "default" },
-                { label: "Outstanding Payments", value: formatMoney(k.outstandingPayments), tone: k.outstandingPayments > 0 ? "warning" : "default" },
-                { label: "Revenue (period)", value: formatMoney(k.monthlyRevenue), tone: "success" },
+                { label: "Total Students", value: k.totalStudents, icon: "students" },
+                { label: "Active Students", value: k.activeStudents, icon: "students" },
+                { label: "New Leads", value: k.newLeads, icon: "leads" },
+                { label: "Active Applications", value: k.activeApplications, icon: "applications" },
+                { label: "Revenue (period)", value: formatMoney(k.monthlyRevenue), tone: "success", icon: "revenue" },
+                { label: "Visa Submitted", value: k.visaSubmitted, icon: "visa" },
+                { label: "Visa Approved", value: k.visaApproved, tone: "success", icon: "visa" },
+                { label: "Visa Refused", value: k.visaRefused, tone: "danger", icon: "visa" },
+                { label: "Pending Documents", value: k.pendingDocuments, tone: k.pendingDocuments > 0 ? "warning" : "default", icon: "documents" },
+                { label: "Outstanding", value: formatMoney(k.outstandingPayments), tone: k.outstandingPayments > 0 ? "warning" : "default", icon: "payments" },
               ]
         }
       />
 
-      {/* Charts */}
+      {/* ── Charts — 2 columns ── */}
       <div className="grid gap-4 lg:grid-cols-2">
         <ChartCard title="Applications by Country" isPending={isPending} isError={isError} onRetry={() => refetch()} hasData={(c?.byCountry ?? []).length > 0}>
           {c && <SimplePieChart data={c.byCountry} />}
@@ -150,61 +152,62 @@ export function AdminDashboardView() {
         </ChartCard>
       </div>
 
-      {/* Operational widgets */}
+      {/* ── Operational Widgets — 3 columns ── */}
       <div className="grid gap-4 lg:grid-cols-3">
-        <WidgetCard title="Today's Tasks" count={w?.todayTasks} isPending={isPending}>
+        <WidgetCard title="Today's Tasks" count={w?.todayTasks} isPending={loading}>
           <WidgetRow label="Overdue tasks" value={w?.overdueTasks} tone={w && w.overdueTasks > 0 ? "danger" : "default"} />
           <WidgetRow label="Pending documents" value={w?.pendingDocuments} tone={w && w.pendingDocuments > 0 ? "warning" : "default"} />
-          <Link href="/admin/tasks" className="mt-2 inline-block text-sm text-primary hover:underline">
+          <Link href="/admin/tasks" className="mt-3 inline-block text-sm font-medium text-primary hover:underline">
             View all tasks →
           </Link>
         </WidgetCard>
-        <WidgetCard title="Upcoming Deadlines" isPending={isPending}>
-          {w && w.upcomingDeadlines.length === 0 && (
-            <p className="text-muted-foreground">Nothing scheduled.</p>
-          )}
+
+        <WidgetCard title="Upcoming Deadlines" isPending={loading}>
+          {w && w.upcomingDeadlines.length === 0 && <p className="text-muted-foreground">Nothing scheduled.</p>}
           {w?.upcomingDeadlines.map((t) => (
-            <div key={t.id} className="flex justify-between border-b border-border py-1.5 last:border-0">
+            <div key={t.id} className="flex justify-between border-b border-border py-1.5 last:border-0 last:pb-0">
               <span className="min-w-0 truncate pr-2">{t.title}</span>
-              <span className="shrink-0 text-muted-foreground">{formatDate(t.dueDate)}</span>
+              <span className="shrink-0 text-xs font-medium text-muted-foreground">{formatDate(t.dueDate)}</span>
             </div>
           ))}
         </WidgetCard>
-        <WidgetCard title="Recent Applications" isPending={isPending}>
-          {w && w.recentApplications.length === 0 && (
-            <p className="text-muted-foreground">No applications yet.</p>
-          )}
+
+        <WidgetCard title="Recent Applications" isPending={loading}>
+          {w && w.recentApplications.length === 0 && <p className="text-muted-foreground">No applications yet.</p>}
           {w?.recentApplications.map((a) => (
-            <Link key={a.id} href={`/admin/applications/${a.id}`} className="flex justify-between border-b border-border py-1.5 last:border-0 hover:bg-muted/40">
+            <Link key={a.id} href={`/admin/applications/${a.id}`} className="flex justify-between border-b border-border py-1.5 last:border-0 last:pb-0 hover:bg-muted/40">
               <span className="font-medium">{a.number}</span>
-              <span className="min-w-0 truncate pl-2 text-muted-foreground">{a.student} · {a.country}</span>
+              <span className="min-w-0 truncate pl-2 text-xs text-muted-foreground">{a.student} · {a.country}</span>
             </Link>
           ))}
         </WidgetCard>
-        <WidgetCard title="Recent Payments" isPending={isPending}>
+
+        <WidgetCard title="Recent Payments" isPending={loading}>
           {w && w.recentPayments.length === 0 && <p className="text-muted-foreground">No payments yet.</p>}
           {w?.recentPayments.map((p) => (
-            <div key={p.id} className="flex justify-between border-b border-border py-1.5 last:border-0">
+            <div key={p.id} className="flex justify-between border-b border-border py-1.5 last:border-0 last:pb-0">
               <span className="min-w-0 truncate pr-2">{p.student}</span>
-              <span className="shrink-0 font-medium">{formatMoney(p.amount, p.currency)}</span>
+              <span className="shrink-0 font-semibold">{formatMoney(p.amount, p.currency)}</span>
             </div>
           ))}
         </WidgetCard>
-        <WidgetCard title="Recent Activity" isPending={isPending}>
+
+        <WidgetCard title="Recent Activity" isPending={loading}>
           {w && w.recentActivities.length === 0 && <p className="text-muted-foreground">No activity yet.</p>}
           {w?.recentActivities.map((a) => (
-            <div key={a.id} className="flex justify-between border-b border-border py-1.5 last:border-0">
-              <span className="font-mono text-xs">{a.action}</span>
+            <div key={a.id} className="flex justify-between border-b border-border py-1.5 last:border-0 last:pb-0">
+              <span className="min-w-0 truncate font-mono text-xs">{a.action}</span>
               <span className="shrink-0 text-xs text-muted-foreground">{formatDate(a.createdAt)}</span>
             </div>
           ))}
         </WidgetCard>
-        <WidgetCard title="Documents & Finance" isPending={isPending}>
+
+        <WidgetCard title="Documents & Finance" isPending={loading}>
           <WidgetRow label="Pending documents" value={w?.pendingDocuments} tone={w && w.pendingDocuments > 0 ? "warning" : "default"} />
           <WidgetRow label="Outstanding payments" value={k ? formatMoney(k.outstandingPayments) : undefined} tone={k && k.outstandingPayments > 0 ? "warning" : "default"} />
-          <div className="mt-2 flex gap-3 text-sm">
-            <Link href="/admin/documents" className="text-primary hover:underline">Documents →</Link>
-            <Link href="/admin/invoices" className="text-primary hover:underline">Invoices →</Link>
+          <div className="mt-3 flex gap-4 text-sm">
+            <Link href="/admin/documents" className="font-medium text-primary hover:underline">Documents →</Link>
+            <Link href="/admin/invoices" className="font-medium text-primary hover:underline">Invoices →</Link>
           </div>
         </WidgetCard>
       </div>
@@ -222,14 +225,14 @@ function WidgetRow({
   tone?: "default" | "warning" | "danger";
 }) {
   return (
-    <div className="flex justify-between py-0.5">
+    <div className="flex justify-between py-1">
       <span className="text-muted-foreground">{label}</span>
       <span
         className={
           tone === "danger"
-            ? "font-semibold text-destructive"
+            ? "font-bold text-destructive"
             : tone === "warning"
-              ? "font-semibold text-warning"
+              ? "font-bold text-warning"
               : "font-semibold"
         }
       >
