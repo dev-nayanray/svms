@@ -1,12 +1,9 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/shared/page-kit";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
-import { StatusBadge, TableShell, EmptyState } from "@/components/shared";
-import { formatDate, formatMoney, titleCase } from "@/lib/utils";
+import { StatusBadge } from "@/components/shared";
 import { documentCompletion, paymentStatus } from "@/lib/utils/student-insights";
-import { PassportValue } from "@/components/admin/passport-value";
+import { StudentDetailTabs, type StudentDetailData } from "@/components/admin/student-detail-tabs";
 
 export const dynamic = "force-dynamic";
 
@@ -45,12 +42,77 @@ export default async function Student360Page({ params }: { params: Promise<{ id:
 
   const docs = documentCompletion(student.documents);
   const pay = paymentStatus(student.invoices);
-  const currentApp = student.applications[0];
-  const upcomingTasks = student.tasks
-    .filter((t) => t.status === "TODO" || t.status === "IN_PROGRESS")
-    .slice(0, 6);
-
   const fullName = `${student.firstName} ${student.lastName}`;
+
+  const data: StudentDetailData = {
+    id: student.id,
+    studentId: student.studentId,
+    firstName: student.firstName,
+    lastName: student.lastName,
+    email: student.email,
+    phone: student.phone,
+    whatsapp: student.whatsapp,
+    dateOfBirth: student.dateOfBirth,
+    gender: student.gender,
+    nationality: student.nationality,
+    address: student.address,
+    city: student.city,
+    country: student.country,
+    passportNumber: student.passportNumber,
+    passportIssueDate: student.passportIssueDate,
+    passportExpiryDate: student.passportExpiryDate,
+    passportIssuingCountry: student.passportIssuingCountry,
+    emergencyContactName: student.emergencyContactName,
+    emergencyContactPhone: student.emergencyContactPhone,
+    emergencyContactRelation: student.emergencyContactRelation,
+    profilePhotoUrl: student.profilePhotoUrl,
+    status: student.status,
+    createdAt: student.createdAt,
+    branch: student.branch ? { id: student.branch.id, name: student.branch.name } : null,
+    employee: student.employee ? {
+      id: student.employee.id,
+      user: { name: student.employee.user.name, email: student.employee.user.email },
+      title: student.employee.title,
+    } : null,
+    academicRecords: student.academicRecords.map((r) => ({
+      id: r.id, level: r.level, institution: r.institution, group: r.group, result: r.result, passingYear: r.passingYear,
+    })),
+    englishProficiencies: student.englishProficiencies.map((e) => ({
+      id: e.id, testType: e.testType, overallScore: e.overallScore, testDate: e.testDate,
+    })),
+    applications: student.applications.map((a) => ({
+      id: a.id, applicationNumber: a.applicationNumber, stageKey: a.stageKey, status: a.status, createdAt: a.createdAt,
+      country: { name: a.country.name },
+      statusHistory: a.statusHistory.map((h) => ({
+        id: h.id, fromStage: h.fromStage, toStage: h.toStage, note: h.note, createdAt: h.createdAt,
+      })),
+    })),
+    documents: student.documents.map((d) => ({
+      id: d.id, name: d.name, status: d.status, category: d.category, createdAt: d.createdAt,
+    })),
+    payments: student.payments.map((p) => ({
+      id: p.id, amount: p.amount, currency: p.currency, status: p.status, paymentDate: p.paymentDate, createdAt: p.createdAt, paymentMethod: p.paymentMethod,
+    })),
+    invoices: student.invoices.map((i) => ({
+      id: i.id, invoiceNumber: i.invoiceNumber, total: i.total, paidAmount: i.paidAmount, dueAmount: i.dueAmount, status: i.status, dueDate: i.dueDate,
+    })),
+    tasks: student.tasks.map((t) => ({
+      id: t.id, title: t.title, status: t.status, priority: t.priority, dueDate: t.dueDate,
+    })),
+    conversations: student.conversations.map((c) => ({
+      id: c.id, lastMessageAt: c.lastMessageAt, employee: { user: { name: c.employee.user.name } },
+    })),
+    auditActivity: auditActivity.map((a) => ({
+      id: a.id, action: a.action, createdAt: a.createdAt,
+    })),
+    docsPercent: docs.percent,
+    docsApproved: docs.approved,
+    docsTotal: docs.total,
+    payLabel: pay.label,
+    payDue: pay.due,
+    payTotal: pay.total,
+    payInvoices: pay.invoices,
+  };
 
   return (
     <>
@@ -65,333 +127,7 @@ export default async function Student360Page({ params }: { params: Promise<{ id:
           </div>
         }
       />
-
-      {/* Student 360 summary strip */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Current Application</p>
-            {currentApp ? (
-              <>
-                <Link href={`/admin/applications/${currentApp.id}`} className="mt-1 block font-mono text-sm font-semibold text-primary hover:underline">
-                  {currentApp.applicationNumber}
-                </Link>
-                <p className="text-xs text-muted-foreground">{currentApp.country.name}</p>
-              </>
-            ) : (
-              <p className="mt-1 text-sm text-muted-foreground">No application</p>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Current Stage</p>
-            <p className="mt-1 text-sm font-semibold">{currentApp ? titleCase(currentApp.stageKey) : "—"}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Document Completion</p>
-            <p className="mt-1 text-2xl font-semibold">{docs.percent}%</p>
-            <div className="mt-1 h-1.5 w-full rounded-full bg-muted" role="progressbar" aria-valuenow={docs.percent} aria-valuemin={0} aria-valuemax={100} aria-label="Document completion">
-              <div className="h-1.5 rounded-full bg-primary" style={{ width: `${docs.percent}%` }} />
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">{docs.approved}/{docs.total} approved</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Payment Status</p>
-            <p className="mt-1 text-sm font-semibold">
-              {pay.label === "NO_INVOICES" ? "No invoices" : <StatusBadge status={pay.label} />}
-            </p>
-            {pay.invoices > 0 && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Due {formatMoney(pay.due)} of {formatMoney(pay.total)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        {/* Profile */}
-        <Card>
-          <CardHeader><CardTitle>Profile</CardTitle></CardHeader>
-          <CardContent className="space-y-1.5 text-sm">
-            <Row label="Student ID" value={student.studentId} />
-            <Row label="Email" value={student.email} />
-            <Row label="Phone" value={student.phone ?? "—"} />
-            <Row label="Date of Birth" value={formatDate(student.dateOfBirth)} />
-            <Row label="Gender" value={student.gender ? titleCase(student.gender) : "—"} />
-            <Row label="Nationality" value={student.nationality ?? "—"} />
-            <Row label="Address" value={[student.address, student.city, student.country].filter(Boolean).join(", ") || "—"} />
-            <Row label="Emergency Contact" value={student.emergencyContactName ? `${student.emergencyContactName} (${student.emergencyContactPhone})` : "—"} />
-            <Row label="Branch" value={student.branch?.name ?? "—"} />
-            <Row label="Registered" value={formatDate(student.createdAt)} />
-          </CardContent>
-        </Card>
-
-        {/* Passport (sensitive — masked until revealed) */}
-        <Card>
-          <CardHeader><CardTitle>Passport</CardTitle></CardHeader>
-          <CardContent className="space-y-1.5 text-sm">
-            <Row label="Passport Number" value={<PassportValue passport={student.passportNumber} />} />
-            <Row label="Issue Date" value={formatDate(student.passportIssueDate)} />
-            <Row label="Expiry Date" value={formatDate(student.passportExpiryDate)} />
-          </CardContent>
-        </Card>
-
-        {/* Assigned counselor + upcoming tasks */}
-        <Card>
-          <CardHeader><CardTitle>Assigned Counselor</CardTitle></CardHeader>
-          <CardContent className="space-y-1.5 text-sm">
-            {student.employee ? (
-              <>
-                <Row label="Name" value={<Link href={`/admin/employees/${student.employee.id}`} className="text-primary hover:underline">{student.employee.user.name}</Link>} />
-                <Row label="Title" value={student.employee.title ?? "—"} />
-                <Row label="Email" value={student.employee.user.email} />
-              </>
-            ) : (
-              <p className="text-muted-foreground">No counselor assigned.</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle>Upcoming Tasks</CardTitle></CardHeader>
-          <CardContent>
-            {upcomingTasks.length === 0 && <p className="text-sm text-muted-foreground">No open tasks.</p>}
-            <ul className="space-y-1.5 text-sm">
-              {upcomingTasks.map((t) => (
-                <li key={t.id} className="flex items-center justify-between rounded-md border border-border px-3 py-2">
-                  <span className="font-medium">{t.title}</span>
-                  <span className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{formatDate(t.dueDate)}</span>
-                    <StatusBadge status={t.priority} />
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-
-        {/* Academic background */}
-        <Card>
-          <CardHeader><CardTitle>Academic Background</CardTitle></CardHeader>
-          <CardContent>
-            {student.academicRecords.length === 0 ? <EmptyState title="No academic records" /> : (
-              <TableShell headers={["Level", "Institution", "Result", "Year"]}>
-                {student.academicRecords.map((r) => (
-                  <tr key={r.id}>
-                    <td className="px-4 py-2.5 font-medium">{r.level}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground">{r.institution}</td>
-                    <td className="px-4 py-2.5">{r.result ?? "—"}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground">{r.passingYear ?? "—"}</td>
-                  </tr>
-                ))}
-              </TableShell>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* English proficiency */}
-        <Card>
-          <CardHeader><CardTitle>English Proficiency</CardTitle></CardHeader>
-          <CardContent>
-            {student.englishProficiencies.length === 0 ? <EmptyState title="No test records" /> : (
-              <ul className="space-y-1.5 text-sm">
-                {student.englishProficiencies.map((e) => (
-                  <li key={e.id} className="flex justify-between rounded-md border border-border px-3 py-2">
-                    <span className="font-medium">{titleCase(e.testType)}</span>
-                    <span>Overall: <strong>{e.overallScore ?? "—"}</strong></span>
-                    <span className="text-muted-foreground">{formatDate(e.testDate)}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Applications */}
-      <Card>
-        <CardHeader><CardTitle>Applications</CardTitle></CardHeader>
-        <CardContent>
-          {student.applications.length === 0 ? <EmptyState title="No applications" /> : (
-            <TableShell headers={["Number", "Country", "Stage", "Status", "Created"]}>
-              {student.applications.map((a) => (
-                <tr key={a.id} className="hover:bg-muted/40">
-                  <td className="px-4 py-2.5">
-                    <Link href={`/admin/applications/${a.id}`} className="font-mono text-xs font-medium text-primary hover:underline">
-                      {a.applicationNumber}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-2.5">{a.country.name}</td>
-                  <td className="px-4 py-2.5"><StatusBadge status={a.stageKey} /></td>
-                  <td className="px-4 py-2.5"><StatusBadge status={a.status} /></td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{formatDate(a.createdAt)}</td>
-                </tr>
-              ))}
-            </TableShell>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Documents / Payments / Invoices */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle>Documents ({docs.total})</CardTitle></CardHeader>
-          <CardContent>
-            {student.documents.length === 0 ? <EmptyState title="No documents" /> : (
-              <ul className="space-y-1.5 text-sm">
-                {student.documents.map((d) => (
-                  <li key={d.id} className="flex items-center justify-between rounded-md border border-border px-3 py-2">
-                    <span className="font-medium">{d.name}</span>
-                    <StatusBadge status={d.status} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle>Payments ({student.payments.length})</CardTitle></CardHeader>
-          <CardContent>
-            {student.payments.length === 0 ? <EmptyState title="No payments" /> : (
-              <ul className="space-y-1.5 text-sm">
-                {student.payments.map((p) => (
-                  <li key={p.id} className="flex justify-between rounded-md border border-border px-3 py-2">
-                    <span>{formatDate(p.paymentDate ?? p.createdAt)}</span>
-                    <span className="font-medium">{formatMoney(p.amount, p.currency)}</span>
-                    <StatusBadge status={p.status} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader><CardTitle>Invoices</CardTitle></CardHeader>
-        <CardContent>
-          {student.invoices.length === 0 ? <EmptyState title="No invoices" /> : (
-            <TableShell headers={["Invoice", "Total", "Paid", "Due", "Status"]}>
-              {student.invoices.map((i) => (
-                <tr key={i.id}>
-                  <td className="px-4 py-2.5">
-                    <Link href={`/admin/invoices/${i.id}`} className="font-mono text-xs text-primary hover:underline">
-                      {i.invoiceNumber}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-2.5">{formatMoney(i.total)}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{formatMoney(i.paidAmount)}</td>
-                  <td className="px-4 py-2.5 font-medium">{formatMoney(i.dueAmount)}</td>
-                  <td className="px-4 py-2.5"><StatusBadge status={i.status} /></td>
-                </tr>
-              ))}
-            </TableShell>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Tasks + Messages */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle>Tasks</CardTitle></CardHeader>
-          <CardContent>
-            {student.tasks.length === 0 ? <EmptyState title="No tasks" /> : (
-              <ul className="space-y-1.5 text-sm">
-                {student.tasks.slice(0, 10).map((t) => (
-                  <li key={t.id} className="flex items-center justify-between rounded-md border border-border px-3 py-2">
-                    <span className="font-medium">{t.title}</span>
-                    <span className="flex items-center gap-2">
-                      <StatusBadge status={t.status} />
-                      <span className="text-xs text-muted-foreground">{formatDate(t.dueDate)}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle>Messages</CardTitle></CardHeader>
-          <CardContent>
-            {student.conversations.length === 0 ? (
-              <EmptyState title="No conversations" description="Conversations appear when the student messages their counselor." />
-            ) : (
-              <ul className="space-y-1.5 text-sm">
-                {student.conversations.map((c) => (
-                  <li key={c.id} className="flex justify-between rounded-md border border-border px-3 py-2">
-                    <span>{c.employee.user.name}</span>
-                    <span className="text-xs text-muted-foreground">{formatDate(c.lastMessageAt)}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Application timeline */}
-      <Card>
-        <CardHeader><CardTitle>Application Timeline</CardTitle></CardHeader>
-        <CardContent>
-          {student.applications.every((a) => a.statusHistory.length === 0) ? (
-            <EmptyState title="No timeline events yet" />
-          ) : (
-            <ol className="relative space-y-4 border-l border-border pl-5">
-              {student.applications.flatMap((a) =>
-                a.statusHistory.map((h) => ({ ...h, appNumber: a.applicationNumber }))
-              )
-                .sort((x, y) => new Date(y.createdAt).getTime() - new Date(x.createdAt).getTime())
-                .slice(0, 25)
-                .map((h) => (
-                  <li key={h.id}>
-                    <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-primary" aria-hidden />
-                    <p className="text-sm font-medium">
-                      <span className="font-mono text-xs text-muted-foreground">{h.appNumber}</span>{" "}
-                      {h.fromStage ? `${titleCase(h.fromStage)} → ${titleCase(h.toStage)}` : titleCase(h.toStage)}
-                    </p>
-                    {h.note && <p className="text-sm text-muted-foreground">{h.note}</p>}
-                    <p className="text-xs text-muted-foreground">{new Date(h.createdAt).toLocaleString("en-GB")}</p>
-                  </li>
-                ))}
-            </ol>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Audit activity (complete case history) */}
-      <Card>
-        <CardHeader><CardTitle>Audit Activity</CardTitle></CardHeader>
-        <CardContent>
-          {auditActivity.length === 0 ? (
-            <EmptyState title="No recorded activity" />
-          ) : (
-            <ol className="relative space-y-4 border-l border-border pl-5">
-              {auditActivity.map((a) => (
-                <li key={a.id}>
-                  <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-muted-foreground" aria-hidden />
-                  <p className="font-mono text-xs font-medium">{a.action}</p>
-                  <p className="text-xs text-muted-foreground">{new Date(a.createdAt).toLocaleString("en-GB")}</p>
-                </li>
-              ))}
-            </ol>
-          )}
-        </CardContent>
-      </Card>
+      <StudentDetailTabs data={data} />
     </>
-  );
-}
-
-function Row({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex justify-between gap-4">
-      <span className="shrink-0 text-muted-foreground">{label}</span>
-      <span className="min-w-0 truncate text-right font-medium">{value}</span>
-    </div>
   );
 }
