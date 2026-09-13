@@ -12,7 +12,7 @@ export function StatCard({
   icon?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md">
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium text-muted-foreground">{title}</p>
         {icon && <div className="text-muted-foreground">{icon}</div>}
@@ -33,8 +33,8 @@ export function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 px-6 py-12 text-center">
-      <p className="font-medium text-foreground">{title}</p>
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 px-6 py-16 text-center">
+      <p className="font-semibold text-foreground">{title}</p>
       {description && <p className="mt-1 text-sm text-muted-foreground max-w-sm">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
@@ -51,12 +51,12 @@ export function TableShell({
   empty?: boolean;
 }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
+    <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
       <table className="w-full text-sm">
-        <thead className="bg-muted/40 text-left text-xs font-medium text-muted-foreground">
+        <thead className="border-b border-border bg-muted/30 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           <tr>
             {headers.map((h) => (
-              <th key={h} className="whitespace-nowrap px-4 py-2.5 font-medium">
+              <th key={h} className="whitespace-nowrap px-4 py-3 font-semibold">
                 {h}
               </th>
             ))}
@@ -93,12 +93,12 @@ export function Pagination({
       </span>
       <div className="flex gap-2">
         {page > 1 && (
-          <a href={build(page - 1)} className="rounded-md border border-border px-3 py-1 hover:bg-muted">
+          <a href={build(page - 1)} className="rounded-lg border border-border px-3 py-1.5 font-medium hover:bg-muted transition-colors">
             Previous
           </a>
         )}
         {page < totalPages && (
-          <a href={build(page + 1)} className="rounded-md border border-border px-3 py-1 hover:bg-muted">
+          <a href={build(page + 1)} className="rounded-lg border border-border px-3 py-1.5 font-medium hover:bg-muted transition-colors">
             Next
           </a>
         )}
@@ -108,14 +108,12 @@ export function Pagination({
 }
 
 const STATUS_TONES: Record<string, "default" | "success" | "warning" | "destructive" | "info"> = {
-  // Active / positive
   ACTIVE: "success",
   APPROVED: "success",
   PAID: "success",
   COMPLETED: "success",
   CONVERTED: "success",
   ISSUED: "info",
-  // In progress / informational
   UPLOADED: "info",
   IN_PROGRESS: "info",
   UNDER_REVIEW: "info",
@@ -125,12 +123,10 @@ const STATUS_TONES: Record<string, "default" | "success" | "warning" | "destruct
   PROCESSING: "info",
   PREPARATION: "info",
   TODO: "default",
-  // Pending / warning
   PENDING: "warning",
   PARTIAL: "warning",
   REQUESTED: "warning",
   DRAFT: "default",
-  // Negative / danger
   REJECTED: "destructive",
   REFUSED: "destructive",
   OVERDUE: "destructive",
@@ -142,12 +138,10 @@ const STATUS_TONES: Record<string, "default" | "success" | "warning" | "destruct
   ARCHIVED: "default",
   INACTIVE: "default",
   SUSPENDED: "warning",
-  // Lead statuses
   NEW: "info",
   CONTACTED: "info",
   COUNSELING: "info",
   QUALIFIED: "success",
-  // Priorities
   LOW: "default",
   MEDIUM: "info",
   HIGH: "warning",
@@ -159,7 +153,7 @@ export function StatusBadge({ status }: { status: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs font-medium whitespace-nowrap",
+        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold whitespace-nowrap",
         tone === "success" && "border-success/20 bg-success/10 text-success",
         tone === "warning" && "border-warning/20 bg-warning/10 text-warning",
         tone === "destructive" && "border-destructive/20 bg-destructive/10 text-destructive",

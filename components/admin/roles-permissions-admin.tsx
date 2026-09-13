@@ -177,7 +177,7 @@ export function RolesPermissionsAdmin() {
               {groups.map((group) => (
                 <div key={group.key}>
                   <p className="mb-2 text-sm font-semibold">{group.label}</p>
-                  <div className="overflow-x-auto rounded-lg border border-border">
+                  <div className="overflow-x-auto rounded-xl border border-border">
                     <table className="w-full text-sm">
                       <thead className="bg-muted/60 text-left text-xs uppercase text-muted-foreground">
                         <tr>

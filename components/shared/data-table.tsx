@@ -151,12 +151,13 @@ export function DataTable<T extends { id: string }>({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-border bg-card">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-muted/30 text-left text-xs font-medium text-muted-foreground">
+          <thead className="border-b border-border bg-muted/30 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             <tr>
               {visibleColumns.map((c) => (
-                <th key={c.key} className={cn("whitespace-nowrap px-3 py-2.5 font-medium", c.className)}>
+                <th key={c.key} className={cn("whitespace-nowrap px-4 py-3 font-semibold", c.className)}>
                   {c.sortable ? (
                     <button
                       className="inline-flex items-center gap-1 hover:text-foreground"
@@ -183,7 +184,7 @@ export function DataTable<T extends { id: string }>({
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i} className="border-b border-border last:border-0">
                   {visibleColumns.map((c) => (
-                    <td key={c.key} className="px-3 py-2.5">
+                    <td key={c.key} className="px-4 py-3">
                       <Skeleton className="h-4 w-full" />
                     </td>
                   ))}
@@ -192,21 +193,21 @@ export function DataTable<T extends { id: string }>({
               ))}
             {!isPending && rows.length === 0 && (
               <tr>
-                <td colSpan={visibleColumns.length + (rowActions ? 1 : 0)} className="px-3 py-12 text-center text-sm text-muted-foreground">
+                <td colSpan={visibleColumns.length + (rowActions ? 1 : 0)} className="px-4 py-16 text-center text-sm text-muted-foreground">
                   {emptyMessage}
                 </td>
               </tr>
             )}
             {!isPending &&
               rows.map((row) => (
-                <tr key={row.id} className="border-b border-border last:border-0 transition-colors hover:bg-muted/30">
+                <tr key={row.id} className="border-b border-border last:border-0 transition-colors hover:bg-muted/40">
                   {visibleColumns.map((c) => (
-                    <td key={c.key} className={cn("px-3 py-2.5", c.className)}>
+                    <td key={c.key} className={cn("px-4 py-3", c.className)}>
                       {c.render(row)}
                     </td>
                   ))}
                   {rowActions && rowActions.length > 0 && (
-                    <td className="px-3 py-2.5 text-right">
+                    <td className="px-4 py-3 text-right">
                       <div className="inline-flex gap-0.5">
                         {rowActions.map((a) => (
                           <button
@@ -227,11 +228,12 @@ export function DataTable<T extends { id: string }>({
               ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Error */}
       {isError && (
-        <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+        <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
           {(error as Error).message}
           <Button variant="outline" size="sm" className="ml-3" onClick={() => refetch()}>
             Retry

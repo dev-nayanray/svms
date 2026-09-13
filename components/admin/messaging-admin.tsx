@@ -252,7 +252,7 @@ export function MessagingAdmin() {
           description="Conversations are created when a counselor sends a message to a student."
         />
       ) : (
-        <ul className="divide-y divide-border rounded-lg border border-border">
+        <ul className="divide-y divide-border rounded-xl border border-border">
           {conversations.map((c) => (
             <li key={c.id}>
               <button

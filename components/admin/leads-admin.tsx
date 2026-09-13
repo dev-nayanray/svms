@@ -290,7 +290,7 @@ function AddNoteDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="dialog" aria-modal="true" aria-label={`Add note to ${leadName}`}>
-      <div className="w-[95vw] max-w-md rounded-lg border border-border bg-card p-6 shadow-xl">
+      <div className="w-[95vw] max-w-md rounded-xl border border-border bg-card p-6 shadow-xl">
         <h2 className="text-base font-semibold">Add note — {leadName}</h2>
         <textarea
           autoFocus

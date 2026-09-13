@@ -106,7 +106,7 @@ export function AdminShell({
         title={collapsed ? item.label : undefined}
         onClick={() => setMobileOpen(false)}
         className={cn(
-          "group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors",
+          "group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors",
           collapsed && "justify-center",
           active
             ? "bg-primary/10 text-primary"
@@ -266,7 +266,7 @@ export function AdminShell({
             {/* Global search trigger */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="flex h-9 items-center gap-2 rounded-md border border-border bg-muted/50 px-3 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="flex h-9 items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               aria-label="Search"
             >
               <Search className="h-3.5 w-3.5" aria-hidden />
@@ -284,7 +284,7 @@ export function AdminShell({
               href="/?preview=1"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden h-9 items-center gap-1.5 rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted sm:flex"
+              className="hidden h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted sm:flex"
               aria-label="View marketing site (opens in new tab)"
               title="View marketing site"
             >
@@ -400,7 +400,7 @@ export function AdminShell({
                     router.push(r.href);
                   }}
                 >
-                  <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                  <span className="rounded-lg bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                     {r.type}
                   </span>
                   <span className="min-w-0 flex-1">
