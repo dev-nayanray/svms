@@ -1,0 +1,293 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// Identity & RBAC
+// ─────────────────────────────────────────────
+
+model Role {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  name        String       @unique // ADMIN | EMPLOYEE | STUDENT
+  description String?
+  permissions Permission[]
+  users       User[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Permission {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  key      String   @unique // e.g. "students.read"
+  roleName String
+  role     Role     @relation(fields: [roleName], references: [name])
+}
+
+model User {
+  id               String        @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  email            String        @unique
+  phone            String?
+  passwordHash     String
+  roleName         String        @default("STUDENT")
+  role             Role          @relation(fields: [roleName], references: [name])
+  status           String        @default("ACTIVE") // ACTIVE | INACTIVE | SUSPENDED | PENDING
+  avatar           String?
+  lastLoginAt      DateTime?
+  emailVerifiedAt  DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  student          Student?
+  employee         Employee?
+
+  @@index([roleName])
+}
+
+// ─────────────────────────────────────────────
+// People
+// ─────────────────────────────────────────────
+
+model Student {
+  id                 String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String    @unique @db.ObjectId
+  user               User      @relation(fields: [userId], references: [id])
+  studentId          String    @unique // STD-YYYY-NNNNNN
+  firstName          String
+  lastName           String
+  email              String
+  phone              String?
+  dateOfBirth        DateTime?
+  gender             String?
+  nationality        String?
+  country            String?
+  city               String?
+  assignedEmployeeId String?   @db.ObjectId
+  assignedEmployee   Employee? @relation("AssignedStudents", fields: [assignedEmployeeId], references: [id])
+  status             String    @default("ACTIVE")
+  applications       Application[]
+  documents          Document[]
+  tasks              Task[]
+  conversations      Conversation[]
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([assignedEmployeeId])
+  @@index([status])
+}
+
+model Employee {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String    @unique @db.ObjectId
+  user      User      @relation(fields: [userId], references: [id])
+  title     String?
+  students  Student[] @relation("AssignedStudents")
+  leads     Lead[]
+  conversations Conversation[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Lead {
+  id                 String    @id @default(auto()) @map("_id") @db.ObjectId
+  name               String
+  phone              String?
+  email              String?
+  interestedCountry  String?
+  status             String    @default("NEW") // NEW | CONTACTED | COUNSELING | QUALIFIED | CONVERTED | LOST
+  source             String?
+  notes              String?
+  assignedEmployeeId String?   @db.ObjectId
+  assignedEmployee   Employee? @relation(fields: [assignedEmployeeId], references: [id])
+  convertedStudentId String?   @db.ObjectId
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([status])
+  @@index([assignedEmployeeId])
+}
+
+// ─────────────────────────────────────────────
+// Education catalog
+// ─────────────────────────────────────────────
+
+model Country {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String    @unique
+  code        String    @unique
+  flag        String?
+  currency    String?
+  status      String    @default("ACTIVE")
+  description String?
+  universities University[]
+  applications Application[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model University {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  slug        String    @unique
+  countryId   String    @db.ObjectId
+  country     Country   @relation(fields: [countryId], references: [id])
+  logo        String?
+  website     String?
+  city        String?
+  description String?
+  ranking     Int?
+  status      String    @default("ACTIVE")
+  courses     Course[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([countryId])
+  @@index([status])
+}
+
+model Course {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  universityId    String    @db.ObjectId
+  university      University @relation(fields: [universityId], references: [id])
+  name            String
+  degreeLevel     String // DIPLOMA | BACHELOR | MASTER | PHD | OTHER
+  duration        String?
+  tuitionFee      Float?
+  currency        String    @default("EUR")
+  description      String?
+  status          String    @default("ACTIVE")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([universityId])
+  @@index([degreeLevel])
+}
+
+// ─────────────────────────────────────────────
+// Applications & Documents
+// ─────────────────────────────────────────────
+
+model Application {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  applicationNumber String   @unique
+  studentId        String    @db.ObjectId
+  student          Student   @relation(fields: [studentId], references: [id])
+  countryId        String    @db.ObjectId
+  country          Country   @relation(fields: [countryId], references: [id])
+  universityId     String?   @db.ObjectId
+  courseId         String?   @db.ObjectId
+  stageKey         String    @default("LEAD")
+  status           String    @default("NEW")
+  notes            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  documents        Document[]
+  tasks            Task[]
+
+  @@index([studentId])
+  @@index([stageKey])
+}
+
+model Document {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  studentId   String    @db.ObjectId
+  student     Student   @relation(fields: [studentId], references: [id])
+  applicationId String? @db.ObjectId
+  application Application? @relation(fields: [applicationId], references: [id])
+  name        String
+  fileUrl     String?
+  fileName    String?
+  mimeType    String?
+  fileSize    Int?
+  status      String    @default("REQUESTED") // REQUESTED | UPLOADED | UNDER_REVIEW | APPROVED | REJECTED
+  reviewNote  String?
+  uploadedAt  DateTime?
+  reviewedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([studentId])
+  @@index([status])
+}
+
+model Task {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  description  String?
+  studentId    String?   @db.ObjectId
+  student      Student?  @relation(fields: [studentId], references: [id])
+  applicationId String? @db.ObjectId
+  application  Application? @relation(fields: [applicationId], references: [id])
+  assignedToId String?   @db.ObjectId // employee userId
+  priority     String    @default("MEDIUM")
+  status       String    @default("TODO") // TODO | IN_PROGRESS | COMPLETED | CANCELLED
+  dueDate      DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([studentId])
+  @@index([assignedToId])
+  @@index([status])
+}
+
+model Conversation {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  studentId String    @db.ObjectId
+  student   Student   @relation(fields: [studentId], references: [id])
+  employeeId String?  @db.ObjectId
+  employee  Employee? @relation(fields: [employeeId], references: [id])
+  subject   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  messages Message[]
+
+  @@index([studentId])
+}
+
+model Message {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  conversationId String   @db.ObjectId
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  senderId       String   @db.ObjectId // user id
+  body           String
+  readAt         DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([conversationId])
+}
+
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  type      String
+  title     String
+  message   String
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?  @db.ObjectId
+  action    String
+  entity    String
+  entityId  String?  @db.ObjectId
+  oldValue  Json?
+  newValue  Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity])
+}
