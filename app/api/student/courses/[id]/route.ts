@@ -24,8 +24,23 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
     if (g.error) return g.error;
     const { id } = await params;
 
+    // Defense-in-depth: enforce the student-visibility rule (course +
+    // university + country all ACTIVE and not soft-deleted) at the DB
+    // level AND in the post-fetch isCourseVisibleToStudent() check.
+    // The university + country projections include status + deletedAt
+    // so the post-fetch check has the fields it needs to evaluate the
+    // full chain.
     const course = await prisma.course.findFirst({
-      where: { id },
+      where: {
+        id,
+        deletedAt: null,
+        status: "ACTIVE",
+        university: {
+          deletedAt: null,
+          status: "ACTIVE",
+          country: { deletedAt: null, status: "ACTIVE" },
+        },
+      },
       include: {
         university: {
           select: {
@@ -34,8 +49,18 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
             logo: true,
             website: true,
             city: true,
+            status: true,
+            deletedAt: true,
             country: {
-              select: { id: true, name: true, code: true, flag: true, currency: true },
+              select: {
+                id: true,
+                name: true,
+                code: true,
+                flag: true,
+                currency: true,
+                status: true,
+                deletedAt: true,
+              },
             },
           },
         },
@@ -76,16 +101,30 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
     }
 
     // Strip internal admin fields before sending the public payload.
+    // We also strip university.status + university.deletedAt and
+    // country.status + country.deletedAt — they were only needed for
+    // the post-fetch visibility check.
     const {
       deletedAt: _deletedAt,
       deletedBy: _deletedBy,
+      university: {
+        status: _us,
+        deletedAt: _ud,
+        country: { status: _cs, deletedAt: _cd, ...publicCountry },
+        ...publicUniversity
+      },
       ...publicCourse
     } = course;
     void _deletedAt;
     void _deletedBy;
+    void _us;
+    void _ud;
+    void _cs;
+    void _cd;
 
     return ok({
       ...publicCourse,
+      university: { ...publicUniversity, country: publicCountry },
       englishRequirementsList: collectEnglishRequirements(publicCourse),
       counselingRequested,
       counselingRequestStatus,

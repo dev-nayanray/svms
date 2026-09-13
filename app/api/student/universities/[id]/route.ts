@@ -22,10 +22,31 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
     if (g.error) return g.error;
     const { id } = await params;
 
+    // Defense-in-depth: enforce the student-visibility rule at the DB
+    // level (so a missing row 404s cleanly) AND in the post-fetch
+    // isUniversityVisibleToStudent() check (so a rule change in the
+    // helper still takes effect even if the where-clause drifts).
+    // The country projection includes status + deletedAt so the
+    // post-fetch check has the fields it needs to evaluate the chain.
     const university = await prisma.university.findFirst({
-      where: { id },
+      where: {
+        id,
+        deletedAt: null,
+        status: "ACTIVE",
+        country: { deletedAt: null, status: "ACTIVE" },
+      },
       include: {
-        country: { select: { id: true, name: true, code: true, flag: true, currency: true } },
+        country: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+            flag: true,
+            currency: true,
+            status: true,
+            deletedAt: true,
+          },
+        },
         courses: {
           where: { deletedAt: null, status: "ACTIVE" },
           orderBy: [{ degreeLevel: "asc" }, { name: "asc" }],
@@ -131,19 +152,25 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
     }
 
     // Strip internal administrative fields before sending the public payload.
+    // We also strip country.status + country.deletedAt — they were only
+    // needed for the post-fetch visibility check, not for the UI.
     const {
       deletedAt: _deletedAt,
       deletedBy: _deletedBy,
+      country: { status: _cs, deletedAt: _cd, ...publicCountry },
       ...publicUniversity
     } = university;
     void _deletedAt;
     void _deletedBy;
+    void _cs;
+    void _cd;
 
     return ok({
       ...publicUniversity,
+      country: publicCountry,
       courses: publicUniversity.courses.map((c) => {
-        const { deletedAt: _cd, deletedBy: _cb, intakes: _intakes, ...coursePublic } = c;
-        void _cd;
+        const { deletedAt: _cd2, deletedBy: _cb, intakes: _intakes, ...coursePublic } = c;
+        void _cd2;
         void _cb;
         void _intakes;
         return coursePublic;

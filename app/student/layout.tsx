@@ -13,12 +13,20 @@ export const dynamic = "force-dynamic";
  * connection is shared across all student pages — navigating between
  * /student/messages and /student/documents does NOT re-establish the
  * connection.
+ *
+ * The student's `profilePhotoUrl` is fetched here, server-side, so the
+ * header avatar in the AppShell can render the actual photo (when the
+ * student has uploaded one) instead of just initials. Falls back to
+ * initials client-side.
  */
 export default async function StudentLayout({ children }: { children: React.ReactNode }) {
-  const { name } = await requireStudentProfile();
+  const { name, student } = await requireStudentProfile();
   return (
     <StudentRealtimeProvider>
-      <StudentAppShell userName={name}>
+      <StudentAppShell
+        userName={name}
+        profilePhotoUrl={student.profilePhotoUrl ?? null}
+      >
         {children}
         <PwaProvider />
       </StudentAppShell>

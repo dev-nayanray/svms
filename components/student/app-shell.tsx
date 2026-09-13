@@ -58,9 +58,11 @@ function useUnreadCount() {
 
 export function StudentAppShell({
   userName,
+  profilePhotoUrl,
   children,
 }: {
   userName: string;
+  profilePhotoUrl?: string | null;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -123,9 +125,18 @@ export function StudentAppShell({
             aria-label="Profile"
             className="grid h-10 w-10 place-items-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-primary/15 text-xs font-bold text-primary ring-2 ring-card">
-              {initials || "S"}
-            </span>
+            {profilePhotoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={profilePhotoUrl}
+                alt={userName}
+                className="h-8 w-8 rounded-full object-cover ring-2 ring-card"
+              />
+            ) : (
+              <span className="grid h-8 w-8 place-items-center rounded-full bg-primary/15 text-xs font-bold text-primary ring-2 ring-card">
+                {initials || "S"}
+              </span>
+            )}
           </Link>
         </div>
       </header>
