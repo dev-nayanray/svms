@@ -249,25 +249,33 @@ model Application {
 }
 
 model Document {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  studentId   String    @db.ObjectId
-  student     Student   @relation(fields: [studentId], references: [id])
-  applicationId String? @db.ObjectId
-  application Application? @relation(fields: [applicationId], references: [id])
-  name        String
-  fileUrl     String?
-  fileName    String?
-  mimeType    String?
-  fileSize    Int?
-  status      String    @default("REQUESTED") // REQUESTED | UPLOADED | UNDER_REVIEW | APPROVED | REJECTED
-  reviewNote  String?
-  uploadedAt  DateTime?
-  reviewedAt  DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  studentId     String    @db.ObjectId
+  student       Student   @relation(fields: [studentId], references: [id])
+  applicationId String?   @db.ObjectId
+  application   Application? @relation(fields: [applicationId], references: [id])
+  name          String
+  documentType  String?   // PASSPORT | TRANSCRIPT | IELTS | BANK_STATEMENT | OTHER
+  fileUrl       String?
+  fileName      String?
+  mimeType      String?
+  fileSize      Int?
+  fileHash      String?   // SHA-256 hash for dedup + integrity
+  status        String    @default("REQUESTED") // REQUESTED | UPLOADED | UNDER_REVIEW | APPROVED | REJECTED | EXPIRED
+  reviewNote    String?
+  reviewedById  String?   @db.ObjectId
+  reviewedAt    DateTime?
+  uploadedAt    DateTime?
+  expiresAt     DateTime?
+  version       Int       @default(1)
+  previousVersionId String? @db.ObjectId
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([studentId])
   @@index([status])
+  @@index([documentType])
+  @@index([reviewedById])
 }
 
 model Task {
