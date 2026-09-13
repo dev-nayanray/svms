@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
       data: { ...body, createdById: g.user.id },
     });
 
-    // Notify the assignee
+    // Notify the assignee (employee)
     await notifications.push({
       userId: body.assignedToId,
       type: "TASK_ASSIGNED",
@@ -111,6 +111,23 @@ export async function POST(req: NextRequest) {
       message: body.title,
       link: "/employee/tasks",
     });
+
+    // Also notify the student if the task has a studentId
+    if (body.studentId) {
+      const student = await prisma.student.findUnique({
+        where: { id: body.studentId },
+        select: { userId: true, firstName: true },
+      });
+      if (student) {
+        await notifications.push({
+          userId: student.userId,
+          type: "TASK_ASSIGNED",
+          title: "New task",
+          message: body.title,
+          link: "/student/tasks",
+        });
+      }
+    }
 
     await auditLog.record({
       userId: g.user.id,

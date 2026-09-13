@@ -103,20 +103,21 @@ function buildSummary(row: {
 
 export const studentTaskService = {
   /**
-   * List tasks assigned to the caller. Supports the 5 views (all,
+   * List tasks for the caller. Supports the 5 views (all,
    * today, upcoming, overdue, completed) and an optional status
-   * filter. Tasks are scoped by `assignedToId = userId` from the
-   * session — never from client input.
+   * filter. Tasks are scoped by `studentId` from the session —
+   * so students see ALL tasks related to them, whether assigned
+   * to the employee or the student.
    */
   async list(
-    userId: string,
+    studentId: string,
     options: { view?: TaskView; status?: string } = {},
   ): Promise<StudentTaskSummary[]> {
     const now = new Date();
 
     const where: Record<string, unknown> = {
       deletedAt: null,
-      assignedToId: userId,
+      studentId: studentId,
     };
 
     // Apply the view filter (today / upcoming / overdue / completed)
@@ -157,13 +158,14 @@ export const studentTaskService = {
    * automatically sets `completedAt`; reverting from COMPLETED to
    * IN_PROGRESS clears it.
    *
-   * Ownership is verified: the task's `assignedToId` must match the
-   * caller's `userId`.
+   * Ownership is verified: the task's `studentId` must match the
+   * caller's `studentId`.
    */
   async updateStatus(
-    userId: string,
+    studentId: string,
     taskId: string,
     newStatus: string,
+    actorUserId?: string,
   ): Promise<StudentTaskSummary> {
     // Validate the status is in the student-allowed set.
     if (!ALLOWED_STUDENT_STATUSES.includes(newStatus as typeof ALLOWED_STUDENT_STATUSES[number])) {
@@ -182,8 +184,8 @@ export const studentTaskService = {
       throw new HttpError(404, "NOT_FOUND", "Task not found");
     }
 
-    // Verify ownership — the task must be assigned to the caller.
-    if (task.assignedToId !== userId) {
+    // Verify ownership — the task must belong to the caller (studentId).
+    if (task.studentId !== studentId) {
       // Return the same 404 as "not found" so the existence of
       // another user's task is never confirmed.
       throw new HttpError(404, "NOT_FOUND", "Task not found");
@@ -228,7 +230,7 @@ export const studentTaskService = {
 
     // Audit-log the status change.
     await auditLog.record({
-      userId,
+      userId: actorUserId,
       action: "task.status_changed",
       entity: "Task",
       entityId: taskId,
@@ -237,7 +239,7 @@ export const studentTaskService = {
     });
 
     // Notify the task creator when the student completes it.
-    if (newStatus === "COMPLETED" && task.createdById && task.createdById !== userId) {
+    if (newStatus === "COMPLETED" && task.createdById && task.createdById !== actorUserId) {
       await notifications.push({
         userId: task.createdById,
         type: "TASK_COMPLETED",
@@ -255,8 +257,8 @@ export const studentTaskService = {
    * status=COMPLETED, but as a separate POST endpoint for the
    * checklist UX (tap a checkbox → POST /complete).
    */
-  async complete(userId: string, taskId: string): Promise<StudentTaskSummary> {
-    return this.updateStatus(userId, taskId, "COMPLETED");
+  async complete(studentId: string, taskId: string, actorUserId?: string): Promise<StudentTaskSummary> {
+    return this.updateStatus(studentId, taskId, "COMPLETED", actorUserId);
   },
 
   /**

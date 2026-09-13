@@ -27,7 +27,7 @@ export async function POST(_req: NextRequest, { params }: Ctx) {
     if (!g.ok) return g.error;
 
     const { id } = await params;
-    const task = await studentTaskService.complete(g.userId, id);
+    const task = await studentTaskService.complete(g.student.id, id, g.userId);
     return ok({ task });
   } catch (err) {
     return handleApiError(err);

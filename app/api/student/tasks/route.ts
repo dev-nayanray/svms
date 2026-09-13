@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     const view = (sp.get("view") ?? "all") as TaskView;
     const status = sp.get("status") ?? undefined;
 
-    const tasks = await studentTaskService.list(g.userId, {
+    const tasks = await studentTaskService.list(g.student.id, {
       view: view as TaskView,
       status: status ?? undefined,
     });

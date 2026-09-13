@@ -55,7 +55,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       );
     }
 
-    const task = await studentTaskService.updateStatus(g.userId, id, body.status);
+    const task = await studentTaskService.updateStatus(g.student.id, id, body.status, g.userId);
     return ok({ task });
   } catch (err) {
     return handleApiError(err);
