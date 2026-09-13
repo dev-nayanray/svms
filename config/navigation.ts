@@ -53,6 +53,7 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
   {
     label: "Organization",
     items: [
+      { href: "/admin/users", label: "User Management", icon: "Users" },
       { href: "/admin/employees", label: "Employees", icon: "GraduationCap" },
       { href: "/admin/branches", label: "Branches", icon: "GitBranch" },
       { href: "/admin/roles-permissions", label: "Roles & Permissions", icon: "ShieldCheck" },
