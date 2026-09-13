@@ -23,11 +23,17 @@ export function NotificationBadge({ count, className }: { count: number; classNa
     <span
       aria-label={`${count} unread notifications`}
       className={cn(
-        "absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-white ring-2 ring-card",
+        "absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-white ring-2 ring-card shadow-sm",
         className
       )}
     >
-      {count > 9 ? "9+" : count}
+      {/* Subtle ping animation when there are unread notifications —
+          catches the eye without being distracting. */}
+      <span
+        aria-hidden
+        className="absolute inset-0 animate-ping rounded-full bg-destructive opacity-60 motion-reduce:hidden"
+      />
+      <span className="relative">{count > 9 ? "9+" : count}</span>
     </span>
   );
 }

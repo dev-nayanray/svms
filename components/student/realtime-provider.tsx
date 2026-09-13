@@ -355,36 +355,70 @@ export function StudentRealtimeProvider({ children }: { children: React.ReactNod
 }
 
 /**
- * LiveIndicator — small dot that shows the SSE connection status.
- * Rendered in the header so the user knows whether real-time updates
- * are flowing.
+ * LiveIndicator — premium pill that shows the SSE connection status
+ * with a gradient dot + label. Rendered in the header so the user
+ * knows whether real-time updates are flowing.
+ *
+ * Visual states:
+ *  - live:         emerald gradient dot, "Live" label, no pulse
+ *  - connecting:   amber gradient dot, "Connecting" label, soft pulse
+ *  - reconnecting: amber gradient dot, "Reconnecting" label, soft pulse
+ *  - offline:      muted dot, "Offline" label, no pulse
+ *
+ * The pill has a subtle gradient background + ring that matches the
+ * dot color, so the whole element feels "alive" rather than a static
+ * label. On mobile we show only the dot (label is hidden via the
+ * `showLabel` prop), keeping the header compact.
  */
-export function LiveIndicator() {
+export function LiveIndicator({ showLabel = true }: { showLabel?: boolean }) {
   const { status } = useRealtime();
-  const color =
-    status === "live"
-      ? "bg-emerald-500"
-      : status === "reconnecting"
-        ? "bg-amber-500 animate-pulse"
-        : status === "connecting"
-          ? "bg-amber-500 animate-pulse"
-          : "bg-muted-foreground";
-  const label =
-    status === "live"
-      ? "Live"
-      : status === "reconnecting"
-        ? "Reconnecting"
-        : status === "connecting"
-          ? "Connecting"
-          : "Offline";
+  const isLive = status === "live";
+  const isConnecting = status === "connecting" || status === "reconnecting";
+
+  const dotClass = isLive
+    ? "bg-emerald-500"
+    : isConnecting
+      ? "bg-amber-500"
+      : "bg-muted-foreground";
+
+  const label = isLive
+    ? "Live"
+    : status === "reconnecting"
+      ? "Reconnecting"
+      : status === "connecting"
+        ? "Connecting"
+        : "Offline";
+
+  const ringClass = isLive
+    ? "ring-emerald-500/20 bg-emerald-500/10"
+    : isConnecting
+      ? "ring-amber-500/20 bg-amber-500/10"
+      : "ring-border bg-muted/30";
+
   return (
     <span
-      className="hidden md:inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 transition-colors",
+        isLive ? "text-emerald-600 dark:text-emerald-400" : isConnecting ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground",
+        ringClass,
+        !showLabel && "px-1",
+      )}
       aria-label={`Real-time connection: ${label}`}
       title={`Real-time: ${label}`}
     >
-      <span className={cn("h-2 w-2 rounded-full", color)} aria-hidden />
-      {label}
+      <span className="relative flex h-2 w-2" aria-hidden>
+        {/* Pulse ring — only when connecting */}
+        {isConnecting && (
+          <span
+            className={cn(
+              "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
+              dotClass,
+            )}
+          />
+        )}
+        <span className={cn("relative inline-flex h-2 w-2 rounded-full", dotClass)} />
+      </span>
+      {showLabel && <span className="tabular-nums">{label}</span>}
     </span>
   );
 }
