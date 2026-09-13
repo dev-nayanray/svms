@@ -250,16 +250,20 @@ async function main() {
       assignedEmployeeId: employee.id, branchId: branch.id,
     },
   });
-  await prisma.academicRecord.upsert({
-    where: { id: "seed-karim-hsc" },
-    update: {},
-    create: { id: "seed-karim-hsc", studentId: student.id, level: "HSC", institution: "Dhaka College", group: "Science", result: "GPA 5.00", passingYear: 2023 },
-  });
-  await prisma.englishProficiency.upsert({
-    where: { id: "seed-karim-ielts" },
-    update: {},
-    create: { id: "seed-karim-ielts", studentId: student.id, testType: "IELTS", overallScore: 6.5, readingScore: 6.5, writingScore: 6.0, listeningScore: 7.0, speakingScore: 6.0, testDate: new Date("2026-05-10") },
-  });
+  // Karim's academic record (findFirst + create — MongoDB ObjectId can't use string IDs)
+  const existingHsc = await prisma.academicRecord.findFirst({ where: { studentId: student.id, level: "HSC" } });
+  if (!existingHsc) {
+    await prisma.academicRecord.create({
+      data: { studentId: student.id, level: "HSC", institution: "Dhaka College", group: "Science", result: "GPA 5.00", passingYear: 2023 },
+    });
+  }
+  // Karim's English proficiency
+  const existingIelts = await prisma.englishProficiency.findFirst({ where: { studentId: student.id, testType: "IELTS" } });
+  if (!existingIelts) {
+    await prisma.englishProficiency.create({
+      data: { studentId: student.id, testType: "IELTS", overallScore: 6.5, readingScore: 6.5, writingScore: 6.0, listeningScore: 7.0, speakingScore: 6.0, testDate: new Date("2026-05-10") },
+    });
+  }
 
   // Karim's application
   console.log("Seeding Karim's application…");
@@ -308,28 +312,29 @@ async function main() {
   }
 
   // Karim's task
-  await prisma.task.upsert({
-    where: { id: "seed-karim-task-1" },
-    update: {},
-    create: {
-      id: "seed-karim-task-1",
-      title: "Collect bank statement from Karim",
-      assignedToId: employeeUser.id, studentId: student.id, applicationId: karimApp.id,
-      priority: "HIGH", dueDate: new Date(Date.now() + 3 * 86400_000),
-    },
-  });
+  const existingTask = await prisma.task.findFirst({ where: { studentId: student.id, title: "Collect bank statement from Karim" } });
+  if (!existingTask) {
+    await prisma.task.create({
+      data: {
+        title: "Collect bank statement from Karim",
+        assignedToId: employeeUser.id, studentId: student.id, applicationId: karimApp.id,
+        priority: "HIGH", dueDate: new Date(Date.now() + 3 * 86400_000),
+      },
+    });
+  }
 
   // Karim's notification
-  await prisma.notification.upsert({
-    where: { id: "seed-karim-notif-1" },
-    update: {},
-    create: {
-      id: "seed-karim-notif-1", userId: studentUser.id,
-      type: "APPLICATION_STAGE_CHANGED", title: "Application updated",
-      message: `Your application ES-${year}-000001 moved to DOCUMENT COLLECTION. Please upload your documents.`,
-      link: "/student/application",
-    },
-  });
+  const existingNotif = await prisma.notification.findFirst({ where: { userId: studentUser.id, type: "APPLICATION_STAGE_CHANGED" } });
+  if (!existingNotif) {
+    await prisma.notification.create({
+      data: {
+        userId: studentUser.id,
+        type: "APPLICATION_STAGE_CHANGED", title: "Application updated",
+        message: `Your application ES-${year}-000001 moved to DOCUMENT COLLECTION. Please upload your documents.`,
+        link: "/student/application",
+      },
+    });
+  }
 
   // Karim's conversation + messages
   console.log("Seeding conversations + messages…");
