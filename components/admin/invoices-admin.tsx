@@ -171,7 +171,15 @@ export function InvoicesAdmin() {
             ? [{ key: "studentId", label: "Student", options: studentOptions }]
             : []),
         ]}
-        emptyMessage="No invoices yet."
+        
+        exportColumns={[
+          { key: "invoiceNumber", header: "Invoice" },
+          { key: "studentName", header: "Student" },
+          { key: "total", header: "Total" },
+          { key: "paidAmount", header: "Paid" },
+          { key: "dueAmount", header: "Due" },
+          { key: "status", header: "Status" },
+        ]}
         rowActions={[
           { label: "View", onClick: (i) => router.push(`/admin/invoices/${i.id}`) },
           {

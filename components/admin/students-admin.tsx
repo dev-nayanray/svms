@@ -185,6 +185,16 @@ export function StudentsAdmin() {
           { key: "country", label: "Country", options: countryOptions },
         ]}
         emptyMessage="No students match your filters."
+        emptyAction={<Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4" /> New Student</Button>}
+        exportColumns={[
+          { key: "studentId", header: "Student ID" },
+          { key: "firstName", header: "First Name" },
+          { key: "lastName", header: "Last Name" },
+          { key: "email", header: "Email" },
+          { key: "phone", header: "Phone" },
+          { key: "status", header: "Status" },
+          { key: "country", header: "Country" },
+        ]}
         rowActions={[
           { label: "View", onClick: (s) => router.push(`/admin/students/${s.id}`) },
           { label: "Edit", onClick: (s) => setEditStudent(s) },

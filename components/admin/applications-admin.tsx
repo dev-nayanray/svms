@@ -192,7 +192,7 @@ export function ApplicationsAdmin() {
             { key: "intakeId", label: "Intake", options: intakeOptions },
             { key: "priority", label: "Priority", options: ["LOW", "MEDIUM", "HIGH", "URGENT"].map((p) => ({ value: p, label: p })) },
           ]}
-          emptyMessage="No applications match your filters."
+          
           rowActions={[
             { label: "View", onClick: (a) => router.push(`/admin/applications/${a.id}`) },
             { label: "Edit", onClick: (a) => setEditApp(a) },

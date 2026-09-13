@@ -160,7 +160,14 @@ export function LeadsAdmin() {
           { key: "countryId", label: "Country", options: countryOptions },
           { key: "employeeId", label: "Employee", options: employeeOptions },
         ]}
-        emptyMessage="No leads match your filters."
+        
+        exportColumns={[
+          { key: "name", header: "Name" },
+          { key: "email", header: "Email" },
+          { key: "phone", header: "Phone" },
+          { key: "source", header: "Source" },
+          { key: "status", header: "Status" },
+        ]}
         rowActions={[
           { label: "View", onClick: (l) => router.push(`/admin/leads/${l.id}`) },
           { label: "Edit", onClick: (l) => setEditLead(l) },

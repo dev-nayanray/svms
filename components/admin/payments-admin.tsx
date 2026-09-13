@@ -260,7 +260,16 @@ export function PaymentsAdmin() {
             ? [{ key: "studentId", label: "Student", options: studentOptions }]
             : []),
         ]}
-        emptyMessage="No payments recorded yet."
+        
+        emptyAction={undefined}
+        exportColumns={[
+          { key: "student", header: "Student" },
+          { key: "amount", header: "Amount" },
+          { key: "currency", header: "Currency" },
+          { key: "paymentMethod", header: "Method" },
+          { key: "status", header: "Status" },
+          { key: "paymentDate", header: "Date" },
+        ]}
         rowActions={[
           { label: "Edit", onClick: (p) => setEditPayment(p) },
           {
