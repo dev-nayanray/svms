@@ -74,6 +74,9 @@ model Student {
   documents          Document[]
   tasks              Task[]
   conversations      Conversation[]
+  appointments       Appointment[]
+  payments           Payment[]
+  invoices           Invoice[]
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
@@ -89,6 +92,7 @@ model Employee {
   students  Student[] @relation("AssignedStudents")
   leads     Lead[]
   conversations Conversation[]
+  appointments Appointment[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }
@@ -164,8 +168,26 @@ model Course {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
+  intakes         Intake[]
+
   @@index([universityId])
   @@index([degreeLevel])
+}
+
+model Intake {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  courseId    String    @db.ObjectId
+  course      Course    @relation(fields: [courseId], references: [id])
+  name        String    // e.g. "Fall 2026"
+  month       Int       // 1–12
+  year        Int
+  deadline    DateTime?
+  status      String    @default("ACTIVE") // ACTIVE | INACTIVE
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([courseId])
+  @@index([status])
 }
 
 // ─────────────────────────────────────────────
@@ -189,6 +211,10 @@ model Application {
 
   documents        Document[]
   tasks            Task[]
+  visaApplications VisaApplication[]
+  appointments     Appointment[]
+  payments         Payment[]
+  invoices         Invoice[]
 
   @@index([studentId])
   @@index([stageKey])
@@ -290,4 +316,89 @@ model AuditLog {
 
   @@index([userId])
   @@index([entity])
+}
+
+// ─────────────────────────────────────────────
+// Visa, Appointments, Finance
+// ─────────────────────────────────────────────
+
+model VisaApplication {
+  id              String       @id @default(auto()) @map("_id") @db.ObjectId
+  applicationId   String       @db.ObjectId
+  application     Application  @relation(fields: [applicationId], references: [id])
+  visaType        String?
+  stage           String       @default("PREPARATION") // PREPARATION | SUBMITTED | BIOMETRICS | INTERVIEW | PROCESSING | APPROVED | REFUSED
+  submittedAt     DateTime?
+  biometricsAt    DateTime?
+  interviewAt     DateTime?
+  decisionAt      DateTime?
+  notes           String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([applicationId])
+  @@index([stage])
+}
+
+model Appointment {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  studentId       String    @db.ObjectId
+  student         Student   @relation(fields: [studentId], references: [id])
+  applicationId   String?   @db.ObjectId
+  application     Application? @relation(fields: [applicationId], references: [id])
+  employeeId      String?   @db.ObjectId
+  employee        Employee? @relation(fields: [employeeId], references: [id])
+  type            String    // COUNSELING | DOCUMENT_REVIEW | VISA_INTERVIEW | BIOMETRICS | OTHER
+  title           String
+  scheduledAt     DateTime
+  durationMinutes Int       @default(30)
+  location        String?
+  status          String    @default("SCHEDULED") // SCHEDULED | COMPLETED | CANCELLED | RESCHEDULED
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([studentId])
+  @@index([employeeId])
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+model Payment {
+  id                 String    @id @default(auto()) @map("_id") @db.ObjectId
+  studentId          String    @db.ObjectId
+  student            Student   @relation(fields: [studentId], references: [id])
+  applicationId      String?   @db.ObjectId
+  application        Application? @relation(fields: [applicationId], references: [id])
+  invoiceId          String?   @db.ObjectId
+  amount             Float
+  currency           String    @default("EUR")
+  paymentMethod      String    @default("OTHER") // CASH | BANK_TRANSFER | CARD | OTHER
+  transactionReference String?
+  paymentDate        DateTime?
+  status             String    @default("PENDING") // PENDING | PAID | REFUNDED | CANCELLED
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([studentId])
+  @@index([status])
+}
+
+model Invoice {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  invoiceNumber String    @unique
+  studentId     String    @db.ObjectId
+  student       Student   @relation(fields: [studentId], references: [id])
+  applicationId String?   @db.ObjectId
+  application   Application? @relation(fields: [applicationId], references: [id])
+  amount        Float
+  currency      String    @default("EUR")
+  issueDate     DateTime  @default(now())
+  dueDate       DateTime?
+  status        String    @default("ISSUED") // DRAFT | ISSUED | PAID | OVERDUE | CANCELLED
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([studentId])
+  @@index([status])
 }

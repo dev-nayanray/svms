@@ -9,15 +9,24 @@ import { Eye } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default async function EmployeeApplicationsPage() {
+export default async function EmployeeApplicationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ stage?: string }>;
+}) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login?callbackUrl=/employee/applications");
   const role = (session.user as { role?: string }).role;
   if (role !== "EMPLOYEE" && role !== "ADMIN") redirect("/403");
 
+  const sp = await searchParams;
+  const stageFilter = sp.stage || undefined;
+
   // Case ownership: EMPLOYEE sees applications on students assigned to them.
   const isAdmin = role === "ADMIN";
-  const where = isAdmin ? {} : { student: { assignedEmployee: { userId: session.user.id } } };
+  const ownerFilter = isAdmin ? {} : { student: { assignedEmployee: { userId: session.user.id } } };
+  const stageFilterClause = stageFilter ? { stageKey: stageFilter } : {};
+  const where = { ...ownerFilter, ...stageFilterClause };
 
   const applications = await prisma.application.findMany({
     where,
@@ -33,7 +42,20 @@ export default async function EmployeeApplicationsPage() {
     <div>
       <EmployeePageHeader
         title="My Applications"
-        description={role === "ADMIN" ? "All applications across the platform." : "Applications for students assigned to you."}
+        description={
+          stageFilter
+            ? `Filtered: ${titleCase(stageFilter)} stage${role === "ADMIN" ? " · all students" : " · your assigned students"}`
+            : role === "ADMIN"
+              ? "All applications across the platform."
+              : "Applications for students assigned to you."
+        }
+        actions={
+          stageFilter ? (
+            <Link href="/employee/applications">
+              <Button variant="outline" size="sm">Clear filter</Button>
+            </Link>
+          ) : undefined
+        }
       />
       <Card>
         <CardContent className="p-0">
