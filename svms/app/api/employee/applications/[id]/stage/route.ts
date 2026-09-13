@@ -9,6 +9,7 @@ import { changeApplicationStage } from "@/lib/services/application-cases";
 const stageSchema = z.object({
   stage: z.string().min(1, "Stage is required"),
   note: z.string().max(2000, "Note too long").optional(),
+  expectedFromStage: z.string().optional(),
 });
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -30,7 +31,18 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     }
 
     const scope = { isAdmin: role === "ADMIN", userId: session.user.id, employeeId };
-    const result = await changeApplicationStage(scope, id, body.stage, { id: session.user.id }, body.note);
+    const result = await changeApplicationStage(
+      scope,
+      id,
+      body.stage,
+      {
+        id: session.user.id,
+        ipAddress: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip"),
+        userAgent: req.headers.get("user-agent"),
+      },
+      body.note,
+      body.expectedFromStage,
+    );
     return ok(result);
   } catch (err) {
     return handleApiError(err);

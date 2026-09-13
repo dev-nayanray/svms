@@ -2,6 +2,13 @@ import { prisma } from "@/lib/db";
 import { HttpError } from "@/lib/api";
 import type { EmployeeScope } from "@/lib/services/employee-dashboard";
 import { APPLICATION_STAGES } from "@/lib/services/employee-dashboard";
+import { titleCase } from "@/lib/utils";
+import {
+  validateTransition,
+  loadStageRuleSnapshot,
+  type StageRuleSnapshot,
+  type TransitionBlock,
+} from "@/lib/services/stage-rules";
 
 /**
  * Employee Application Management service — server-side data layer for
@@ -580,35 +587,85 @@ export async function requireApplication(scope: EmployeeScope, id: string) {
 }
 
 // ─────────────────────────────────────────────
-// Stage transition — validated + audit-logged
+// Stage transition — validated + audited + notified
 // ─────────────────────────────────────────────
+
+/**
+ * Critical stage transitions — these emit an AuditLog row in addition to
+ * the ApplicationStageHistory row. Lower-impact transitions still get a
+ * history row but skip the audit log to avoid log noise.
+ */
+const CRITICAL_TRANSITIONS: { from: string; to: string }[] = [
+  { from: "DOCUMENT_COLLECTION", to: "APPLICATION_SUBMITTED" },
+  { from: "DEPOSIT_PAYMENT", to: "CONFIRMATION" },
+  { from: "VISA_PREPARATION", to: "VISA_SUBMITTED" },
+  { from: "VISA_DECISION", to: "TRAVEL_PREPARATION" },
+  { from: "TRAVEL_PREPARATION", to: "COMPLETED" },
+];
+
+export type StageChangeResult = {
+  fromStage: string;
+  toStage: string;
+  note: string | null;
+  historyId: string;
+};
 
 export async function changeApplicationStage(
   scope: EmployeeScope,
   id: string,
   toStage: string,
-  actor: { id: string },
+  actor: { id: string; ipAddress?: string | null; userAgent?: string | null },
   note?: string,
-): Promise<{ fromStage: string; toStage: string }> {
-  // Validate the target stage is in the canonical list
+  /** Optional concurrency guard — if provided, the transition is rejected when the current stage doesn't match. */
+  expectedFromStage?: string,
+): Promise<StageChangeResult> {
+  // 1. Validate the target stage is in the canonical list
   if (!APPLICATION_STAGES.includes(toStage as (typeof APPLICATION_STAGES)[number])) {
     throw new HttpError(400, "BAD_REQUEST", `Invalid stage: ${toStage}`);
   }
 
-  // IDOR closure: resolve via scope filter
+  // 2. IDOR closure: resolve via scope filter
   const owner = applicationCaseScope(scope);
   const app = await prisma.application.findFirst({
     where: { id, ...owner },
-    select: { id: true, stageKey: true },
+    select: { id: true, stageKey: true, studentId: true },
   });
   if (!app) throw new HttpError(404, "NOT_FOUND", "Application not found");
 
-  if (app.stageKey === toStage) {
-    // No-op — return current state without writing a history row
-    return { fromStage: app.stageKey, toStage };
+  // 3. Concurrency guard — reject if the stage changed since the caller
+  //    last read it. The client passes `expectedFromStage` = the stage
+  //    it saw when rendering the form. If the current stage doesn't match,
+  //    someone else changed it in the meantime → 409 Conflict.
+  if (expectedFromStage !== undefined && expectedFromStage !== app.stageKey) {
+    throw new HttpError(
+      409,
+      "CONFLICT",
+      `Application stage changed since you last viewed it (expected ${expectedFromStage}, current ${app.stageKey}). Refresh and try again.`,
+    );
   }
 
-  await prisma.$transaction([
+  // 4. No-op when the stage is already the target — duplicate request
+  if (app.stageKey === toStage) {
+    // Return the existing state without writing a history row. The
+    // caller can detect the no-op via `fromStage === toStage`.
+    return {
+      fromStage: app.stageKey,
+      toStage,
+      note: note ?? null,
+      historyId: "",
+    };
+  }
+
+  // 5. Load the rule snapshot (single batched query — documents, payments,
+  //    invoices, visaApplications, student) and validate the transition.
+  const snapshot = await loadStageRuleSnapshot(id);
+  const block = validateTransition(app.stageKey, toStage, snapshot);
+  if (block) {
+    throw new HttpError(422, "VALIDATION_ERROR", `Transition blocked: ${block.reason} [code: ${block.code}]`);
+  }
+
+  // 6. Apply the transition inside a transaction: update + history row
+  const [, history] = await prisma.$transaction([
     prisma.application.update({
       where: { id },
       data: { stageKey: toStage, updatedAt: new Date() },
@@ -624,8 +681,113 @@ export async function changeApplicationStage(
     }),
   ]);
 
-  return { fromStage: app.stageKey, toStage };
+  // 7. Notification — push to the student + the assigned employee (if any).
+  //    Best-effort — never blocks the transition. Errors are logged, not
+  //    surfaced to the caller.
+  try {
+    const student = await prisma.student.findUnique({
+      where: { id: app.studentId },
+      select: { userId: true, firstName: true, lastName: true, assignedEmployeeId: true },
+    });
+    if (student) {
+      const title = `Application stage: ${titleCase(toStage)}`;
+      const message = `Your application has moved to ${toStage.replace(/_/g, " ").toLowerCase()} stage.${note ? ` Note: ${note}` : ""}`;
+      await prisma.notification.create({
+        data: { userId: student.userId, type: "APPLICATION_STAGE_CHANGED", title, message, link: `/employee/applications/${id}` },
+      });
+      // Notify assigned employee too (if different from the actor)
+      if (student.assignedEmployeeId) {
+        const emp = await prisma.employee.findUnique({
+          where: { id: student.assignedEmployeeId },
+          select: { userId: true },
+        });
+        if (emp && emp.userId !== actor.id) {
+          await prisma.notification.create({
+            data: {
+              userId: emp.userId,
+              type: "APPLICATION_STAGE_CHANGED",
+              title: `${student.firstName} ${student.lastName} → ${titleCase(toStage)}`,
+              message: `Application stage changed to ${toStage.replace(/_/g, " ").toLowerCase()} by another employee.`,
+              link: `/employee/applications/${id}`,
+            },
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[stage-change] notification failed", err);
+  }
+
+  // 8. Audit log — only for critical transitions (avoid log noise on
+  //    low-impact moves like LEAD → COUNSELING)
+  const isCritical = CRITICAL_TRANSITIONS.some(
+    (t) => t.from === app.stageKey && t.to === toStage,
+  );
+  if (isCritical) {
+    try {
+      await prisma.auditLog.create({
+        data: {
+          userId: actor.id,
+          action: "application.stage_changed",
+          entity: "Application",
+          entityId: id,
+          oldValue: { stage: app.stageKey },
+          newValue: { stage: toStage, note: note ?? null },
+          ipAddress: actor.ipAddress ?? undefined,
+          userAgent: actor.userAgent ?? undefined,
+        },
+      });
+    } catch (err) {
+      console.error("[stage-change] audit log failed", err);
+    }
+  }
+
+  return {
+    fromStage: app.stageKey,
+    toStage,
+    note: note ?? null,
+    historyId: history.id,
+  };
 }
+
+// ─────────────────────────────────────────────
+// Transition preview — used by the UI to show blocked reasons
+// ─────────────────────────────────────────────
+
+export type TransitionPreview = {
+  toStage: string;
+  allowed: boolean;
+  block: TransitionBlock | null;
+};
+
+/**
+ * Returns a preview for every stage the application COULD move to. The
+ * UI uses this to render the stage selector with blocked indicators.
+ */
+export async function getTransitionPreviews(
+  scope: EmployeeScope,
+  id: string,
+): Promise<{ currentStage: string; previews: TransitionPreview[] }> {
+  const owner = applicationCaseScope(scope);
+  const app = await prisma.application.findFirst({
+    where: { id, ...owner },
+    select: { id: true, stageKey: true },
+  });
+  if (!app) throw new HttpError(404, "NOT_FOUND", "Application not found");
+
+  const snapshot = await loadStageRuleSnapshot(id);
+  const previews: TransitionPreview[] = APPLICATION_STAGES
+    .filter((s) => s !== app.stageKey)
+    .map((toStage) => {
+      const block = validateTransition(app.stageKey, toStage, snapshot);
+      return { toStage, allowed: block === null, block };
+    });
+
+  return { currentStage: app.stageKey, previews };
+}
+
+// Re-export the snapshot type for tests + the UI
+export type { StageRuleSnapshot, TransitionBlock };
 
 // ─────────────────────────────────────────────
 // Assign / reassign

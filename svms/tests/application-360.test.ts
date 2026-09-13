@@ -18,6 +18,16 @@ const prismaMock = vi.hoisted(() => ({
   },
   employee: {
     findFirst: vi.fn(),
+    findUnique: vi.fn(),
+  },
+  student: {
+    findUnique: vi.fn(),
+  },
+  notification: {
+    create: vi.fn(),
+  },
+  auditLog: {
+    create: vi.fn(),
   },
   $transaction: vi.fn((args: unknown[]) => Promise.all(args)),
 }));
@@ -355,9 +365,11 @@ describe("Application 360 — stage change + IDOR", () => {
   });
 
   it("returns a no-op when the stage is the same (no history row created)", async () => {
-    prismaMock.application.findFirst.mockResolvedValue({ id: "a1", stageKey: "LEAD" });
+    prismaMock.application.findFirst.mockResolvedValue({ id: "a1", stageKey: "LEAD", studentId: "stu-1" });
     const result = await changeApplicationStage(EMPLOYEE_SCOPE, "a1", "LEAD", { id: "u-1" });
-    expect(result).toEqual({ fromStage: "LEAD", toStage: "LEAD" });
+    expect(result.fromStage).toBe("LEAD");
+    expect(result.toStage).toBe("LEAD");
+    expect(result.historyId).toBe("");
     expect(prismaMock.application.update).not.toHaveBeenCalled();
     expect(prismaMock.applicationStageHistory.create).not.toHaveBeenCalled();
   });
@@ -371,10 +383,19 @@ describe("Application 360 — stage change + IDOR", () => {
   });
 
   it("updates application + creates a history row on valid transition", async () => {
-    prismaMock.application.findFirst.mockResolvedValue({ id: "a1", stageKey: "LEAD" });
-    prismaMock.$transaction.mockResolvedValue([undefined, undefined]);
+    prismaMock.application.findFirst
+      .mockResolvedValueOnce({ id: "a1", stageKey: "LEAD", studentId: "stu-1" })
+      .mockResolvedValueOnce({
+        id: "a1", stageKey: "LEAD", status: "NEW", deadline: null,
+        student: { id: "stu-1", firstName: "Karim", lastName: "Ahmed", userId: "u-stu" },
+        documents: [], payments: [], invoices: [], visaApplications: [],
+      });
+    prismaMock.$transaction.mockResolvedValue([{}, { id: "hist-1" }]);
+    prismaMock.student.findUnique.mockResolvedValue(null);
     const result = await changeApplicationStage(EMPLOYEE_SCOPE, "a1", "COUNSELING", { id: "u-1" }, "Moving forward");
-    expect(result).toEqual({ fromStage: "LEAD", toStage: "COUNSELING" });
+    expect(result.fromStage).toBe("LEAD");
+    expect(result.toStage).toBe("COUNSELING");
+    expect(result.historyId).toBe("hist-1");
     expect(prismaMock.$transaction).toHaveBeenCalled();
     const txArgs = prismaMock.$transaction.mock.calls[0][0];
     expect(txArgs).toHaveLength(2);
