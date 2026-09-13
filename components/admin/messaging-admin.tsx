@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui";
-import { Button, Input, Textarea } from "@/components/ui";
+import { Button, Textarea } from "@/components/ui";
 import { EmptyState } from "@/components/shared";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api-client";
-import { formatDate } from "@/lib/utils";
-import { Search, Send, Paperclip, X, ChevronLeft } from "lucide-react";
+import { formatDate, cn } from "@/lib/utils";
+import { Search, Send, Paperclip, X, ChevronLeft, MessageSquare, RefreshCw } from "lucide-react";
 
 type Conversation = {
   id: string;
@@ -20,6 +19,8 @@ type Conversation = {
   messages: { id: string; body: string; createdAt: string; senderId: string }[];
   _count: { messages: number };
 };
+
+type ConversationList = { data: Conversation[] };
 
 type ConversationDetail = {
   id: string;
@@ -35,35 +36,17 @@ type ConversationDetail = {
   }[];
 };
 
-type ConversationList = {
-  data: Conversation[];
-};
-
-/**
- * Admin Messaging — conversation list + conversation detail with compose.
- *
- * Features:
- *  - Conversation list with search (student name, employee name, student ID)
- *  - Conversation detail: full message thread with timestamps + read status
- *  - Compose new message: body + optional attachment URL + visibility toggle
- *  - Attachments architecture: attachmentUrl stored as a string (future:
- *    object storage with signed URLs)
- *  - Admins have supervisory visibility — can see all conversations
- *  - Internal notes are never exposed to students (visibility field)
- */
 export function MessagingAdmin() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [composeBody, setComposeBody] = useState("");
-  const [attachmentUrl, setAttachmentUrl] = useState("");
   const [sending, setSending] = useState(false);
 
   const queryString = new URLSearchParams(search ? { search } : {}).toString();
 
-  // Conversation list
-  const { data: listData, isPending: listPending } = useQuery({
+  const { data: listData, isPending: listPending, refetch } = useQuery({
     queryKey: ["/api/conversations", queryString],
     queryFn: () => apiFetch<ConversationList>(`/api/conversations?${queryString}`),
     staleTime: 10_000,
@@ -71,7 +54,6 @@ export function MessagingAdmin() {
 
   const conversations = listData?.data ?? [];
 
-  // Selected conversation detail
   const { data: detail } = useQuery({
     queryKey: ["/api/conversations", selectedId],
     queryFn: () => apiFetch<ConversationDetail>(`/api/conversations/${selectedId}`),
@@ -93,13 +75,11 @@ export function MessagingAdmin() {
         json: {
           studentId: detail.student.id,
           body: composeBody.trim(),
-          attachmentUrl: attachmentUrl.trim() || undefined,
           visibility: "STUDENT",
         },
       });
       toast({ title: "Message sent", variant: "success" });
       setComposeBody("");
-      setAttachmentUrl("");
       qc.invalidateQueries({ queryKey: ["/api/conversations", selectedId] });
       qc.invalidateQueries({ queryKey: ["/api/conversations", queryString] });
     } catch (err) {
@@ -109,112 +89,100 @@ export function MessagingAdmin() {
     }
   };
 
-  // Conversation detail view
+  // ── Conversation detail view ──
   if (selectedId && detail) {
-    
+    const messages = detail.messages ?? [];
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => setSelectedId(null)}>
-            <ChevronLeft className="h-4 w-4" aria-hidden /> Back to conversations
+            <ChevronLeft className="h-4 w-4" aria-hidden /> Back
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <p className="font-semibold">
-                  {detail.student.firstName} {detail.student.lastName}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {detail.student.studentId} · Counselor: {detail.employee.user.name}
-                </p>
-              </div>
-            </div>
+        {/* Conversation header */}
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+          <span className="grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+            {detail.student.firstName[0]}{detail.student.lastName[0]}
+          </span>
+          <div className="flex-1">
+            <p className="font-bold">{detail.student.firstName} {detail.student.lastName}</p>
+            <p className="text-xs text-muted-foreground">
+              {detail.student.studentId} · Counselor: {detail.employee.user.name}
+            </p>
+          </div>
+          <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground">
+            {messages.length} messages
+          </span>
+        </div>
 
-            {/* Message thread */}
-            <div className="max-h-96 space-y-3 overflow-y-auto">
-              {detail.messages.length === 0 ? (
-                <EmptyState title="No messages yet" />
-              ) : (
-                detail.messages.map((msg) => {
-                  const isOwn = msg.senderId !== detail.student.userId;
-                  return (
+        {/* Message thread */}
+        <div className="rounded-xl border border-border bg-card shadow-sm">
+          <div className="max-h-[400px] space-y-3 overflow-y-auto p-4">
+            {messages.length === 0 ? (
+              <EmptyState title="No messages yet" description="Send the first message to start the conversation." />
+            ) : (
+              messages.map((msg) => {
+                const isOwn = msg.senderId !== detail.student.userId;
+                return (
+                  <div key={msg.id} className={cn("flex flex-col", isOwn ? "items-end" : "items-start")}>
                     <div
-                      key={msg.id}
-                      className={
-                        "flex flex-col " + (isOwn ? "items-end" : "items-start")
-                      }
+                      className={cn(
+                        "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm",
+                        isOwn
+                          ? "rounded-br-sm bg-primary text-primary-foreground"
+                          : "rounded-bl-sm bg-muted text-foreground",
+                      )}
                     >
-                      <div
-                        className={
-                          "max-w-[80%] rounded-lg px-3 py-2 text-sm " +
-                          (isOwn
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-foreground")
-                        }
-                      >
-                        <p>{msg.body}</p>
-                        {msg.attachmentUrl && (
-                          <a
-                            href={msg.attachmentUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={
-                              "mt-1 inline-flex items-center gap-1 text-xs underline " +
-                              (isOwn ? "text-primary-foreground/80" : "text-primary")
-                            }
-                          >
-                            <Paperclip className="h-3 w-3" aria-hidden /> Attachment
-                          </a>
-                        )}
-                      </div>
-                      <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>{formatDate(msg.createdAt)}</span>
-                        {isOwn && (
-                          <span>{msg.readAt ? "Read" : "Delivered"}</span>
-                        )}
-                      </div>
+                      <p>{msg.body}</p>
+                      {msg.attachmentUrl && (
+                        <a
+                          href={msg.attachmentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={cn(
+                            "mt-1.5 inline-flex items-center gap-1 text-xs underline",
+                            isOwn ? "text-primary-foreground/80" : "text-primary",
+                          )}
+                        >
+                          <Paperclip className="h-3 w-3" aria-hidden /> Attachment
+                        </a>
+                      )}
                     </div>
-                  );
-                })
-              )}
-            </div>
+                    <div className="mt-1 flex items-center gap-2 px-1 text-xs text-muted-foreground">
+                      <span>{formatDate(msg.createdAt)}</span>
+                      {isOwn && <span>{msg.readAt ? "✓ Read" : "✓ Delivered"}</span>}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
 
-            {/* Compose */}
-            <form onSubmit={sendMessage} className="mt-4 space-y-2 border-t border-border pt-3">
-              <Textarea
-                value={composeBody}
-                onChange={(e) => setComposeBody(e.target.value)}
-                placeholder="Type a message…"
-                className="min-h-[70px]"
-                aria-label="Message body"
-              />
-              <div className="flex items-center gap-2">
-                <Input
-                  type="text"
-                  value={attachmentUrl}
-                  onChange={(e) => setAttachmentUrl(e.target.value)}
-                  placeholder="Attachment URL (optional)"
-                  className="flex-1"
-                  aria-label="Attachment URL"
-                />
-                <Button type="submit" disabled={sending || !composeBody.trim()}>
-                  <Send className="h-4 w-4" aria-hidden /> Send
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Messages are student-visible. Internal notes are a future enhancement.
-              </p>
-            </form>
-          </CardContent>
-        </Card>
+          {/* Compose */}
+          <form onSubmit={sendMessage} className="border-t border-border p-4">
+            <Textarea
+              value={composeBody}
+              onChange={(e) => setComposeBody(e.target.value)}
+              placeholder="Type a message…"
+              className="min-h-[70px] resize-none"
+              aria-label="Message body"
+            />
+            <div className="mt-2 flex justify-end">
+              <Button type="submit" disabled={sending || !composeBody.trim()} size="sm">
+                {sending ? "Sending…" : "Send"} <Send className="h-4 w-4" aria-hidden />
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
     );
   }
 
-  // Conversation list view
+  // ── Conversation list view ──
   return (
     <div className="space-y-4">
       {/* Search */}
@@ -225,15 +193,11 @@ export function MessagingAdmin() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by student name or ID…"
-          className="h-9 w-full rounded-md border border-border bg-card pl-9 pr-9 text-sm"
+          className="h-9 w-full rounded-lg border border-border bg-card pl-9 pr-9 text-sm focus:border-primary focus:outline-none"
           aria-label="Search conversations"
         />
         {search && (
-          <button
-            onClick={() => setSearch("")}
-            className="absolute right-2 top-1.5 rounded p-1 text-muted-foreground hover:bg-muted"
-            aria-label="Clear search"
-          >
+          <button onClick={() => setSearch("")} className="absolute right-2 top-1.5 rounded p-1 text-muted-foreground hover:bg-muted" aria-label="Clear search">
             <X className="h-3.5 w-3.5" />
           </button>
         )}
@@ -243,55 +207,64 @@ export function MessagingAdmin() {
       {listPending ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-16 animate-pulse rounded-md bg-muted" />
+            <div key={i} className="h-20 animate-pulse rounded-xl bg-muted" />
           ))}
         </div>
       ) : conversations.length === 0 ? (
         <EmptyState
           title="No conversations"
-          description="Conversations are created when a counselor sends a message to a student."
+          description="Conversations appear when a counselor sends a message to a student."
         />
       ) : (
-        <ul className="divide-y divide-border rounded-xl border border-border">
+        <ul className="space-y-2">
           {conversations.map((c) => (
             <li key={c.id}>
               <button
                 onClick={() => setSelectedId(c.id)}
-                className="flex w-full items-center justify-between gap-4 p-4 text-left hover:bg-muted/40"
+                className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
               >
+                {/* Avatar */}
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                  {c.student.firstName[0]}{c.student.lastName[0]}
+                </span>
+
+                {/* Content */}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">
-                    {c.student.firstName} {c.student.lastName}
-                    <span className="ml-2 text-xs font-normal text-muted-foreground">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="truncate text-sm font-bold">
+                      {c.student.firstName} {c.student.lastName}
+                    </p>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {formatDate(c.lastMessageAt)}
+                    </span>
+                  </div>
+                  <p className="truncate text-sm text-muted-foreground">
+                    {c.messages[0]?.body ?? "No messages yet"}
+                  </p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      {c.student.studentId}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
                       {c._count.messages} message{c._count.messages === 1 ? "" : "s"}
                     </span>
-                  </p>
-                  <p className="truncate text-sm text-muted-foreground">
-                    {c.messages[0]?.body ?? "—"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Counselor: {c.employee.user.name}
-                  </p>
+                  </div>
                 </div>
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {formatDate(c.lastMessageAt)}
-                </span>
+
+                <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground/30" aria-hidden />
               </button>
             </li>
           ))}
         </ul>
       )}
 
-      {/* Supervisory visibility notice */}
-      <Card className="bg-muted/30">
-        <CardContent className="p-3 text-xs text-muted-foreground">
-          <p>
-            <strong>Supervisory visibility:</strong> Admins can see all conversations between
-            students and counselors. Internal notes (visibility: INTERNAL) are never exposed to
-            students — enforced server-side via the <code className="rounded bg-muted px-1 py-0.5">isMessageVisibleTo()</code> helper.
-          </p>
-        </CardContent>
-      </Card>
+      {/* Info notice */}
+      <div className="rounded-xl border border-border bg-muted/20 p-3">
+        <p className="text-xs text-muted-foreground">
+          <strong>Supervisory visibility:</strong> Admins can see all conversations between students and counselors.
+          Internal notes (visibility: INTERNAL) are never exposed to students.
+        </p>
+      </div>
     </div>
   );
 }
