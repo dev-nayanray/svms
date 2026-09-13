@@ -47,8 +47,7 @@ export function MarketingFooter() {
         <div className="grid gap-12 lg:grid-cols-12">
           {/* Brand column */}
           <div className="lg:col-span-4">
-            <EuroscopeLogo variant="light" size="lg" showWordmark={false} />
-            <EuroscopeLogo variant="light" size="default" className="mt-4" showWordmark={true} />
+            <EuroscopeLogo variant="markLight" size="lg" showWordmark={true} />
             <p className="mt-4 font-display text-sm font-semibold text-accent">{APP_TAGLINE}</p>
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-white/60">{APP_DESCRIPTION}</p>
           </div>

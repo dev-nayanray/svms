@@ -113,7 +113,7 @@ export function MarketingNavbar() {
           className="rounded-lg focus-visible:outline-2 focus-visible:outline-ring"
           aria-label="Euroscope home"
         >
-          <EuroscopeLogo size="default" />
+          <EuroscopeLogo size="default" variant="mark" showWordmark={true} />
         </Link>
 
         {/* Desktop links — show at lg (1024px) not xl, so tablet users get links */}

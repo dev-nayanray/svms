@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -164,8 +165,13 @@ export function AdminShell({
             collapsed && "justify-center px-0",
           )}
         >
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
-            SV
+          <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full">
+            <Image
+              src="/euroscope-mark.png"
+              alt="Euroscope"
+              fill
+              className="object-cover object-top"
+            />
           </span>
           {!collapsed && (
             <div className="min-w-0">
@@ -203,8 +209,13 @@ export function AdminShell({
           />
           <aside className="absolute left-0 top-0 h-full w-64 border-r border-border bg-card">
             <div className="flex h-14 items-center gap-2.5 border-b border-border px-3">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
-                SV
+              <span className="relative h-8 w-8 overflow-hidden rounded-full">
+                <Image
+                  src="/euroscope-mark.png"
+                  alt="Euroscope"
+                  fill
+                  className="object-cover object-top"
+                />
               </span>
               <div>
                 <p className="text-sm font-bold">Euroscope</p>

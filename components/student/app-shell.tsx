@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -98,8 +99,13 @@ export function StudentAppShell({
             </button>
           ) : (
             <Link href="/student" aria-label="Home" className="grid h-11 w-11 place-items-center rounded-md md:hidden">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
-                {APP_NAME.slice(0, 2).toUpperCase()}
+              <span className="relative h-8 w-8 overflow-hidden rounded-full">
+                <Image
+                  src="/euroscope-mark.png"
+                  alt="Euroscope"
+                  fill
+                  className="object-cover object-top"
+                />
               </span>
             </Link>
           )}
