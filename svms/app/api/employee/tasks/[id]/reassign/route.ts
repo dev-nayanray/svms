@@ -4,10 +4,10 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { hasPermission } from "@/lib/permissions";
 import { z } from "zod";
-import { requestReupload } from "@/lib/services/document-cases";
+import { reassignTask } from "@/lib/services/task-cases";
 
-const reuploadSchema = z.object({
-  reason: z.string().min(1, "A reason is required").max(2000, "Reason too long"),
+const reassignSchema = z.object({
+  assignedToId: z.string().min(1, "Assignee is required"),
 });
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -16,10 +16,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     if (!session?.user?.id) throw new HttpError(401, "UNAUTHORIZED", "Authentication required");
     const role = (session.user as { role?: string }).role;
     if (role !== "EMPLOYEE" && role !== "ADMIN") throw new HttpError(403, "FORBIDDEN", "Employees only");
-    if (!hasPermission(role, "documents.review")) throw new HttpError(403, "FORBIDDEN", "Missing documents.review permission");
-
-    const { id } = await ctx.params;
-    const body = reuploadSchema.parse(await req.json());
+    if (!hasPermission(role, "tasks.manage")) throw new HttpError(403, "FORBIDDEN", "Missing tasks.manage permission");
 
     let employeeId: string | null = null;
     if (role === "EMPLOYEE") {
@@ -27,10 +24,11 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       if (!employee) throw new HttpError(403, "FORBIDDEN", "No employee record");
       employeeId = employee.id;
     }
-
     const scope = { isAdmin: role === "ADMIN", userId: session.user.id, employeeId };
-    const result = await requestReupload(scope, id, body.reason, { id: session.user.id });
-    return ok(result, { status: 201 });
+    const { id } = await ctx.params;
+    const body = reassignSchema.parse(await req.json());
+    await reassignTask(scope, id, body.assignedToId, { id: session.user.id });
+    return ok({ ok: true });
   } catch (err) {
     return handleApiError(err);
   }
