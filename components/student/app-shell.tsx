@@ -3,11 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { signOut } from "next-auth/react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { ArrowLeft, Bell, ChevronRight, Grid3x3, LogOut } from "lucide-react";
+import { ArrowLeft, Bell, ChevronRight, Grid3x3, LogOut, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
 import { APP_NAME } from "@/lib/constants/app";
@@ -15,9 +15,26 @@ import { STUDENT_TABS, STUDENT_MORE, isActivePath } from "@/config/student-nav";
 import { StudentNavIcon, NotificationBadge } from "@/components/student/ui";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { LiveIndicator, useRealtime } from "@/components/student/realtime-provider";
+import { GlobalSearchOverlay } from "@/components/student/search/global-search-overlay";
 
 const TAB_ICONS: Record<string, string> = Object.fromEntries(STUDENT_TABS.map((t) => [t.href, t.icon]));
 const MORE_ICONS: Record<string, string> = Object.fromEntries(STUDENT_MORE.map((t) => [t.href, t.icon]));
+
+/**
+ * Helper for the "/" keyboard shortcut — returns true if the user is
+ * currently focused on an input, textarea, or contenteditable element.
+ * When true, we DON'T trigger the search overlay (because the user is
+ * probably typing something else, and intercepting "/" would delete
+ * their typed character).
+ */
+function isInputFocused(): boolean {
+  const el = document.activeElement;
+  if (!el) return false;
+  const tag = el.tagName.toLowerCase();
+  if (tag === "input" || tag === "textarea" || tag === "select") return true;
+  if (el.isContentEditable) return true;
+  return false;
+}
 
 const PAGE_TITLES: Record<string, string> = {
   "/student/profile": "Profile",
@@ -70,8 +87,32 @@ export function StudentAppShell({
   const unread = useUnreadCount();
   const { status: realtimeStatus } = useRealtime();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const isHome = pathname === "/student" || pathname.startsWith("/student/dashboard");
   const isMoreActive = STUDENT_MORE.some((m) => isActivePath(pathname, m.href));
+
+  // Keyboard shortcut: Cmd/Ctrl+K opens the global search overlay.
+  // Esc is handled by Radix Dialog automatically. We only register
+  // the listener once on mount and check for the modifier key on each
+  // keydown to avoid the cost of adding + removing listeners per render.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      // Cmd/Ctrl+K — open search
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+        return;
+      }
+      // Forward-slash opens search when not focused in an input —
+      // the GitHub / Linear / Notion pattern. Catches users mid-flow.
+      if (e.key === "/" && !isInputFocused()) {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const initials = userName
     .split(/\s+/)
@@ -89,6 +130,9 @@ export function StudentAppShell({
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       <OfflineBanner />
+
+      {/* ── Global search overlay ── */}
+      <GlobalSearchOverlay open={searchOpen} onOpenChange={setSearchOpen} />
 
       {/* ── Mobile header — premium glassmorphism + gradient brand ── */}
       <header
@@ -153,6 +197,15 @@ export function StudentAppShell({
               <span className="truncate">{pageTitle(pathname)}</span>
             )}
           </h1>
+
+          {/* ── Search button — opens the global search overlay ── */}
+          <button
+            onClick={() => setSearchOpen(true)}
+            aria-label="Search (Cmd+K)"
+            className="group grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary active:scale-95"
+          >
+            <Search className="h-5 w-5 transition-transform group-hover:scale-110" />
+          </button>
 
           {/* Live indicator — premium pill, hidden on very narrow screens */}
           <span className="hidden sm:inline-flex">
