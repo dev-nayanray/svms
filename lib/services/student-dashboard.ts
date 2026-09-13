@@ -83,6 +83,175 @@ export type DeadlineItem = {
   href: string;
 };
 
+// ── Today's Agenda ─────────────────────────────────────────────────
+// A focused "what's happening today" view, surfaced at the very top
+// of the student dashboard. Combines today's appointments + tasks due
+// today into a single time-sorted list so students don't have to piece
+// it together from multiple dashboard sections.
+
+export type TodayAgendaItem = {
+  id: string;
+  kind: "APPOINTMENT" | "TASK";
+  title: string;
+  subtitle: string | null;
+  /** ISO string or "All day" — for the time pill on the left of the row. */
+  timeLabel: string;
+  /** ISO datetime — used for client-side sorting & rendering. */
+  startsAt: Date | null;
+  status: string;
+  /** Tone for the left icon — drives the color of the icon badge. */
+  tone: "info" | "warning" | "destructive" | "success" | "default";
+  href: string;
+};
+
+export type TodayAgenda = {
+  items: TodayAgendaItem[];
+  total: number;
+  /** A short positive message when there's nothing on the agenda today. */
+  emptyMessage: string | null;
+};
+
+function startOfDay(d: Date): Date {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+function endOfDay(d: Date): Date {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x;
+}
+
+function formatTimeLabel(date: Date | null): string {
+  if (!date) return "All day";
+  return date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
+function appointmentTone(status: string): TodayAgendaItem["tone"] {
+  switch (status) {
+    case "CONFIRMED": return "success";
+    case "SCHEDULED": return "info";
+    case "CANCELLED": return "default";
+    case "NO_SHOW": return "destructive";
+    case "COMPLETED": return "default";
+    default: return "default";
+  }
+}
+
+function taskTone(priority: string): TodayAgendaItem["tone"] {
+  switch (priority) {
+    case "URGENT":
+    case "HIGH": return "destructive";
+    case "MEDIUM": return "warning";
+    case "LOW":
+    default: return "info";
+  }
+}
+
+export function buildTodayAgenda(
+  today: Date,
+  sources: {
+    appointments: {
+      id: string;
+      scheduledAt: Date;
+      purpose: string;
+      meetingMethod: string | null;
+      status: string;
+    }[];
+    tasks: {
+      id: string;
+      title: string;
+      description: string | null;
+      dueDate: Date | null;
+      priority: string;
+      status: string;
+    }[];
+  },
+): TodayAgenda {
+  const dayStart = startOfDay(today);
+  const dayEnd = endOfDay(today);
+
+  const items: TodayAgendaItem[] = [];
+
+  // Today's appointments — only non-terminal ones, scheduled between
+  // 00:00 and 23:59 today. Cancelled/completed/no-show appointments
+  // are excluded from "today's agenda" because they aren't actionable.
+  for (const a of sources.appointments) {
+    if (a.status === "CANCELLED" || a.status === "COMPLETED" || a.status === "NO_SHOW") continue;
+    if (a.scheduledAt < dayStart || a.scheduledAt > dayEnd) continue;
+    items.push({
+      id: a.id,
+      kind: "APPOINTMENT",
+      title: a.purpose,
+      subtitle: a.meetingMethod === "VIDEO_CALL"
+        ? "Video call"
+        : a.meetingMethod === "PHONE_CALL"
+          ? "Phone call"
+          : a.meetingMethod === "IN_PERSON"
+            ? "In-person meeting"
+            : null,
+      timeLabel: formatTimeLabel(a.scheduledAt),
+      startsAt: a.scheduledAt,
+      status: a.status,
+      tone: appointmentTone(a.status),
+      href: "/student/appointments",
+    });
+  }
+
+  // Tasks due today — includes overdue too so the student sees them
+  // front-and-center instead of having to navigate to the Tasks page.
+  for (const t of sources.tasks) {
+    if (t.status === "COMPLETED" || t.status === "CANCELLED") continue;
+    if (!t.dueDate) continue;
+    if (t.dueDate < dayStart) {
+      // Overdue task — include with destructive tone (red badge).
+      items.push({
+        id: t.id,
+        kind: "TASK",
+        title: t.title,
+        subtitle: t.description?.slice(0, 80) ?? "Overdue",
+        timeLabel: "Overdue",
+        startsAt: t.dueDate,
+        status: t.status,
+        tone: "destructive",
+        href: "/student/tasks",
+      });
+      continue;
+    }
+    if (t.dueDate > dayEnd) continue;
+    items.push({
+      id: t.id,
+      kind: "TASK",
+      title: t.title,
+      subtitle: t.description?.slice(0, 80) ?? null,
+      timeLabel: formatTimeLabel(t.dueDate),
+      startsAt: t.dueDate,
+      status: t.status,
+      tone: taskTone(t.priority),
+      href: "/student/tasks",
+    });
+  }
+
+  // Sort: appointments by scheduledAt asc, then tasks by dueDate asc,
+  // with overdue tasks appearing last (they're already in red so the
+  // student sees them but isn't scared off the top of the list).
+  items.sort((a, b) => {
+    if (!a.startsAt && !b.startsAt) return 0;
+    if (!a.startsAt) return 1;
+    if (!b.startsAt) return -1;
+    return a.startsAt.getTime() - b.startsAt.getTime();
+  });
+
+  return {
+    items,
+    total: items.length,
+    emptyMessage: items.length === 0
+      ? "Nothing on your agenda today — take a breath and explore universities, or get ahead on your documents."
+      : null,
+  };
+}
+
 /** Merges + sorts deadlines by proximity; anything past due is flagged overdue. */
 export function collectDeadlines(
   now: Date,
@@ -253,6 +422,7 @@ export async function getStudentDashboard(student: StudentProfile, userId: strin
     stageHistory,
     recentDocs,
     recentMessages,
+    todayAppointments,
   ] = await Promise.all([
     prisma.application.findMany({
       where: { studentId: student.id, deletedAt: null },
@@ -276,7 +446,7 @@ export async function getStudentDashboard(student: StudentProfile, userId: strin
     }),
     prisma.task.findMany({
       where: { studentId: student.id, deletedAt: null, status: { in: ["TODO", "IN_PROGRESS"] } },
-      select: { title: true, dueDate: true, priority: true, status: true },
+      select: { id: true, title: true, description: true, dueDate: true, priority: true, status: true },
     }),
     prisma.invoice.findMany({
       where: { studentId: student.id, deletedAt: null },
@@ -313,6 +483,21 @@ export async function getStudentDashboard(student: StudentProfile, userId: strin
       take: 3,
       select: { body: true, createdAt: true },
     }),
+    // Today's appointments — non-terminal, scheduled today. Used by
+    // buildTodayAgenda below. Cached here so we don't issue a second
+    // query when the dashboard already needs appointment data.
+    prisma.appointment.findMany({
+      where: {
+        studentId: student.id,
+        status: { in: ["SCHEDULED", "CONFIRMED"] },
+        scheduledAt: {
+          gte: startOfDay(new Date()),
+          lte: endOfDay(new Date()),
+        },
+      },
+      select: { id: true, scheduledAt: true, purpose: true, meetingMethod: true, status: true },
+      orderBy: { scheduledAt: "asc" },
+    }),
   ]);
 
   const mainApp = applications[0] ?? null;
@@ -331,6 +516,18 @@ export async function getStudentDashboard(student: StudentProfile, userId: strin
     invoices: invoices.map((i) => ({ invoiceNumber: i.invoiceNumber, dueAmount: i.dueAmount, dueDate: i.dueDate, status: i.status })),
     documents: expiringDocs,
   }).slice(0, 5);
+
+  const todayAgenda = buildTodayAgenda(new Date(), {
+    appointments: todayAppointments,
+    tasks: tasks.map((t) => ({
+      id: t.id,
+      title: t.title,
+      description: t.description,
+      dueDate: t.dueDate,
+      priority: t.priority,
+      status: t.status,
+    })),
+  });
 
   return {
     student: {
@@ -354,6 +551,7 @@ export async function getStudentDashboard(student: StudentProfile, userId: strin
     stages: stages.map((s) => ({ key: s.key, name: s.name })),
     progress,
     nextAction,
+    todayAgenda,
     documents: documentSummaryFromCounts(docCounts),
     deadlines,
     payments: paymentSummaryFromInvoices(invoices),

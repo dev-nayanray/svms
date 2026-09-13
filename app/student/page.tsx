@@ -23,6 +23,7 @@ import {
   Timeline,
   MobileCard,
 } from "@/components/student/ui";
+import { TodayAgenda } from "@/components/student/dashboard/today-agenda";
 import { formatDate, formatMoney, titleCase, cn } from "@/lib/utils";
 import {
   getStudentDashboard,
@@ -48,6 +49,7 @@ export default async function StudentDashboard() {
     stages,
     progress,
     nextAction,
+    todayAgenda,
     documents: docSummary,
     deadlines,
     payments: paymentSummary,
@@ -105,7 +107,10 @@ export default async function StudentDashboard() {
         </div>
       </section>
 
-      {/* ─── 2. APPLICATION PROGRESS CARD ─── */}
+      {/* ─── 2. TODAY'S AGENDA — appointments + tasks due today ─── */}
+      <TodayAgenda data={todayAgenda} />
+
+      {/* ─── 3. APPLICATION PROGRESS CARD ─── */}
       {application ? (
         <ProgressCard
           title={`${application.country} — ${application.course ?? "Application"}`}
@@ -140,7 +145,7 @@ export default async function StudentDashboard() {
         </MobileCard>
       )}
 
-      {/* ─── 3. NEXT ACTION ─── */}
+      {/* ─── 4. NEXT ACTION ─── */}
       {nextAction && (
         <MobileCard className="border-primary/30 bg-primary/5">
           <div className="flex items-start gap-3">
@@ -182,7 +187,7 @@ export default async function StudentDashboard() {
         </MobileCard>
       )}
 
-      {/* ─── 4. APPLICATION TIMELINE ─── */}
+      {/* ─── 5. APPLICATION TIMELINE ─── */}
       {application && stages.length > 0 && (
         <section aria-labelledby="timeline-heading">
           <h3 id="timeline-heading" className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -203,7 +208,7 @@ export default async function StudentDashboard() {
         </section>
       )}
 
-      {/* ─── 5. DOCUMENT SUMMARY ─── */}
+      {/* ─── 6. DOCUMENT SUMMARY ─── */}
       <section aria-labelledby="docs-heading">
         <div className="mb-2 flex items-center justify-between">
           <h3 id="docs-heading" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -242,7 +247,7 @@ export default async function StudentDashboard() {
         </MobileCard>
       </section>
 
-      {/* ─── 6. UPCOMING DEADLINES ─── */}
+      {/* ─── 7. UPCOMING DEADLINES ─── */}
       {deadlines.length > 0 && (
         <section aria-labelledby="deadlines-heading">
           <h3 id="deadlines-heading" className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -287,7 +292,7 @@ export default async function StudentDashboard() {
         </section>
       )}
 
-      {/* ─── 7. PAYMENT SUMMARY ─── */}
+      {/* ─── 8. PAYMENT SUMMARY ─── */}
       {paymentSummary.totalAmount > 0 && (
         <section aria-labelledby="payments-heading">
           <div className="mb-2 flex items-center justify-between">
@@ -327,7 +332,7 @@ export default async function StudentDashboard() {
         </section>
       )}
 
-      {/* ─── 8. QUICK ACTIONS ─── */}
+      {/* ─── 9. QUICK ACTIONS ─── */}
       <section aria-labelledby="quick-actions">
         <h3 id="quick-actions" className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Quick actions
@@ -360,7 +365,7 @@ export default async function StudentDashboard() {
         </div>
       </section>
 
-      {/* ─── 9. COUNSELOR CARD ─── */}
+      {/* ─── 10. COUNSELOR CARD ─── */}
       {counselor && (
         <section aria-labelledby="counselor-heading">
           <h3 id="counselor-heading" className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -396,7 +401,7 @@ export default async function StudentDashboard() {
         </section>
       )}
 
-      {/* ─── 10. RECENT ACTIVITY ─── */}
+      {/* ─── 11. RECENT ACTIVITY ─── */}
       {activities.length > 0 && (
         <section aria-labelledby="activity-heading">
           <h3 id="activity-heading" className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -429,7 +434,7 @@ export default async function StudentDashboard() {
         </section>
       )}
 
-      {/* ─── 11. NOTIFICATIONS PREVIEW ─── */}
+      {/* ─── 12. NOTIFICATIONS PREVIEW ─── */}
       {notifications.length > 0 && (
         <section aria-labelledby="notif-heading">
           <div className="mb-2 flex items-center justify-between">
