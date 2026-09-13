@@ -7,7 +7,9 @@ import {
   AlertTriangle,
   CalendarClock,
   CheckCircle2,
+  Clock3,
   MapPin,
+  Plus,
   RefreshCw,
   UserRound,
   Video,
@@ -21,6 +23,7 @@ import { Skeleton } from "@/components/ui/overlays";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
+import { RequestAppointmentSheet } from "./request-appointment-sheet";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -50,6 +53,7 @@ type ListResponse = { appointments: Appointment[] };
 // ── Status → tone ──────────────────────────────────────────────────
 
 const STATUS_TONE: Record<string, "default" | "info" | "warning" | "success" | "destructive"> = {
+  REQUESTED: "info",
   SCHEDULED: "warning",
   CONFIRMED: "info",
   COMPLETED: "success",
@@ -57,8 +61,11 @@ const STATUS_TONE: Record<string, "default" | "info" | "warning" | "success" | "
   NO_SHOW: "destructive",
 };
 
-const FILTERS: { value: "upcoming" | "past" | "cancelled" | "all"; label: string }[] = [
+type FilterValue = "upcoming" | "past" | "cancelled" | "requested" | "all";
+
+const FILTERS: { value: FilterValue; label: string }[] = [
   { value: "upcoming", label: "Upcoming" },
+  { value: "requested", label: "Requested" },
   { value: "past", label: "Past" },
   { value: "cancelled", label: "Cancelled" },
   { value: "all", label: "All" },
@@ -69,7 +76,9 @@ const FILTERS: { value: "upcoming" | "past" | "cancelled" | "all"; label: string
 export function AppointmentsView() {
   const { toast } = useToast();
   const qc = useQueryClient();
-  const [filter, setFilter] = useState<"upcoming" | "past" | "cancelled" | "all">("upcoming");
+  const [filter, setFilter] = useState<FilterValue>("upcoming");
+  const [requestOpen, setRequestOpen] = useState(false);
+  const [sheetInstance, setSheetInstance] = useState(0);
   const online = useOnlineStatus();
 
   const listQ = useQuery<ListResponse>({
@@ -135,7 +144,11 @@ export function AppointmentsView() {
   }
 
   async function handleCancel(appt: Appointment) {
-    if (!confirm("Cancel this appointment? Your counselor will be notified.")) return;
+    const isRequest = appt.status === "REQUESTED";
+    const msg = isRequest
+      ? "Cancel this appointment request? Your counselor will be notified."
+      : "Cancel this appointment? Your counselor will be notified.";
+    if (!confirm(msg)) return;
     qc.setQueryData<ListResponse>(["student-appointments", filter], (prev) =>
       prev
         ? {
@@ -146,9 +159,9 @@ export function AppointmentsView() {
     try {
       await apiFetch(`/api/student/appointments/${appt.id}/cancel`, {
         method: "POST",
-        json: { cancelReason: "Cancelled by student" },
+        json: { cancelReason: isRequest ? "Request withdrawn by student" : "Cancelled by student" },
       });
-      toast({ title: "Appointment cancelled" });
+      toast({ title: isRequest ? "Request withdrawn" : "Appointment cancelled" });
       qc.invalidateQueries({ queryKey: ["student-appointments"] });
     } catch (err) {
       qc.invalidateQueries({ queryKey: ["student-appointments"] });
@@ -156,8 +169,32 @@ export function AppointmentsView() {
     }
   }
 
+  function openRequestSheet() {
+    // Bump the key so the sheet remounts with fresh state.
+    setSheetInstance((n) => n + 1);
+    setRequestOpen(true);
+  }
+
+  function handleRequested() {
+    qc.invalidateQueries({ queryKey: ["student-appointments"] });
+    setFilter("requested");
+  }
+
   return (
     <MobilePage>
+      {/* Primary CTA — Request appointment */}
+      <Button onClick={openRequestSheet} className="w-full" size="lg">
+        <Plus className="h-4 w-4" aria-hidden />
+        Request appointment
+      </Button>
+
+      <RequestAppointmentSheet
+        key={sheetInstance}
+        open={requestOpen}
+        onOpenChange={setRequestOpen}
+        onRequested={handleRequested}
+      />
+
       {/* Upcoming hero card */}
       {heroAppt && filter === "upcoming" && (
         <AppointmentHero appointment={heroAppt} onConfirm={() => handleConfirm(heroAppt)} onCancel={() => handleCancel(heroAppt)} />
@@ -189,16 +226,21 @@ export function AppointmentsView() {
       {appointments.length === 0 ? (
         <MobileCard className="py-8 text-center">
           <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
-            <CalendarClock className="h-6 w-6" aria-hidden />
+            {filter === "requested"
+              ? <Clock3 className="h-6 w-6" aria-hidden />
+              : <CalendarClock className="h-6 w-6" aria-hidden />}
           </span>
           <h2 className="mt-3 text-base font-semibold">
             {filter === "upcoming" && "No upcoming appointments"}
+            {filter === "requested" && "No pending requests"}
             {filter === "past" && "No past appointments"}
             {filter === "cancelled" && "No cancelled appointments"}
             {filter === "all" && "No appointments yet"}
           </h2>
           <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            Your counselor will schedule appointments as your application progresses.
+            {filter === "requested"
+              ? "Tap \u201cRequest appointment\u201d above to propose a time with your counselor."
+              : "Your counselor will schedule appointments as your application progresses."}
           </p>
         </MobileCard>
       ) : (
@@ -321,6 +363,7 @@ function AppointmentCard({
   const date = parseISO(appointment.scheduledAt);
   const tone = STATUS_TONE[appointment.status] ?? "default";
   const isUpcoming = appointment.status === "SCHEDULED" || appointment.status === "CONFIRMED";
+  const isRequested = appointment.status === "REQUESTED";
   const meetingIcon = appointment.meetingMethod === "VIDEO_CALL" || appointment.meetingMethod === "ONLINE"
     ? <Video className="h-3 w-3" aria-hidden />
     : <MapPin className="h-3 w-3" aria-hidden />;
@@ -371,6 +414,17 @@ function AppointmentCard({
           </Button>
           <Button size="sm" variant="outline" onClick={onCancel} className="flex-1 text-destructive hover:bg-destructive/10">
             <XCircle className="h-3.5 w-3.5" aria-hidden /> Cancel
+          </Button>
+        </div>
+      )}
+      {isRequested && (
+        <div className="flex items-center gap-2 rounded-lg bg-info/5 border border-info/20 px-3 py-2">
+          <Clock3 className="h-3.5 w-3.5 shrink-0 text-info" aria-hidden />
+          <p className="min-w-0 flex-1 text-xs text-info">
+            Pending counselor approval. You can withdraw this request before they respond.
+          </p>
+          <Button size="sm" variant="outline" onClick={onCancel} className="shrink-0 text-destructive hover:bg-destructive/10">
+            <XCircle className="h-3.5 w-3.5" aria-hidden /> Withdraw
           </Button>
         </div>
       )}

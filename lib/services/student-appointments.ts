@@ -21,10 +21,12 @@ import { notifications } from "./notification";
  *  - View their own appointments
  *  - Confirm a SCHEDULED appointment (→ CONFIRMED)
  *  - Cancel a SCHEDULED or CONFIRMED appointment (→ CANCELLED)
- *  - Request a reschedule (sends a notification to the counselor)
+ *  - Request a new appointment (→ REQUESTED, counselor approves)
+ *  - Cancel their own REQUESTED appointment (→ CANCELLED, before approval)
  *
  * Students CANNOT:
- *  - Create appointments (counselor/admin creates them)
+ *  - Create SCHEDULED appointments directly (counselor/admin does this
+ *    when approving a REQUEST, or schedules ad-hoc meetings)
  *  - Mark appointments as COMPLETED or NO_SHOW (admin only)
  *  - Modify the scheduled time, purpose, location, or any other field
  *  - Access other students' appointments
@@ -52,6 +54,7 @@ export type AppointmentView = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
+  REQUESTED: "Requested",
   SCHEDULED: "Scheduled",
   CONFIRMED: "Confirmed",
   COMPLETED: "Completed",
@@ -116,10 +119,17 @@ export const studentAppointmentService = {
   /**
    * List the caller's appointments. Optional status filter.
    * Returns upcoming first (by scheduledAt asc for future, desc for past).
+   *
+   * Filter semantics:
+   *  - upcoming:    SCHEDULED/CONFIRMED with future scheduledAt
+   *  - past:        COMPLETED/NO_SHOW, or past SCHEDULED/CONFIRMED
+   *  - cancelled:   CANCELLED
+   *  - requested:   REQUESTED (pending counselor approval)
+   *  - all (default): everything else, most recent first
    */
   async list(
     studentId: string,
-    filter: "upcoming" | "past" | "cancelled" | "all" = "all",
+    filter: "upcoming" | "past" | "cancelled" | "requested" | "all" = "all",
   ): Promise<AppointmentView[]> {
     const now = new Date();
     const where: Record<string, unknown> = {
@@ -136,6 +146,8 @@ export const studentAppointmentService = {
       ];
     } else if (filter === "cancelled") {
       where.status = "CANCELLED";
+    } else if (filter === "requested") {
+      where.status = "REQUESTED";
     }
 
     const rows = await prisma.appointment.findMany({
@@ -293,5 +305,135 @@ export const studentAppointmentService = {
     }
 
     return buildView(updated as never);
+  },
+
+  /**
+   * Request a new appointment → REQUESTED. The student proposes a
+   * preferred time + purpose + meeting method; the counselor reviews
+   * and either converts it to SCHEDULED (with possibly a different
+   * time / location) or rejects it.
+   *
+   * The student's assignedEmployeeId becomes the appointment's
+   * employeeId. If the student has no assigned counselor, the request
+   * cannot be created — return a 409 so the client can surface a
+   * helpful message ("please contact your branch").
+   *
+   * Guard against request flooding: a student cannot have more than
+   * 3 outstanding REQUESTED appointments at once. This prevents an
+   * accidental double-submit or a confused student from spamming
+   * their counselor's queue.
+   */
+  async request(
+    studentId: string,
+    input: {
+      preferredAt: Date;
+      purpose: string;
+      meetingMethod?: string | null;
+      notes?: string | null;
+    },
+    userId?: string,
+  ): Promise<AppointmentView> {
+    // ── 1. Resolve the student + assigned counselor ──
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+      select: {
+        userId: true,
+        firstName: true,
+        lastName: true,
+        assignedEmployeeId: true,
+      },
+    });
+    if (!student) {
+      throw new HttpError(404, "NOT_FOUND", "Student not found");
+    }
+    if (!student.assignedEmployeeId) {
+      throw new HttpError(
+        409,
+        "CONFLICT",
+        "You don't have an assigned counselor yet. Please contact your branch — they'll assign one and you can request appointments.",
+      );
+    }
+
+    // ── 2. Verify the assigned employee exists + is active ──
+    const counselor = await prisma.employee.findFirst({
+      where: { id: student.assignedEmployeeId, deletedAt: null },
+      include: { user: { select: { id: true, name: true } } },
+    });
+    if (!counselor) {
+      throw new HttpError(
+        409,
+        "CONFLICT",
+        "Your assigned counselor is no longer available. Please contact your branch.",
+      );
+    }
+
+    // ── 3. Flood guard — max 3 outstanding REQUESTED appointments ──
+    const outstanding = await prisma.appointment.count({
+      where: { studentId, status: "REQUESTED" },
+    });
+    if (outstanding >= 3) {
+      throw new HttpError(
+        409,
+        "CONFLICT",
+        "You already have 3 pending appointment requests. Please wait for your counselor to respond before requesting more.",
+      );
+    }
+
+    // ── 4. Validate preferredAt is in the future ──
+    // Allow up to 2 minutes in the past to account for clock drift +
+    // form-submission latency. Anything older is rejected.
+    const now = new Date();
+    const twoMinsAgo = new Date(now.getTime() - 2 * 60 * 1000);
+    if (input.preferredAt < twoMinsAgo) {
+      throw new HttpError(
+        422,
+        "VALIDATION_ERROR",
+        "Preferred date must be in the future. Please pick an upcoming date.",
+      );
+    }
+
+    // ── 5. Create the REQUESTED appointment ──
+    const created = await prisma.appointment.create({
+      data: {
+        studentId,
+        employeeId: counselor.id,
+        scheduledAt: input.preferredAt,
+        durationMins: 30, // default, counselor can adjust on approval
+        purpose: input.purpose,
+        meetingMethod: input.meetingMethod ?? null,
+        status: "REQUESTED",
+        notes: input.notes ?? null,
+      },
+      include: {
+        employee: { include: { user: { select: { id: true, name: true } } } },
+      },
+    });
+
+    // ── 6. Audit + notify counselor ──
+    await auditLog.record({
+      userId: userId ?? student.userId ?? undefined,
+      action: "appointment.requested",
+      entity: "Appointment",
+      entityId: created.id,
+      newValue: {
+        status: "REQUESTED",
+        scheduledAt: input.preferredAt,
+        purpose: input.purpose,
+        meetingMethod: input.meetingMethod ?? null,
+      },
+    });
+
+    const counselorUserId = counselor.user?.id;
+    if (counselorUserId) {
+      await notifications.push({
+        userId: counselorUserId,
+        type: "APPOINTMENT_REQUESTED",
+        title: "New appointment request",
+        message: `${student.firstName} ${student.lastName} requested an appointment on ${input.preferredAt.toLocaleString()}. Purpose: ${input.purpose}.`,
+        link: "/employee/students",
+      });
+    }
+
+    return buildView(created as never);
   },
 };

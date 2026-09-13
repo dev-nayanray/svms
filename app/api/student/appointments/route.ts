@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
  *  - upcoming: SCHEDULED/CONFIRMED with future scheduledAt
  *  - past: COMPLETED/NO_SHOW, or past SCHEDULED/CONFIRMED
  *  - cancelled: CANCELLED
+ *  - requested: REQUESTED (pending counselor approval on student-initiated requests)
  *
  * Scoped by `studentId` from the session. Internal fields
  * (`employeeId`) stripped. Counselor name + initials included.
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
     if (!g.ok) return g.error;
 
     const sp = req.nextUrl.searchParams;
-    const filter = (sp.get("filter") ?? "all") as "upcoming" | "past" | "cancelled" | "all";
+    const filter = (sp.get("filter") ?? "all") as "upcoming" | "past" | "cancelled" | "requested" | "all";
 
     const appointments = await studentAppointmentService.list(g.student.id, filter);
     return ok({ appointments });
