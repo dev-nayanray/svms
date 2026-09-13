@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, ArrowRight, ChevronDown, Globe } from "lucide-react";
+import { ICONS, FaIcon } from "./icons";
 import { cn } from "@/lib/utils";
 import { MarketingButton } from "./ui";
 import { EuroscopeLogo } from "./logo";
@@ -11,10 +11,6 @@ import { EuroscopeLogo } from "./logo";
 /**
  * Navigation structure — grouped into top-level links + a dropdown
  * for "Study in Europe" with the most popular European destinations.
- *
- * The active state uses `pathname === href || pathname.startsWith(href + "/")`
- * so sub-routes (e.g. /study-in-europe/germany) activate the parent
- * link — this is the standard SaaS navbar pattern.
  */
 const DESTINATIONS = [
   { href: "/study-in-europe/germany", label: "Germany", flag: "🇩🇪" },
@@ -69,7 +65,7 @@ export function MarketingNavbar() {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  // Close mobile menu on Escape
+  // Close everything on Escape
   useEffect(() => {
     const onEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -103,7 +99,7 @@ export function MarketingNavbar() {
       className={cn(
         "sticky top-0 z-50 w-full transition-all duration-300",
         scrolled
-          ? "border-b border-border bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 shadow-sm"
+          ? "border-b border-border bg-background/90 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 shadow-sm"
           : "border-b border-transparent bg-background/0",
       )}
     >
@@ -120,8 +116,8 @@ export function MarketingNavbar() {
           <EuroscopeLogo size="default" />
         </Link>
 
-        {/* Desktop links */}
-        <ul className="hidden items-center gap-0.5 xl:flex">
+        {/* Desktop links — show at lg (1024px) not xl, so tablet users get links */}
+        <ul className="hidden items-center gap-0.5 lg:flex">
           {NAV_LINKS.map((link) => {
             const active = isActive(pathname, link.href);
             if (link.hasDropdown) {
@@ -138,11 +134,9 @@ export function MarketingNavbar() {
                     aria-haspopup="true"
                   >
                     {link.label}
-                    <ChevronDown
-                      className={cn(
-                        "h-3.5 w-3.5 transition-transform",
-                        destinationsOpen && "rotate-180",
-                      )}
+                    <FaIcon
+                      icon={ICONS.chevronDown}
+                      className={cn("h-3.5 w-3.5 transition-transform", destinationsOpen && "rotate-180")}
                       aria-hidden
                     />
                   </button>
@@ -170,7 +164,7 @@ export function MarketingNavbar() {
                             className="flex items-center justify-between rounded-lg bg-primary/5 px-3 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
                           >
                             <span>All destinations</span>
-                            <ArrowRight className="h-4 w-4" aria-hidden />
+                            <FaIcon icon={ICONS.arrowRight} className="h-4 w-4" aria-hidden />
                           </Link>
                         </div>
                       </div>
@@ -196,8 +190,8 @@ export function MarketingNavbar() {
           })}
         </ul>
 
-        {/* Desktop CTAs */}
-        <div className="hidden items-center gap-2 xl:flex">
+        {/* Desktop CTAs — show at lg */}
+        <div className="hidden items-center gap-2 lg:flex">
           <Link
             href="/login"
             className="rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
@@ -206,19 +200,8 @@ export function MarketingNavbar() {
           </Link>
           <MarketingButton href="/contact" size="sm">
             Book a Consultation
-            <ArrowRight className="h-4 w-4" aria-hidden />
+            <FaIcon icon={ICONS.arrowRight} className="h-3.5 w-3.5" aria-hidden />
           </MarketingButton>
-        </div>
-
-        {/* Tablet/desktop menu (lg to xl) — compact CTA only */}
-        <div className="hidden items-center gap-2 lg:flex xl:hidden">
-          <Link
-            href="/login"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:text-primary"
-          >
-            Login
-          </Link>
-          <MarketingButton href="/contact" size="sm">Book a Consultation</MarketingButton>
         </div>
 
         {/* Mobile menu toggle */}
@@ -229,7 +212,7 @@ export function MarketingNavbar() {
           aria-label={mobileOpen ? "Close menu" : "Open menu"}
           aria-expanded={mobileOpen}
         >
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          <FaIcon icon={mobileOpen ? ICONS.xmark : ICONS.bars} className="h-5 w-5" />
         </button>
       </nav>
 
@@ -253,14 +236,12 @@ export function MarketingNavbar() {
                         aria-expanded={mobileDestinationsOpen}
                       >
                         <span className="flex items-center gap-2">
-                          <Globe className="h-4 w-4" aria-hidden />
+                          <FaIcon icon={ICONS.globe} className="h-4 w-4" aria-hidden />
                           {link.label}
                         </span>
-                        <ChevronDown
-                          className={cn(
-                            "h-4 w-4 transition-transform",
-                            mobileDestinationsOpen && "rotate-180",
-                          )}
+                        <FaIcon
+                          icon={ICONS.chevronDown}
+                          className={cn("h-4 w-4 transition-transform", mobileDestinationsOpen && "rotate-180")}
                           aria-hidden
                         />
                       </button>
@@ -285,7 +266,7 @@ export function MarketingNavbar() {
                               className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-primary hover:bg-primary/10"
                             >
                               All destinations
-                              <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                              <FaIcon icon={ICONS.arrowRight} className="h-3.5 w-3.5" aria-hidden />
                             </Link>
                           </li>
                         </ul>
@@ -321,7 +302,7 @@ export function MarketingNavbar() {
               </Link>
               <MarketingButton href="/contact" size="default" className="w-full" onClick={closeMobile}>
                 Book a Consultation
-                <ArrowRight className="h-4 w-4" aria-hidden />
+                <FaIcon icon={ICONS.arrowRight} className="h-4 w-4" aria-hidden />
               </MarketingButton>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ICONS, FaIcon } from "./icons";
 import { Container, Section, Eyebrow, MarketingButton } from "./ui";
 import { MarketingReveal } from "./reveal";
 
@@ -135,7 +135,7 @@ export function DestinationSection() {
                 {/* CTA */}
                 <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
                   Explore {dest.name}
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden />
+                  <FaIcon icon={ICONS.arrowRight} className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden />
                 </span>
               </Link>
             </MarketingReveal>
@@ -145,7 +145,7 @@ export function DestinationSection() {
         <div className="mt-14 text-center">
           <MarketingButton href="/study-in-europe" variant="outline" size="lg">
             View all destinations
-            <ArrowRight className="h-4 w-4" aria-hidden />
+            <FaIcon icon={ICONS.arrowRight} className="h-4 w-4" aria-hidden />
           </MarketingButton>
         </div>
       </Container>

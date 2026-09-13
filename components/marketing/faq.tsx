@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ICONS, FaIcon } from "./icons";
 import { cn } from "@/lib/utils";
 import { Container, Section, Eyebrow } from "./ui";
 import { MarketingReveal } from "./reveal";
@@ -57,7 +57,8 @@ function FAQItem({ q, a, defaultOpen = false }: { q: string; a: string; defaultO
         aria-expanded={open}
       >
         <span className="font-display text-sm font-semibold sm:text-base">{q}</span>
-        <ChevronDown
+        <FaIcon
+          icon={ICONS.chevronDown}
           className={cn("h-5 w-5 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")}
           aria-hidden
         />

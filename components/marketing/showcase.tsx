@@ -1,20 +1,39 @@
-import {
-  LayoutDashboard,
-  GraduationCap,
-  ClipboardCheck,
-  FileText,
-  Mail,
-  Plane,
-  CalendarClock,
-  CreditCard,
-  MessageSquare,
-  Bell,
-  BarChart3,
-  ShieldCheck,
-} from "lucide-react";
-import { Container, Section, Eyebrow, FeatureCard, MarketingButton } from "./ui";
+import { ICONS, type FaIconType } from "./icons";
+import { Container, Section, Eyebrow, MarketingButton } from "./ui";
 import { MarketingReveal } from "./reveal";
 import { APP_NAME } from "@/lib/constants/app";
+import { FaIcon } from "./icons";
+
+// Lightweight local FeatureCard that accepts a Font Awesome icon
+// (the shared FeatureCard in ui.tsx expects a LucideIcon, which we're
+// phasing out in favor of FA icons per the user's request).
+function FeatureCard({
+  icon,
+  title,
+  children,
+  className,
+}: {
+  icon: FaIconType;
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 ${className ?? ""}`}
+    >
+      <div
+        className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        aria-hidden
+      />
+      <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
+        <FaIcon icon={icon} className="h-5 w-5" aria-hidden />
+      </div>
+      <h3 className="font-display text-lg font-bold tracking-tight">{title}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{children}</p>
+    </div>
+  );
+}
 
 /* ════════════════════════════════════════════════════════════
  *  FEATURE GRID
@@ -22,62 +41,62 @@ import { APP_NAME } from "@/lib/constants/app";
 
 const FEATURES = [
   {
-    icon: LayoutDashboard,
+    icon: ICONS.clipboardCheck,
     title: "Student Management",
     body: "Manage student profiles, academic information, English proficiency and application history — all in one organized record.",
   },
   {
-    icon: GraduationCap,
+    icon: ICONS.graduationCap,
     title: "University & Course Discovery",
     body: "Browse European universities and available courses. Filter by country, level, tuition fees and language requirements.",
   },
   {
-    icon: ClipboardCheck,
+    icon: ICONS.clipboardCheck,
     title: "Application Management",
     body: "Track applications from submission to final decision. Each stage of the journey is logged with timestamps and notes.",
   },
   {
-    icon: FileText,
+    icon: ICONS.fileLines,
     title: "Document Management",
     body: "Upload, organize, review and track required documents. Version history preserves replaced files for audit trails.",
   },
   {
-    icon: Mail,
+    icon: ICONS.envelope,
     title: "Offer Management",
     body: "Track conditional and unconditional offer letters. Students see offer status in their dashboard, counselors manage in their panel.",
   },
   {
-    icon: Plane,
+    icon: ICONS.planeDeparture,
     title: "Visa Management",
     body: "Manage visa preparation, requirements checklists, appointments and progress. Country-specific visa requirements supported.",
   },
   {
-    icon: CalendarClock,
+    icon: ICONS.clock,
     title: "Tasks & Deadlines",
     body: "Never lose track of important application deadlines. Task lists with priority, due dates and overdue indicators.",
   },
   {
-    icon: CreditCard,
+    icon: ICONS.deposit,
     title: "Payments & Invoices",
     body: "Track service payments, issue invoices and monitor financial status. Students see their balance, admins see the big picture.",
   },
   {
-    icon: MessageSquare,
+    icon: ICONS.comments,
     title: "Communication",
     body: "Keep students and employees connected with real-time messaging. Conversation-scoped, unread badges, and instant notifications.",
   },
   {
-    icon: BarChart3,
+    icon: ICONS.scroll,
     title: "Reports & Analytics",
     body: "Monitor applications, students, visas and business performance with dashboard analytics and exportable reports.",
   },
   {
-    icon: ShieldCheck,
+    icon: ICONS.shieldCheck,
     title: "Role-Based Access",
     body: "Secure access for Admin, Employees and Students — each role sees only what they need, with full audit logging.",
   },
   {
-    icon: Bell,
+    icon: ICONS.sparkles,
     title: "Real-Time Notifications",
     body: "Live updates via Server-Sent Events — new messages, document reviews and appointment changes arrive instantly.",
   },
