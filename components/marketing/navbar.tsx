@@ -9,8 +9,12 @@ import { MarketingButton } from "./ui";
 import { EuroscopeLogo } from "./logo";
 
 /**
- * Navigation structure — grouped into top-level links + a dropdown
- * for "Study in Europe" with the most popular European destinations.
+ * Navigation structure — 6 top-level links (reduced from 8 to prevent
+ * overflow on laptop screens). "Study in Europe" has a dropdown with
+ * the most popular destinations.
+ *
+ * "Courses" and "How We Help" are accessible from other pages (footer,
+ * hero CTAs, in-page links) — keeping the navbar clean.
  */
 const DESTINATIONS = [
   { href: "/study-in-europe/germany", label: "Germany", flag: "🇩🇪" },
@@ -25,12 +29,10 @@ const DESTINATIONS = [
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
-  { href: "/study-in-europe", label: "Study in Europe", hasDropdown: true },
+  { href: "/study-in-europe", label: "Destinations", hasDropdown: true },
   { href: "/universities", label: "Universities" },
-  { href: "/courses", label: "Courses" },
   { href: "/features", label: "Services" },
-  { href: "/how-it-works", label: "How We Help" },
-  { href: "/about", label: "About Us" },
+  { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -48,7 +50,7 @@ export function MarketingNavbar() {
   const dropdownRef = useRef<HTMLLIElement | null>(null);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
+    const onScroll = () => setScrolled(window.scrollY > 4);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -98,26 +100,27 @@ export function MarketingNavbar() {
     <header
       className={cn(
         "sticky top-0 z-50 w-full transition-all duration-300",
+        // ALWAYS solid background — prevents invisible text on dark hero
         scrolled
-          ? "border-b border-border bg-background/90 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 shadow-sm"
-          : "border-b border-transparent bg-background/0",
+          ? "border-b border-border bg-background/95 backdrop-blur-xl shadow-sm"
+          : "border-b border-border bg-background",
       )}
     >
       <nav
-        className="euroscope-container flex h-16 items-center justify-between gap-4 md:h-18"
+        className="euroscope-container flex h-16 items-center justify-between gap-4 lg:h-18"
         aria-label="Primary"
       >
         {/* Logo */}
         <Link
           href="/"
-          className="rounded-lg focus-visible:outline-2 focus-visible:outline-ring"
+          className="flex items-center rounded-lg focus-visible:outline-2 focus-visible:outline-ring"
           aria-label="Euroscope home"
         >
           <EuroscopeLogo size="default" variant="mark" showWordmark={true} />
         </Link>
 
-        {/* Desktop links — show at lg (1024px) not xl, so tablet users get links */}
-        <ul className="hidden items-center gap-0.5 lg:flex">
+        {/* Desktop links — show at lg (1024px) */}
+        <ul className="hidden items-center gap-1 lg:flex">
           {NAV_LINKS.map((link) => {
             const active = isActive(pathname, link.href);
             if (link.hasDropdown) {
@@ -127,7 +130,7 @@ export function MarketingNavbar() {
                     type="button"
                     onClick={() => setDestinationsOpen((o) => !o)}
                     className={cn(
-                      "flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-ring",
+                      "flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-ring",
                       active || destinationsOpen ? "text-primary" : "text-foreground/80",
                     )}
                     aria-expanded={destinationsOpen}
@@ -136,14 +139,14 @@ export function MarketingNavbar() {
                     {link.label}
                     <FaIcon
                       icon={ICONS.chevronDown}
-                      className={cn("h-3.5 w-3.5 transition-transform", destinationsOpen && "rotate-180")}
+                      className={cn("h-3 w-3 transition-transform duration-200", destinationsOpen && "rotate-180")}
                       aria-hidden
                     />
                   </button>
                   {/* Dropdown */}
                   {destinationsOpen && (
                     <div className="absolute left-0 top-full pt-2">
-                      <div className="w-72 rounded-2xl border border-border bg-card p-2 shadow-xl shadow-primary/5">
+                      <div className="w-72 rounded-2xl border border-border bg-card p-2 shadow-xl shadow-black/5">
                         <div className="grid grid-cols-2 gap-1">
                           {DESTINATIONS.map((dest) => (
                             <Link
@@ -164,7 +167,7 @@ export function MarketingNavbar() {
                             className="flex items-center justify-between rounded-lg bg-primary/5 px-3 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
                           >
                             <span>All destinations</span>
-                            <FaIcon icon={ICONS.arrowRight} className="h-4 w-4" aria-hidden />
+                            <FaIcon icon={ICONS.arrowRight} className="h-3.5 w-3.5" aria-hidden />
                           </Link>
                         </div>
                       </div>
@@ -190,13 +193,13 @@ export function MarketingNavbar() {
           })}
         </ul>
 
-        {/* Desktop CTAs — show at lg */}
-        <div className="hidden items-center gap-2 lg:flex">
+        {/* Desktop CTAs */}
+        <div className="hidden items-center gap-3 lg:flex">
           <Link
             href="/login"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
+            className="text-sm font-medium text-foreground/70 transition-colors hover:text-primary"
           >
-            Student Login
+            Login
           </Link>
           <MarketingButton href="/contact" size="sm">
             Book a Consultation
@@ -208,7 +211,7 @@ export function MarketingNavbar() {
         <button
           type="button"
           onClick={() => setMobileOpen((o) => !o)}
-          className="grid h-11 w-11 place-items-center rounded-lg text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring lg:hidden"
+          className="grid h-10 w-10 place-items-center rounded-lg text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring lg:hidden"
           aria-label={mobileOpen ? "Close menu" : "Open menu"}
           aria-expanded={mobileOpen}
         >
@@ -216,7 +219,7 @@ export function MarketingNavbar() {
         </button>
       </nav>
 
-      {/* Mobile menu — full-screen slide-down */}
+      {/* Mobile menu — full-screen overlay */}
       {mobileOpen && (
         <div className="fixed inset-0 top-16 z-40 overflow-y-auto bg-background lg:hidden">
           <div className="euroscope-container py-6">
@@ -235,10 +238,7 @@ export function MarketingNavbar() {
                         )}
                         aria-expanded={mobileDestinationsOpen}
                       >
-                        <span className="flex items-center gap-2">
-                          <FaIcon icon={ICONS.globe} className="h-4 w-4" aria-hidden />
-                          {link.label}
-                        </span>
+                        <span>{link.label}</span>
                         <FaIcon
                           icon={ICONS.chevronDown}
                           className={cn("h-4 w-4 transition-transform", mobileDestinationsOpen && "rotate-180")}
@@ -298,7 +298,7 @@ export function MarketingNavbar() {
                 onClick={closeMobile}
                 className="rounded-lg border border-border px-3 py-3 text-center text-sm font-medium hover:bg-muted"
               >
-                Student Login
+                Login
               </Link>
               <MarketingButton href="/contact" size="default" className="w-full" onClick={closeMobile}>
                 Book a Consultation

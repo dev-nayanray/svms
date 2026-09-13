@@ -1,14 +1,16 @@
 import { ICONS, FaIcon } from "./icons";
 import { Container, MarketingButton } from "./ui";
 import { MarketingReveal } from "./reveal";
-// APP_NAME is used via the dynamic content, not imported here.
 import type { MarketingContent } from "@/lib/services/marketing-content";
 
 /**
- * HeroSection — editorial company positioning with DYNAMIC content.
+ * HeroSection — premium editorial company positioning.
  *
- * Content (headline, subtitle, CTAs, badge) is loaded from the DB via
- * the admin panel. Falls back to defaults if nothing is stored.
+ * Design principles:
+ *  - Dark navy background with gold radial accents (matches logo)
+ *  - Clear visual hierarchy: badge → headline → subtext → CTAs → trust
+ *  - Right-side collage with destination grid + floating cards
+ *  - Generous spacing (py-24 md:py-32 lg:py-40)
  */
 export function HeroSection({ content }: { content: MarketingContent }) {
   const { hero } = content;
@@ -16,26 +18,27 @@ export function HeroSection({ content }: { content: MarketingContent }) {
     <section className="relative overflow-hidden bg-ink text-white">
       {/* ── Background layers ── */}
       <div className="absolute inset-0" aria-hidden>
+        {/* Base gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-ink via-ink to-ink-surface" />
-        {/* Navy radial glow — top center, large */}
+        {/* Navy radial glow — top center */}
         <div
-          className="absolute -top-32 left-1/2 h-[700px] w-[1000px] -translate-x-1/2 rounded-full opacity-50 blur-[140px]"
-          style={{ background: "radial-gradient(ellipse, #1e293b 0%, transparent 60%)" }}
+          className="absolute -top-40 left-1/2 h-[800px] w-[1200px] -translate-x-1/2 rounded-full opacity-50 blur-[150px]"
+          style={{ background: "radial-gradient(ellipse, #1e293b 0%, transparent 55%)" }}
         />
-        {/* Gold radial glow — bottom left, warm accent */}
+        {/* Gold radial glow — bottom left */}
         <div
-          className="absolute -bottom-32 -left-32 h-[500px] w-[500px] rounded-full opacity-15 blur-[120px]"
+          className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full opacity-15 blur-[120px]"
           style={{ background: "radial-gradient(circle, #d4af37 0%, transparent 70%)" }}
         />
-        {/* Subtle grid pattern */}
-        <div className="absolute inset-0 euroscope-grid-bg opacity-[0.15]" />
+        {/* Grid pattern */}
+        <div className="absolute inset-0 euroscope-grid-bg opacity-[0.12]" />
       </div>
 
       <Container className="relative py-24 md:py-32 lg:py-40">
         <div className="grid items-center gap-16 lg:grid-cols-2 lg:gap-20">
           {/* ── Left: company positioning ── */}
-          <div>
-            {/* Trust badge */}
+          <div className="max-w-xl">
+            {/* Trust badge with pulsing dot */}
             <MarketingReveal>
               <div className="inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 backdrop-blur-sm">
                 <span className="relative flex h-2 w-2">
@@ -50,7 +53,7 @@ export function HeroSection({ content }: { content: MarketingContent }) {
 
             {/* Headline */}
             <MarketingReveal delay={80}>
-              <h1 className="mt-7 font-display text-[2.75rem] font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-[4rem]">
+              <h1 className="mt-8 font-display text-[2.5rem] font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.75rem]">
                 {hero.headlinePart1}{" "}
                 <span className="block sm:inline">
                   <span className="euroscope-gradient-text">{hero.headlinePart2}</span>
@@ -60,14 +63,14 @@ export function HeroSection({ content }: { content: MarketingContent }) {
 
             {/* Subheadline */}
             <MarketingReveal delay={160}>
-              <p className="mt-7 max-w-xl text-lg leading-relaxed text-white/70 md:text-xl">
+              <p className="mt-6 text-lg leading-relaxed text-white/70 md:text-xl">
                 {hero.subtitle}
               </p>
             </MarketingReveal>
 
             {/* CTAs */}
             <MarketingReveal delay={240}>
-              <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:gap-4">
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:gap-4">
                 <MarketingButton href={hero.ctaPrimaryHref} variant="primary" size="lg" className="w-full sm:w-auto">
                   {hero.ctaPrimaryText}
                   <FaIcon icon={ICONS.arrowRight} className="h-4 w-4" aria-hidden />
@@ -78,19 +81,19 @@ export function HeroSection({ content }: { content: MarketingContent }) {
               </div>
             </MarketingReveal>
 
-            {/* Trust features */}
+            {/* Trust features row */}
             <MarketingReveal delay={320}>
-              <div className="mt-12 grid grid-cols-3 gap-4 border-t border-white/10 pt-8">
+              <div className="mt-12 flex items-center gap-6 border-t border-white/10 pt-8">
                 {[
                   { icon: ICONS.users, label: "Personal counselors" },
                   { icon: ICONS.route, label: "End-to-end support" },
                   { icon: ICONS.earthEurope, label: "European expertise" },
                 ].map((item) => (
-                  <div key={item.label} className="flex flex-col gap-2">
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-accent">
-                      <FaIcon icon={item.icon} className="h-4 w-4" aria-hidden />
+                  <div key={item.label} className="flex items-center gap-2">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-accent ring-1 ring-white/10">
+                      <FaIcon icon={item.icon} className="h-3.5 w-3.5" aria-hidden />
                     </span>
-                    <span className="text-xs font-medium leading-tight text-white/60">{item.label}</span>
+                    <span className="text-xs font-medium text-white/60">{item.label}</span>
                   </div>
                 ))}
               </div>
@@ -108,6 +111,18 @@ export function HeroSection({ content }: { content: MarketingContent }) {
 }
 
 function HeroCollage() {
+  const destinations = [
+    { flag: "🇩🇪", name: "Germany" },
+    { flag: "🇫🇷", name: "France" },
+    { flag: "🇮🇹", name: "Italy" },
+    { flag: "🇪🇸", name: "Spain" },
+    { flag: "🇳🇱", name: "Netherlands" },
+    { flag: "🇸🇪", name: "Sweden" },
+    { flag: "🇫🇮", name: "Finland" },
+    { flag: "🇮🇪", name: "Ireland" },
+    { flag: "🇵🇱", name: "Poland" },
+  ];
+
   return (
     <div className="relative">
       {/* Glow behind */}
@@ -119,6 +134,7 @@ function HeroCollage() {
 
       {/* Main destinations card */}
       <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-ink-surface to-ink p-6 shadow-2xl shadow-black/40">
+        {/* Card header */}
         <div className="flex items-center justify-between border-b border-white/10 pb-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-accent">
@@ -135,17 +151,7 @@ function HeroCollage() {
 
         {/* Destinations grid */}
         <div className="my-6 grid grid-cols-3 gap-2">
-          {[
-            { flag: "🇩🇪", name: "Germany" },
-            { flag: "🇫🇷", name: "France" },
-            { flag: "🇮🇹", name: "Italy" },
-            { flag: "🇪🇸", name: "Spain" },
-            { flag: "🇳🇱", name: "Netherlands" },
-            { flag: "🇸🇪", name: "Sweden" },
-            { flag: "🇫🇮", name: "Finland" },
-            { flag: "🇮🇪", name: "Ireland" },
-            { flag: "🇵🇱", name: "Poland" },
-          ].map((dest) => (
+          {destinations.map((dest) => (
             <div
               key={dest.name}
               className="group flex cursor-pointer flex-col items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] p-3 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.08]"
