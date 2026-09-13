@@ -104,6 +104,7 @@ model Employee {
   conversations Conversation[]
   appointments Appointment[]
   assignedApplications Application[] @relation("AssignedApplications")
+  assignedVisaApplications VisaApplication[] @relation("AssignedVisaApplications")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }
@@ -141,6 +142,7 @@ model Country {
   description String?
   universities University[]
   applications Application[]
+  visaRequirements VisaRequirement[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -368,17 +370,53 @@ model VisaApplication {
   applicationId   String       @db.ObjectId
   application     Application  @relation(fields: [applicationId], references: [id])
   visaType        String?
-  stage           String       @default("PREPARATION") // PREPARATION | SUBMITTED | BIOMETRICS | INTERVIEW | PROCESSING | APPROVED | REFUSED
+  stage           String       @default("PREPARATION") // PREPARATION | SUBMITTED | BIOMETRICS | INTERVIEW | PROCESSING | APPROVED | REFUSED | WITHDRAWN | COMPLETED
+  assignedEmployeeId String?   @db.ObjectId
+  assignedEmployee Employee?  @relation("AssignedVisaApplications", fields: [assignedEmployeeId], references: [id])
   submittedAt     DateTime?
   biometricsAt    DateTime?
   interviewAt     DateTime?
   decisionAt      DateTime?
+  decisionReason  String?
   notes           String?
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
+  stageHistory    VisaStageHistory[]
+
   @@index([applicationId])
   @@index([stage])
+  @@index([assignedEmployeeId])
+}
+
+model VisaStageHistory {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  visaApplicationId String       @db.ObjectId
+  visaApplication  VisaApplication @relation(fields: [visaApplicationId], references: [id])
+  fromStage       String?
+  toStage         String
+  changedById     String         @db.ObjectId
+  note            String?
+  createdAt       DateTime       @default(now())
+
+  @@index([visaApplicationId])
+  @@index([createdAt])
+}
+
+model VisaRequirement {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  countryId   String    @db.ObjectId
+  country     Country   @relation(fields: [countryId], references: [id])
+  name        String
+  description String?
+  required    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  status      String    @default("ACTIVE")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([countryId])
+  @@index([status])
 }
 
 model Appointment {
