@@ -102,6 +102,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html
       lang="en"
       className={`${inter.variable} ${sora.variable} h-full antialiased`}
+      // data-scroll-behavior — Next.js recommends this to disable smooth
+      // scrolling during route transitions (prevents the dev warning
+      // "Detected scroll-behavior: smooth on the <html> element").
+      data-scroll-behavior="smooth"
       // suppressHydrationWarning — browser extensions (Bitdefender,
       // Grammarly, password managers) inject `bis_*`, `data-*`, `class`
       // attributes into <html> and <body> AFTER server render but BEFORE

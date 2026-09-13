@@ -12,8 +12,17 @@ type Params = { params: Promise<{ country: string }> };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { country: slug } = await params;
+  // Normalize the slug: convert hyphens to spaces for name matching.
+  // e.g. "czech-republic" → "czech republic" → matches "Czech Republic"
+  const slugForName = slug.replace(/-/g, " ");
   const country = await prisma.country.findFirst({
-    where: { OR: [{ code: slug.toUpperCase() }, { name: { contains: slug, mode: "insensitive" } }] },
+    where: {
+      OR: [
+        { code: slug.toUpperCase() },
+        { name: { contains: slugForName, mode: "insensitive" } },
+        { name: { equals: slugForName, mode: "insensitive" } },
+      ],
+    },
   });
   if (!country) {
     return { title: "Destination not found" };
@@ -26,9 +35,14 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 export default async function CountryDetailPage({ params }: Params) {
   const { country: slug } = await params;
+  const slugForName = slug.replace(/-/g, " ");
   const country = await prisma.country.findFirst({
     where: {
-      OR: [{ code: slug.toUpperCase() }, { name: { contains: slug, mode: "insensitive" } }],
+      OR: [
+        { code: slug.toUpperCase() },
+        { name: { contains: slugForName, mode: "insensitive" } },
+        { name: { equals: slugForName, mode: "insensitive" } },
+      ],
     },
   });
   if (!country) notFound();
