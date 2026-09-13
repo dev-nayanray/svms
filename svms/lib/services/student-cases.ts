@@ -290,6 +290,13 @@ export async function getStudentById(
   nationality: string | null;
   country: string | null;
   city: string | null;
+  address: string | null;
+  postalCode: string | null;
+  passportNumber: string | null;
+  passportIssueDate: Date | null;
+  passportExpiryDate: Date | null;
+  passportIssuingCountry: string | null;
+  avatar: string | null;
   status: string;
   createdAt: Date;
   updatedAt: Date;
@@ -377,6 +384,41 @@ export async function getStudentById(
     durationMinutes: number;
     location: string | null;
   }[];
+  academicRecords: {
+    id: string;
+    level: string;
+    institution: string;
+    group: string | null;
+    subject: string | null;
+    passingYear: number | null;
+    result: string | null;
+    certificateUrl: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }[];
+  englishProficiencies: {
+    id: string;
+    testType: string;
+    overallScore: number | null;
+    readingScore: number | null;
+    writingScore: number | null;
+    listeningScore: number | null;
+    speakingScore: number | null;
+    testDate: Date | null;
+    expiryDate: Date | null;
+    certificateUrl: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }[];
+  notes: {
+    id: string;
+    body: string;
+    visibility: string;
+    pinned: boolean;
+    authorId: string;
+    createdAt: Date;
+    updatedAt: Date;
+  }[];
 } | null> {
   // IDOR closure: the scope filter is always present, even for ADMIN
   // (where it's `{}`). For EMPLOYEE it's `{ assignedEmployeeId: <emp-id> }`
@@ -398,6 +440,12 @@ export async function getStudentById(
       nationality: true,
       country: true,
       city: true,
+      address: true,
+      postalCode: true,
+      passportNumber: true,
+      passportIssueDate: true,
+      passportExpiryDate: true,
+      passportIssuingCountry: true,
       status: true,
       createdAt: true,
       updatedAt: true,
@@ -405,6 +453,7 @@ export async function getStudentById(
       assignedEmployee: {
         select: { id: true, title: true, user: { select: { name: true, email: true } } },
       },
+      user: { select: { avatar: true } },
       applications: {
         orderBy: { updatedAt: "desc" },
         select: {
@@ -496,6 +545,50 @@ export async function getStudentById(
           location: true,
         },
       },
+      academicRecords: {
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          level: true,
+          institution: true,
+          group: true,
+          subject: true,
+          passingYear: true,
+          result: true,
+          certificateUrl: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+      englishProficiencies: {
+        orderBy: { testDate: "desc" },
+        select: {
+          id: true,
+          testType: true,
+          overallScore: true,
+          readingScore: true,
+          writingScore: true,
+          listeningScore: true,
+          speakingScore: true,
+          testDate: true,
+          expiryDate: true,
+          certificateUrl: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+      notes: {
+        orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
+        select: {
+          id: true,
+          body: true,
+          visibility: true,
+          pinned: true,
+          authorId: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
     },
   });
 
@@ -519,7 +612,8 @@ export async function getStudentById(
     },
   });
 
-  return { ...student, visaApplications };
+  const { user: _userRow, ...rest } = student;
+  return { ...rest, avatar: _userRow?.avatar ?? null, visaApplications };
 }
 
 // ─────────────────────────────────────────────
@@ -549,10 +643,16 @@ export type TimelineItem = {
     | "visa_submitted"
     | "visa_decided"
     | "appointment_scheduled"
-    | "message_received";
+    | "message_received"
+    | "academic_added"
+    | "english_added"
+    | "note_added"
+    | "profile_updated";
   title: string;
   detail: string;
   at: Date;
+  /** When true, this item is only visible to employees with audit.read. */
+  internal?: boolean;
 };
 
 export function buildStudentTimeline(student: StudentDetail): TimelineItem[] {
@@ -649,12 +749,6 @@ export function buildStudentTimeline(student: StudentDetail): TimelineItem[] {
 
   for (const c of student.conversations) {
     for (const m of c.messages) {
-      if (m.senderId !== student.userId) {
-        // incoming message — only count messages from the student to the
-        // employee, not the employee's own replies.
-        // Note: student.userId is on the User model — we approximate by
-        // using messages from anyone other than the student user id.
-      }
       items.push({
         kind: "message_received",
         title: `Message in: ${c.subject ?? "Conversation"}`,
@@ -664,5 +758,60 @@ export function buildStudentTimeline(student: StudentDetail): TimelineItem[] {
     }
   }
 
+  for (const a of student.academicRecords) {
+    items.push({
+      kind: "academic_added",
+      title: `Academic record: ${a.level}`,
+      detail: `${a.institution}${a.passingYear ? ` · ${a.passingYear}` : ""}${a.result ? ` · ${a.result}` : ""}`,
+      at: a.createdAt,
+    });
+  }
+
+  for (const e of student.englishProficiencies) {
+    items.push({
+      kind: "english_added",
+      title: `English test: ${e.testType}`,
+      detail: `Overall: ${e.overallScore ?? "—"}${e.testDate ? ` · ${e.testDate.toISOString().slice(0, 10)}` : ""}`,
+      at: e.createdAt,
+    });
+  }
+
+  for (const n of student.notes) {
+    items.push({
+      kind: "note_added",
+      title: n.pinned ? "📌 Pinned note" : "Note added",
+      detail: n.body.slice(0, 100),
+      at: n.createdAt,
+      // INTERNAL notes are private to staff — flagged so the page can hide
+      // them from employees who lack audit.read (defense in depth).
+      internal: n.visibility === "INTERNAL",
+    });
+  }
+
+  // Profile update — surfaced from the updatedAt timestamp. This is the
+  // only "synthetic" event (no dedicated audit row) so we mark it internal
+  // and let the page filter based on the caller's permissions.
+  items.push({
+    kind: "profile_updated",
+    title: "Profile updated",
+    detail: `Last update: ${student.updatedAt.toISOString().slice(0, 10)}`,
+    at: student.updatedAt,
+    internal: true,
+  });
+
   return items.sort((a, b) => b.at.getTime() - a.at.getTime());
+}
+
+/**
+ * Permission-filtered timeline. INTERNAL items (notes marked INTERNAL, profile
+ * update synthetic events) are stripped when the caller lacks `audit.read`.
+ * This is the function the page should call — `buildStudentTimeline` is the
+ * raw builder used for testing.
+ */
+export function buildStudentTimelineForUser(
+  student: StudentDetail,
+  canSeeInternal: boolean,
+): TimelineItem[] {
+  const all = buildStudentTimeline(student);
+  return canSeeInternal ? all : all.filter((i) => !i.internal);
 }

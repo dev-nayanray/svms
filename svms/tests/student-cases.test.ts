@@ -23,6 +23,7 @@ import {
   getStudentById,
   requireStudent,
   buildStudentTimeline,
+  buildStudentTimelineForUser,
   type StudentListFilters,
 } from "@/lib/services/student-cases";
 import type { EmployeeScope } from "@/lib/services/employee-dashboard";
@@ -365,11 +366,18 @@ describe("getStudentById — IDOR closure", () => {
       nationality: null,
       country: "Bangladesh",
       city: "Dhaka",
+      address: null,
+      postalCode: null,
+      passportNumber: null,
+      passportIssueDate: null,
+      passportExpiryDate: null,
+      passportIssuingCountry: null,
       status: "ACTIVE",
       createdAt: new Date("2026-08-01"),
       updatedAt: new Date("2026-08-10"),
       assignedEmployeeId: "emp-1",
       assignedEmployee: { id: "emp-1", title: "Counselor", user: { name: "Counselor Name", email: "c@x.com" } },
+      user: { avatar: null },
       applications: [],
       documents: [],
       payments: [],
@@ -377,6 +385,9 @@ describe("getStudentById — IDOR closure", () => {
       tasks: [],
       conversations: [],
       appointments: [],
+      academicRecords: [],
+      englishProficiencies: [],
+      notes: [],
     };
     prismaMock.student.findFirst.mockResolvedValue(fakeStudent);
     prismaMock.visaApplication.findMany.mockResolvedValue([]);
@@ -423,6 +434,13 @@ describe("buildStudentTimeline — merge + sort", () => {
       nationality: null,
       country: null,
       city: null,
+      address: null,
+      postalCode: null,
+      passportNumber: null,
+      passportIssueDate: null,
+      passportExpiryDate: null,
+      passportIssuingCountry: null,
+      avatar: null,
       status: "ACTIVE",
       createdAt: new Date("2026-07-01"),
       updatedAt: new Date("2026-07-01"),
@@ -461,6 +479,9 @@ describe("buildStudentTimeline — merge + sort", () => {
       conversations: [],
       visaApplications: [],
       appointments: [],
+      academicRecords: [],
+      englishProficiencies: [],
+      notes: [],
     };
     const items = buildStudentTimeline(student);
     expect(items.length).toBeGreaterThan(0);
@@ -488,6 +509,13 @@ describe("buildStudentTimeline — merge + sort", () => {
       nationality: null,
       country: null,
       city: null,
+      address: null,
+      postalCode: null,
+      passportNumber: null,
+      passportIssueDate: null,
+      passportExpiryDate: null,
+      passportIssuingCountry: null,
+      avatar: null,
       status: "ACTIVE",
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -501,8 +529,13 @@ describe("buildStudentTimeline — merge + sort", () => {
       conversations: [],
       visaApplications: [],
       appointments: [],
+      academicRecords: [],
+      englishProficiencies: [],
+      notes: [],
     };
-    expect(buildStudentTimeline(empty)).toEqual([]);
+    // The synthetic profile_updated event is internal — so the raw builder
+    // produces 1 item, but the user-facing builder filters it out.
+    expect(buildStudentTimelineForUser(empty, false)).toEqual([]);
   });
 });
 

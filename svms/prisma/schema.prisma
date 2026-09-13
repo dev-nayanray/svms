@@ -67,6 +67,13 @@ model Student {
   nationality        String?
   country            String?
   city               String?
+  address            String?
+  postalCode         String?
+  // Passport (sensitive — masked in the UI by default; reveal requires explicit click)
+  passportNumber     String?
+  passportIssueDate  DateTime?
+  passportExpiryDate DateTime?
+  passportIssuingCountry String?
   assignedEmployeeId String?   @db.ObjectId
   assignedEmployee   Employee? @relation("AssignedStudents", fields: [assignedEmployeeId], references: [id])
   status             String    @default("ACTIVE")
@@ -77,6 +84,9 @@ model Student {
   appointments       Appointment[]
   payments           Payment[]
   invoices           Invoice[]
+  academicRecords    AcademicRecord[]
+  englishProficiencies EnglishProficiency[]
+  notes              Note[]
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
@@ -405,4 +415,59 @@ model Invoice {
 
   @@index([studentId])
   @@index([status])
+}
+
+// ─────────────────────────────────────────────
+// Student academic & English proficiency records + Notes
+// ─────────────────────────────────────────────
+
+model AcademicRecord {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  studentId      String   @db.ObjectId
+  student        Student  @relation(fields: [studentId], references: [id])
+  level          String // SSC | HSC | DIPLOMA | BACHELOR | MASTER | PHD | OTHER
+  institution    String
+  group          String?
+  subject        String?
+  passingYear    Int?
+  result         String? // GPA / grade — free-text because grading scales vary
+  certificateUrl String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([studentId])
+}
+
+model EnglishProficiency {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  studentId      String   @db.ObjectId
+  student        Student  @relation(fields: [studentId], references: [id])
+  testType       String // IELTS | TOEFL | PTE | DUOLINGO | OTHER
+  overallScore   Float?
+  readingScore   Float?
+  writingScore   Float?
+  listeningScore Float?
+  speakingScore  Float?
+  testDate       DateTime?
+  expiryDate     DateTime?
+  certificateUrl String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([studentId])
+}
+
+model Note {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  studentId   String   @db.ObjectId
+  student     Student  @relation(fields: [studentId], references: [id])
+  authorId    String   @db.ObjectId
+  body        String
+  visibility  String   @default("INTERNAL") // INTERNAL | STUDENT
+  pinned      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([authorId])
 }
