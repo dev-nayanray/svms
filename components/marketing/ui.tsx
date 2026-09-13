@@ -27,7 +27,7 @@ export function Container({
   return <div className={cn("euroscope-container", className)} {...props} />;
 }
 
-/** Section — vertical padding + optional dark/bordered variants. */
+/** Section — generous vertical padding + optional tone variants. */
 export function Section({
   className,
   tone = "default",
@@ -39,11 +39,11 @@ export function Section({
     dark: "bg-ink text-white",
   };
   return (
-    <section className={cn("py-24 md:py-32", tones[tone], className)} {...props} />
+    <section className={cn("py-20 md:py-28 lg:py-32", tones[tone], className)} {...props} />
   );
 }
 
-/** Eyebrow — small label above headings. */
+/** Eyebrow — small uppercase label above headings. */
 export function Eyebrow({
   children,
   className,
@@ -71,7 +71,7 @@ export function Eyebrow({
   );
 }
 
-/** MarketingButton — extends the shared Button with marketing variants. */
+/** MarketingButton — premium button with hover lift + shadow. */
 export function MarketingButton({
   href,
   children,
@@ -98,14 +98,14 @@ export function MarketingButton({
   };
   const variants = {
     primary:
-      "bg-primary text-primary-foreground shadow-sm shadow-primary/30 hover:bg-primary-hover hover:shadow-md hover:shadow-primary/40 hover:-translate-y-0.5",
+      "bg-primary text-primary-foreground shadow-sm hover:bg-primary-hover hover:shadow-md hover:-translate-y-0.5",
     secondary:
       "bg-white text-ink border border-border shadow-sm hover:bg-muted hover:-translate-y-0.5",
     ghost: "text-foreground hover:bg-muted",
     outline:
       "border border-border bg-transparent text-foreground hover:bg-muted hover:-translate-y-0.5",
     accent:
-      "bg-accent text-accent-foreground shadow-sm shadow-accent/30 hover:bg-accent-hover hover:shadow-md hover:-translate-y-0.5",
+      "bg-accent text-accent-foreground shadow-sm hover:bg-accent-hover hover:shadow-md hover:-translate-y-0.5",
   };
   const classes = cn(base, sizes[size], variants[variant], className);
   if (href) {
@@ -122,7 +122,7 @@ export function MarketingButton({
   );
 }
 
-/** FeatureCard — consistent card for feature grids. */
+/** FeatureCard — premium card with hover lift + gradient overlay. */
 export function FeatureCard({
   icon: Icon,
   title,
@@ -141,7 +141,6 @@ export function FeatureCard({
         className,
       )}
     >
-      {/* Subtle gradient on hover */}
       <div
         className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
         aria-hidden
@@ -155,7 +154,7 @@ export function FeatureCard({
   );
 }
 
-/** Reusable icon registry — single source for marketing icon names. */
+/** Reusable icon registry. */
 export const MARKETING_ICONS: Record<string, LucideIcon> = {
   bookOpen: BookOpen,
   building: Building2,
