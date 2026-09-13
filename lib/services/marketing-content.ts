@@ -1,18 +1,32 @@
 import { prisma } from "@/lib/db";
 
 /**
- * Marketing content service — reads/writes all editable marketing
+ * Marketing content service — reads/writes ALL editable marketing
  * page content from the SystemSetting table.
  *
- * The content is stored as a single JSON blob under the key
- * `marketing.content`. This avoids creating a new Prisma model
- * and lets admins edit all content from one form.
+ * Content sections:
+ *  - hero (badge, headline, subtitle, CTAs)
+ *  - services (icon, title, description)
+ *  - whyEuroscope (icon, title, description)
+ *  - howWeHelp (icon, title, description)
+ *  - problems (icon, title, description)
+ *  - trust (icon, title, description)
+ *  - cta (eyebrow, headline, subtitle, CTAs)
+ *  - faq (question, answer)
  *
- * If no content is in the DB (first run), sensible defaults are
- * returned so the marketing site always has content.
+ * Icons are stored as string keys (e.g., "comments", "graduationCap")
+ * that map to the ICONS registry in components/marketing/icons.tsx.
  */
 
 const SETTING_KEY = "marketing.content";
+
+export type IconKey = string; // e.g., "comments", "graduationCap"
+
+export type ContentItem = {
+  icon: IconKey;
+  title: string;
+  description: string;
+};
 
 export type MarketingContent = {
   hero: {
@@ -26,6 +40,11 @@ export type MarketingContent = {
     ctaSecondaryHref: string;
     trustLine: string;
   };
+  services: ContentItem[];
+  whyEuroscope: ContentItem[];
+  howWeHelp: ContentItem[];
+  problems: ContentItem[];
+  trust: ContentItem[];
   cta: {
     eyebrow: string;
     headlinePart1: string;
@@ -39,7 +58,6 @@ export type MarketingContent = {
   faq: { q: string; a: string }[];
 };
 
-/** Default content — used when nothing is in the DB yet. */
 export const DEFAULT_MARKETING_CONTENT: MarketingContent = {
   hero: {
     badge: "European Education Consultancy",
@@ -53,6 +71,42 @@ export const DEFAULT_MARKETING_CONTENT: MarketingContent = {
     ctaSecondaryHref: "/study-in-europe",
     trustLine: "Personalized guidance · End-to-end support · European expertise",
   },
+  services: [
+    { icon: "comments", title: "Personal Counselling", description: "One-on-one sessions with experienced counselors who understand European education. We assess your profile, goals and budget — then recommend the right path." },
+    { icon: "graduationCap", title: "University Selection", description: "We help you choose the right European university based on your academic background, career goals and financial situation — not just rankings." },
+    { icon: "clipboardCheck", title: "Application Management", description: "We handle your university applications end-to-end — forms, documents, deadlines and follow-ups — so nothing falls through the cracks." },
+    { icon: "fileLines", title: "Document Guidance", description: "We guide you through every document — transcripts, motivation letters, recommendations, financial proof — and review each one before submission." },
+    { icon: "planeDeparture", title: "Visa Preparation", description: "We prepare your visa application with country-specific checklists, financial documentation guidance and interview coaching — every step of the way." },
+    { icon: "envelope", title: "Travel & Arrival Support", description: "We help with pre-departure preparation — accommodation guidance, travel planning and what to expect when you arrive in Europe." },
+  ],
+  whyEuroscope: [
+    { icon: "earthEurope", title: "European Focus", description: "We specialize in European education. Our counselors understand the nuances of each country's university system, visa process and culture." },
+    { icon: "users", title: "Personal Counselors", description: "You work with a dedicated counselor who knows your case — not a call center. One person, one relationship, end-to-end support." },
+    { icon: "handshake", title: "End-to-End Support", description: "We don't just submit forms and disappear. We walk with you from the first consultation to your arrival in Europe." },
+    { icon: "eye", title: "Transparent Process", description: "You see every step of your application — what's done, what's pending, what's next. No black boxes, no surprises." },
+    { icon: "clock", title: "Deadline Management", description: "Multiple university intakes, visa appointments and document deadlines — we track them all so you never miss a date." },
+    { icon: "shieldCheck", title: "Honest Guidance", description: "We don't make promises we can't keep. No guaranteed visas, no fake success rates — just honest, expert advice." },
+  ],
+  howWeHelp: [
+    { icon: "lightbulb", title: "Free Consultation", description: "We start with a free, no-obligation consultation. Tell us about your goals, background and budget — we'll tell you if Europe is right for you." },
+    { icon: "route", title: "Personalized Plan", description: "Your counselor creates a personalized roadmap — target countries, universities, courses, timeline and document checklist — based on your profile." },
+    { icon: "peopleArrows", title: "Application Support", description: "We handle your applications — forms, documents, deadlines, follow-ups. You see every step, we handle the heavy lifting." },
+    { icon: "plane", title: "Visa & Travel", description: "Once you have your offer, we guide you through visa preparation, interviews and travel planning — right up to your arrival in Europe." },
+  ],
+  problems: [
+    { icon: "fileQuestion", title: "Too Much Information", description: "Finding reliable university and course information across hundreds of European institutions can be overwhelming." },
+    { icon: "layerGroup", title: "Complicated Applications", description: "Different universities have different requirements, deadlines and application portals — easy to miss something." },
+    { icon: "triangleWarning", title: "Document Confusion", description: "Students often struggle to track which documents are required, which are approved, and which need re-submission." },
+    { icon: "passport", title: "Visa Preparation", description: "Visa preparation requires careful planning, financial proof and timely documentation — with high stakes." },
+    { icon: "calendarXmark", title: "Missed Deadlines", description: "Multiple university intakes, visa appointments and document deadlines can be difficult to manage together." },
+    { icon: "poorCommunication", title: "Poor Communication", description: "Students may not know the current status of their application — left waiting without updates for weeks." },
+  ],
+  trust: [
+    { icon: "lock", title: "Secure Authentication", description: "Password-based login with bcrypt hashing, JWT sessions with periodic DB re-validation, and rate limiting on sensitive endpoints." },
+    { icon: "userShield", title: "Role-Based Access", description: "Three distinct roles — Admin, Employee and Student — each with their own panel, scoped data access and permission matrix." },
+    { icon: "folderLock", title: "Private Document Access", description: "Files stored under private storage (never under /public). Download endpoints verify ownership server-side and stream with no-store cache headers." },
+    { icon: "scroll", title: "Audit Logging", description: "Critical actions — password changes, document uploads, status changes — are recorded with IP, user agent and old/new values for compliance." },
+  ],
   cta: {
     eyebrow: "Get Started",
     headlinePart1: "Your European Future",
@@ -65,42 +119,9 @@ export const DEFAULT_MARKETING_CONTENT: MarketingContent = {
     ctaSecondaryHref: "/study-in-europe",
   },
   faq: [
-    {
-      q: "What is Euroscope?",
-      a: "Euroscope is a European education and student visa management platform. It helps students manage their entire journey — from choosing a university to preparing their visa application — in one organized place. It also serves education consultancies that manage multiple students.",
-    },
-    {
-      q: "Which European countries can I study in?",
-      a: "Euroscope supports applications to universities across major European study destinations including Germany, France, Italy, Spain, the Netherlands, Sweden, Finland, Denmark, Ireland, Poland, Hungary, Portugal, Austria, Belgium and the Czech Republic. Browse the Study in Europe section for details.",
-    },
-    {
-      q: "How does Euroscope help students?",
-      a: "Students get a personal dashboard with their application pipeline, document checklist, visa progress, task deadlines, payments and messages with their counselor. Real-time updates arrive via Server-Sent Events — no refreshing required.",
-    },
-    {
-      q: "Can I track my application?",
-      a: "Yes. Every application moves through a visible pipeline — Lead → Counselling → Document Collection → University Application → Offer → Visa → Travel. Students see the current stage, history and next steps in real time.",
-    },
-    {
-      q: "Can I manage documents through Euroscope?",
-      a: "Yes. Students upload documents (passport, transcripts, English certificate, financial proof, etc.) to private storage. Counselors review and approve/reject with feedback. Version history is preserved when a document is replaced.",
-    },
-    {
-      q: "How does visa preparation work?",
-      a: "Euroscope maintains country-specific visa requirements (e.g., German student visa requires passport, admission letter, blocked account proof, health insurance). Students see a checklist, mark requirements complete, and track visa submission → biometrics → interview → decision.",
-    },
-    {
-      q: "Can employees manage multiple students?",
-      a: "Yes. Education employees get a dedicated panel with their assigned students, applications, documents, tasks, visa cases and appointments. They can review documents, schedule appointments, send messages and track performance.",
-    },
-    {
-      q: "Is Euroscope suitable for education consultancies?",
-      a: "Yes. Euroscope is built for education consultancies of any size. Admins manage branches, employees, students, finance, reports, roles and permissions, and audit logs. The platform scales from a single counselor to a multi-branch operation.",
-    },
-    {
-      q: "How can I get started?",
-      a: 'Click "Start Your Journey" or "Book a Free Consultation" to schedule a call. We\'ll walk you through the platform, set up your account, and help you start your European study journey.',
-    },
+    { q: "What is Euroscope?", a: "Euroscope is a European education and student visa management platform. It helps students manage their entire journey — from choosing a university to preparing their visa application — in one organized place." },
+    { q: "Which European countries can I study in?", a: "Euroscope supports applications to universities across major European study destinations including Germany, France, Italy, Spain, the Netherlands, Sweden, Finland, Denmark, Ireland and more." },
+    { q: "How can I get started?", a: 'Click "Book a Free Consultation" to schedule a call. We\'ll walk you through the platform and help you start your European study journey.' },
   ],
 };
 
@@ -116,21 +137,21 @@ export async function getMarketingContent(): Promise<MarketingContent> {
     if (!setting?.value) return DEFAULT_MARKETING_CONTENT;
 
     const stored = setting.value as Partial<MarketingContent>;
-    // Deep-merge with defaults so new fields added later don't break.
     return {
       hero: { ...DEFAULT_MARKETING_CONTENT.hero, ...stored.hero },
+      services: stored.services?.length ? stored.services : DEFAULT_MARKETING_CONTENT.services,
+      whyEuroscope: stored.whyEuroscope?.length ? stored.whyEuroscope : DEFAULT_MARKETING_CONTENT.whyEuroscope,
+      howWeHelp: stored.howWeHelp?.length ? stored.howWeHelp : DEFAULT_MARKETING_CONTENT.howWeHelp,
+      problems: stored.problems?.length ? stored.problems : DEFAULT_MARKETING_CONTENT.problems,
+      trust: stored.trust?.length ? stored.trust : DEFAULT_MARKETING_CONTENT.trust,
       cta: { ...DEFAULT_MARKETING_CONTENT.cta, ...stored.cta },
       faq: stored.faq?.length ? stored.faq : DEFAULT_MARKETING_CONTENT.faq,
     };
   } catch {
-    // DB unavailable — use defaults so the page still renders.
     return DEFAULT_MARKETING_CONTENT;
   }
 }
 
-/**
- * Write marketing content to the DB. Used by the admin panel.
- */
 export async function saveMarketingContent(content: MarketingContent): Promise<void> {
   const jsonValue = JSON.parse(JSON.stringify(content));
   await prisma.systemSetting.upsert({

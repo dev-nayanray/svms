@@ -13,13 +13,11 @@ import { FAQ } from "@/components/marketing/faq";
 import { getMarketingContent } from "@/lib/services/marketing-content";
 
 /**
- * Marketing homepage — the public face of Euroscope.
+ * Marketing homepage — fully dynamic content from admin panel.
  *
- * Content (hero, CTA, FAQ) is loaded dynamically from the DB so admins
- * can edit it from the admin panel at /admin/marketing.
- *
- * Authenticated users are redirected to their role's panel.
- * Pass `?preview=1` to bypass the redirect for previewing.
+ * All sections read from the DB: hero, services, whyEuroscope, problems,
+ * howWeHelp, trust, FAQ, CTA. Universities, courses, and countries are
+ * also dynamic from the database.
  */
 export default async function HomePage({
   searchParams,
@@ -33,19 +31,18 @@ export default async function HomePage({
     redirect(role === "ADMIN" ? "/admin" : role === "EMPLOYEE" ? "/employee" : "/student");
   }
 
-  // Load dynamic content from DB (falls back to defaults if nothing stored)
   const content = await getMarketingContent();
 
   return (
     <>
       <HeroSection content={content} />
-      <ServicesSection />
-      <WhyEuroscopeSection />
+      <ServicesSection items={content.services} />
+      <WhyEuroscopeSection items={content.whyEuroscope} />
       <DestinationSection />
-      <ProblemSection />
+      <ProblemSection items={content.problems} />
       <JourneyTimeline />
-      <HowWeHelp />
-      <TrustSection />
+      <HowWeHelp items={content.howWeHelp} />
+      <TrustSection items={content.trust} />
       <FAQ items={content.faq} />
       <CTASection content={content.cta} />
     </>

@@ -3,21 +3,15 @@ import { Container, Section, Eyebrow, MarketingButton } from "./ui";
 import { MarketingReveal } from "./reveal";
 import { APP_NAME } from "@/lib/constants/app";
 import { Check } from "lucide-react";
+import type { ContentItem } from "@/lib/services/marketing-content";
 
 /* ════════════════════════════════════════════════════════════
- *  PROBLEM SECTION — FA icons
+ *  PROBLEM SECTION — dynamic from admin
  * ════════════════════════════════════════════════════════════ */
 
-const PROBLEMS = [
-  { icon: ICONS.fileQuestion, title: "Too Much Information", body: "Finding reliable university and course information across hundreds of European institutions can be overwhelming." },
-  { icon: ICONS.layerGroup, title: "Complicated Applications", body: "Different universities have different requirements, deadlines and application portals — easy to miss something." },
-  { icon: ICONS.triangleWarning, title: "Document Confusion", body: "Students often struggle to track which documents are required, which are approved, and which need re-submission." },
-  { icon: ICONS.passport, title: "Visa Preparation", body: "Visa preparation requires careful planning, financial proof and timely documentation — with high stakes." },
-  { icon: ICONS.calendarXmark, title: "Missed Deadlines", body: "Multiple university intakes, visa appointments and document deadlines can be difficult to manage together." },
-  { icon: ICONS.poorCommunication, title: "Poor Communication", body: "Students may not know the current status of their application — left waiting without updates for weeks." },
-];
-
-export function ProblemSection() {
+export function ProblemSection({ items }: { items?: ContentItem[] }) {
+  const problems = items ?? [];
+  if (problems.length === 0) return null;
   return (
     <Section tone="muted">
       <Container>
@@ -39,17 +33,20 @@ export function ProblemSection() {
         </div>
 
         <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {PROBLEMS.map((p, i) => (
-            <MarketingReveal key={p.title} delay={i * 80}>
-              <div className="h-full rounded-2xl border border-border bg-card p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-                <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive ring-1 ring-destructive/10">
-                  <FaIcon icon={p.icon} className="h-6 w-6" aria-hidden />
+          {problems.map((p, i) => {
+            const icon = ICONS[p.icon as keyof typeof ICONS] ?? ICONS.fileQuestion;
+            return (
+              <MarketingReveal key={i} delay={i * 80}>
+                <div className="h-full rounded-2xl border border-border bg-card p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                  <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive ring-1 ring-destructive/10">
+                    <FaIcon icon={icon} className="h-6 w-6" aria-hidden />
+                  </div>
+                  <h3 className="font-display text-xl font-bold tracking-tight">{p.title}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{p.description}</p>
                 </div>
-                <h3 className="font-display text-xl font-bold tracking-tight">{p.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{p.body}</p>
-              </div>
-            </MarketingReveal>
-          ))}
+              </MarketingReveal>
+            );
+          })}
         </div>
       </Container>
     </Section>
@@ -265,17 +262,12 @@ export function HowItWorks() {
 }
 
 /* ════════════════════════════════════════════════════════════
- *  TRUST & SECURITY — FA icons
+ *  TRUST & SECURITY — dynamic from admin
  * ════════════════════════════════════════════════════════════ */
 
-const TRUST_ITEMS = [
-  { icon: ICONS.lock, title: "Secure Authentication", body: "Password-based login with bcrypt hashing, JWT sessions with periodic DB re-validation, and rate limiting on sensitive endpoints." },
-  { icon: ICONS.userShield, title: "Role-Based Access", body: "Three distinct roles — Admin, Employee and Student — each with their own panel, scoped data access and permission matrix." },
-  { icon: ICONS.folderLock, title: "Private Document Access", body: "Files stored under private storage (never under /public). Download endpoints verify ownership server-side and stream with no-store cache headers." },
-  { icon: ICONS.scroll, title: "Audit Logging", body: "Critical actions — password changes, document uploads, status changes — are recorded with IP, user agent and old/new values for compliance." },
-];
-
-export function TrustSection() {
+export function TrustSection({ items }: { items?: ContentItem[] }) {
+  const trustItems = items ?? [];
+  if (trustItems.length === 0) return null;
   return (
     <Section tone="default">
       <Container>
@@ -297,21 +289,24 @@ export function TrustSection() {
         </div>
 
         <div className="mt-16 grid gap-6 sm:grid-cols-2">
-          {TRUST_ITEMS.map((item, i) => (
-            <MarketingReveal key={item.title} delay={i * 80}>
-              <div className="flex h-full gap-5 rounded-2xl border border-border bg-card p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/30">
-                <div className="shrink-0">
-                  <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10">
-                    <FaIcon icon={item.icon} className="h-6 w-6" aria-hidden />
-                  </span>
+          {trustItems.map((item, i) => {
+            const icon = ICONS[item.icon as keyof typeof ICONS] ?? ICONS.lock;
+            return (
+              <MarketingReveal key={i} delay={i * 80}>
+                <div className="flex h-full gap-5 rounded-2xl border border-border bg-card p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/30">
+                  <div className="shrink-0">
+                    <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10">
+                      <FaIcon icon={icon} className="h-6 w-6" aria-hidden />
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-display text-xl font-bold tracking-tight">{item.title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-display text-xl font-bold tracking-tight">{item.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.body}</p>
-                </div>
-              </div>
-            </MarketingReveal>
-          ))}
+              </MarketingReveal>
+            );
+          })}
         </div>
       </Container>
     </Section>
