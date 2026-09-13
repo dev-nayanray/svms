@@ -10,6 +10,7 @@ import {
   CheckSquare,
   Clock,
   FileText,
+  Plus,
   RefreshCw,
   Square,
   WifiOff,
@@ -26,6 +27,7 @@ import {
 } from "@/lib/constants/tasks";
 import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInDays } from "date-fns";
+import { CreateTaskSheet } from "./create-task-sheet";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -68,6 +70,8 @@ export function TasksView() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState<TaskView>("today");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [sheetInstance, setSheetInstance] = useState(0);
 
   const listQ = useQuery<ListResponse>({
     queryKey: ["student-tasks", activeTab],
@@ -180,8 +184,33 @@ export function TasksView() {
     }
   }
 
+  function openCreateSheet() {
+    // Bump the key so the sheet remounts with fresh state.
+    setSheetInstance((n) => n + 1);
+    setCreateOpen(true);
+  }
+
+  function handleCreated() {
+    qc.invalidateQueries({ queryKey: ["student-tasks"] });
+    // Switch to "all" so the new task is visible regardless of its due date.
+    setActiveTab("all");
+  }
+
   return (
     <MobilePage>
+      {/* Primary CTA — create personal task */}
+      <Button onClick={openCreateSheet} size="lg" className="w-full">
+        <Plus className="h-4 w-4" aria-hidden />
+        New personal task
+      </Button>
+
+      <CreateTaskSheet
+        key={sheetInstance}
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={handleCreated}
+      />
+
       {/* Tab bar */}
       <div className="sticky top-14 z-20 -mx-4 overflow-x-auto border-b border-border bg-card/95 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:static md:mx-0 md:rounded-lg md:border md:bg-card md:backdrop-blur-none">
         <div className="flex min-w-max gap-1.5">
@@ -229,7 +258,9 @@ export function TasksView() {
           <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
             {activeTab === "completed"
               ? "Tasks you complete will appear here."
-              : "Your counselor will assign tasks as your application progresses."}
+              : activeTab === "all"
+                ? "Tap \"New personal task\" above to track your own to-dos, or ask your counselor to assign tasks."
+                : "Your counselor will assign tasks as your application progresses — or tap \"New personal task\" above to add your own."}
           </p>
           {activeTab !== "all" && (
             <Button

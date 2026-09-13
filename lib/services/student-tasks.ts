@@ -27,12 +27,13 @@ import {
  *  - View tasks assigned to them
  *  - Change their task's status to IN_PROGRESS (start working)
  *  - Change their task's status to COMPLETED (finish)
+ *  - Create personal tasks (self-assigned, no application link)
  *
  * Students CANNOT:
  *  - Change status to TODO (revert) or CANCELLED (cancel)
  *  - Change title, description, priority, dueDate
  *  - Change assignedToId, studentId, applicationId
- *  - Create or delete tasks
+ *  - Delete tasks
  *  - Assign tasks to others
  *
  * NOTIFICATION ARCHITECTURE
@@ -150,6 +151,112 @@ export const studentTaskService = {
     });
 
     return rows.map((r) => buildSummary(r as never, now));
+  },
+
+  /**
+   * Create a personal task. The student self-assigns — `assignedToId`
+   * is the caller's `userId`, `studentId` is the caller's `studentId`,
+   * and `createdById` is the caller's `userId`. No application link
+   * (student-created tasks are not tied to applications).
+   *
+   * The task starts with status=TODO, priority=MEDIUM by default.
+   * `dueDate` is optional — if provided, it must be in the future
+   * (allow 2 minutes tolerance for clock drift + form latency).
+   *
+   * No notification is sent because the student is creating the task
+   * for themselves — they don't need to be notified of their own
+   * action. (The existing deadline-approaching + overdue notification
+   * cron jobs will pick it up automatically.)
+   */
+  async create(
+    studentId: string,
+    input: {
+      title: string;
+      description?: string | null;
+      priority?: string;
+      dueDate?: Date | null;
+    },
+    actorUserId: string,
+  ): Promise<StudentTaskSummary> {
+    // ── Validate priority ──
+    const ALLOWED_PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;
+    const priority = input.priority ?? "MEDIUM";
+    if (!ALLOWED_PRIORITIES.includes(priority as typeof ALLOWED_PRIORITIES[number])) {
+      throw new HttpError(
+        422,
+        "VALIDATION_ERROR",
+        `Priority must be one of: ${ALLOWED_PRIORITIES.join(", ")} (got ${priority})`,
+      );
+    }
+
+    // ── Validate dueDate is in the future (if provided) ──
+    if (input.dueDate) {
+      const now = new Date();
+      const twoMinsAgo = new Date(now.getTime() - 2 * 60 * 1000);
+      if (input.dueDate < twoMinsAgo) {
+        throw new HttpError(
+          422,
+          "VALIDATION_ERROR",
+          "Due date must be in the future. Pick an upcoming date.",
+        );
+      }
+    }
+
+    // ── Flood guard — max 50 active personal tasks per student ──
+    // Prevents accidental flooding if a student double-submits a form
+    // or scripts the endpoint. 50 is generous — a real student would
+    // complete/cancel tasks long before hitting this.
+    const activeCount = await prisma.task.count({
+      where: {
+        studentId,
+        deletedAt: null,
+        status: { in: ["TODO", "IN_PROGRESS"] },
+        createdById: actorUserId, // only count self-created tasks
+      },
+    });
+    if (activeCount >= 50) {
+      throw new HttpError(
+        409,
+        "CONFLICT",
+        "You have 50 active personal tasks. Please complete or cancel some before creating new ones.",
+      );
+    }
+
+    // ── Create the task ──
+    const created = await prisma.task.create({
+      data: {
+        title: input.title,
+        description: input.description ?? null,
+        assignedToId: actorUserId, // self-assigned
+        studentId, // link to the student for the dashboard aggregate
+        applicationId: null, // never tied to an application
+        priority,
+        status: "TODO",
+        dueDate: input.dueDate ?? null,
+        createdById: actorUserId,
+      },
+      include: {
+        application: {
+          select: { id: true, applicationNumber: true },
+        },
+      },
+    });
+
+    // Audit-log the creation.
+    await auditLog.record({
+      userId: actorUserId,
+      action: "task.created",
+      entity: "Task",
+      entityId: created.id,
+      newValue: {
+        title: input.title,
+        priority,
+        dueDate: input.dueDate ?? null,
+        selfAssigned: true,
+      },
+    });
+
+    return buildSummary(created as never, new Date());
   },
 
   /**
