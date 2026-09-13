@@ -649,14 +649,16 @@ async function main() {
   }
 
   // Ensure status: "ACTIVE" on records that need it (MongoDB schemaless fix)
-  await prisma.university.updateMany({ where: { status: null as unknown as string }, data: { status: "ACTIVE" } });
+  // NOTE: Prisma 6.x rejects `where: { status: null }` at runtime because
+  // `status` is a non-nullable String in the schema. We rely on the fact
+  // that MongoDB's $ne (Prisma's `not` operator) also matches documents
+  // where the field is null or missing entirely, so a single `not: "ACTIVE"`
+  // clause covers both cases.
   await prisma.university.updateMany({ where: { status: { not: "ACTIVE" } }, data: { status: "ACTIVE" } });
-  await prisma.country.updateMany({ where: { status: null as unknown as string }, data: { status: "ACTIVE" } });
   await prisma.country.updateMany({ where: { status: { not: "ACTIVE" } }, data: { status: "ACTIVE" } });
-  await prisma.course.updateMany({ where: { status: null as unknown as string }, data: { status: "ACTIVE" } });
   await prisma.course.updateMany({ where: { status: { not: "ACTIVE" } }, data: { status: "ACTIVE" } });
-  await prisma.visaRequirement.updateMany({ where: { status: null as unknown as string }, data: { status: "ACTIVE" } });
-  await prisma.documentRequirement.updateMany({ where: { status: null as unknown as string }, data: { status: "ACTIVE" } });
+  await prisma.visaRequirement.updateMany({ where: { status: { not: "ACTIVE" } }, data: { status: "ACTIVE" } });
+  await prisma.documentRequirement.updateMany({ where: { status: { not: "ACTIVE" } }, data: { status: "ACTIVE" } });
 
   console.log("\n✅ Seed complete! Demo accounts:");
   console.log("  admin@example.com    / Admin@12345");
