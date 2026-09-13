@@ -160,7 +160,7 @@ async function main() {
     const found = await prisma.university.upsert({
       where: { slug },
       update: {},
-      create: { name: u.name, slug, countryId: countries[u.country], ranking: u.ranking, applicationFee: u.applicationFee, description: u.description },
+      create: { name: u.name, slug, countryId: countries[u.country], ranking: u.ranking, applicationFee: u.applicationFee, description: u.description, status: "ACTIVE" },
     });
     universities[u.name] = found.id;
   }
@@ -186,7 +186,7 @@ async function main() {
     await prisma.course.upsert({
       where: { slug },
       update: {},
-      create: { universityId: universities[c.uni], name: c.name, slug, degreeLevel: c.level, tuitionFee: c.fee, currency: "EUR", englishRequirements: c.english, duration: c.duration },
+      create: { universityId: universities[c.uni], name: c.name, slug, degreeLevel: c.level, tuitionFee: c.fee, currency: "EUR", englishRequirements: c.english, duration: c.duration, status: "ACTIVE" },
     });
   }
 
@@ -221,7 +221,7 @@ async function main() {
   const docReqs = ["Passport", "Academic Transcript", "English Test Certificate", "Bank Statement", "Photograph"];
   for (const name of docReqs) {
     const code = name.toLowerCase().replace(/[^a-z0-9]+/g, "_");
-    await prisma.documentRequirement.upsert({ where: { code }, update: {}, create: { name, code } });
+    await prisma.documentRequirement.upsert({ where: { code }, update: {}, create: { name, code, status: "ACTIVE" } });
   }
 
   // ════════════════════════════════════════════
@@ -635,15 +635,28 @@ async function main() {
   }
 
   // ════════════════════════════════════════════
-  //  ENSURE deletedAt EXISTS (MongoDB schemaless quirk)
+  //  ENSURE deletedAt EXISTS + status is set (MongoDB schemaless quirk)
   //  Only run on models that HAVE a deletedAt field —
   //  Appointment, Conversation, Message, SupportRequest, etc.
   //  don't have deletedAt and would throw a validation error.
+  //  Also ensure status: "ACTIVE" on University, Country, Course —
+  //  MongoDB doesn't apply Prisma @default on create if the field
+  //  isn't explicitly passed, so we set it here for existing records.
   // ════════════════════════════════════════════
   for (const m of ["application","branch","country","course","document","employee","intake","invoice","lead","payment","student","task","university","user","visaApplication"] as const) {
     // @ts-expect-error dynamic model access
     await prisma[m].updateMany({ data: { deletedAt: null } });
   }
+
+  // Ensure status: "ACTIVE" on records that need it (MongoDB schemaless fix)
+  await prisma.university.updateMany({ where: { status: null as unknown as string }, data: { status: "ACTIVE" } });
+  await prisma.university.updateMany({ where: { status: { not: "ACTIVE" } }, data: { status: "ACTIVE" } });
+  await prisma.country.updateMany({ where: { status: null as unknown as string }, data: { status: "ACTIVE" } });
+  await prisma.country.updateMany({ where: { status: { not: "ACTIVE" } }, data: { status: "ACTIVE" } });
+  await prisma.course.updateMany({ where: { status: null as unknown as string }, data: { status: "ACTIVE" } });
+  await prisma.course.updateMany({ where: { status: { not: "ACTIVE" } }, data: { status: "ACTIVE" } });
+  await prisma.visaRequirement.updateMany({ where: { status: null as unknown as string }, data: { status: "ACTIVE" } });
+  await prisma.documentRequirement.updateMany({ where: { status: null as unknown as string }, data: { status: "ACTIVE" } });
 
   console.log("\n✅ Seed complete! Demo accounts:");
   console.log("  admin@example.com    / Admin@12345");
