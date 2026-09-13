@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
   FileText,
+  Layers,
   RefreshCw,
   Upload,
   WifiOff,
@@ -17,6 +18,7 @@ import { DOCUMENT_CATEGORIES } from "@/lib/constants/documents";
 import { cn } from "@/lib/utils";
 import { DocumentCard, type DocumentItem } from "./document-card";
 import { UploadSheet } from "./upload-sheet";
+import { BulkUploadSheet } from "./bulk-upload-sheet";
 import { DocumentPreview } from "./document-preview";
 
 type ListResponse = { documents: DocumentItem[] };
@@ -48,12 +50,14 @@ export function DocumentsView() {
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [replaceTarget, setReplaceTarget] = useState<DocumentItem | null>(null);
   // Incremented each time the upload sheet opens — passed as the `key`
   // so the sheet component remounts and its useState initializers run
   // fresh. This is the React-recommended alternative to
   // "reset state in an effect when a prop changes".
   const [sheetInstance, setSheetInstance] = useState(0);
+  const [bulkSheetInstance, setBulkSheetInstance] = useState(0);
   const [previewDoc, setPreviewDoc] = useState<DocumentItem | null>(null);
 
   const listQ = useQuery<ListResponse>({
@@ -97,6 +101,11 @@ export function DocumentsView() {
     setReplaceTarget(null);
     setSheetInstance((n) => n + 1);
     setUploadOpen(true);
+  }
+
+  function openBulkUpload() {
+    setBulkSheetInstance((n) => n + 1);
+    setBulkOpen(true);
   }
 
   function openReplace(doc: DocumentItem) {
@@ -173,6 +182,15 @@ export function DocumentsView() {
         <p className="text-xs text-muted-foreground">
           Upload, preview, and track your documents. Files are stored privately — only you and your assigned counselor can access them.
         </p>
+        {/* Desktop CTA row */}
+        <div className="hidden gap-2 sm:flex">
+          <Button onClick={openUpload} size="sm">
+            <Upload className="h-3.5 w-3.5" aria-hidden /> Upload single
+          </Button>
+          <Button onClick={openBulkUpload} size="sm" variant="outline">
+            <Layers className="h-3.5 w-3.5" aria-hidden /> Upload multiple
+          </Button>
+        </div>
       </MobileCard>
 
       {/* Category filter chips */}
@@ -228,9 +246,14 @@ export function DocumentsView() {
               ? "No documents match your filters. Try clearing them."
               : "Upload your first document to get started."}
           </p>
-          <Button onClick={openUpload} className="mt-4">
-            <Upload className="h-4 w-4" aria-hidden /> Upload Document
-          </Button>
+          <div className="mt-4 flex gap-2">
+            <Button onClick={openUpload} className="flex-1">
+              <Upload className="h-4 w-4" aria-hidden /> Upload
+            </Button>
+            <Button onClick={openBulkUpload} variant="outline" className="flex-1">
+              <Layers className="h-4 w-4" aria-hidden /> Upload multiple
+            </Button>
+          </div>
         </MobileCard>
       ) : grouped ? (
         // Grouped-by-category view (no filter active)
@@ -292,7 +315,7 @@ export function DocumentsView() {
         </div>
       )}
 
-      {/* Sticky upload CTA (mobile) */}
+      {/* Sticky upload CTAs (mobile) */}
       {docs.length > 0 && (
         <div
           className={cn(
@@ -303,10 +326,18 @@ export function DocumentsView() {
           <button
             type="button"
             onClick={openUpload}
-            className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg transition-transform active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-primary"
-            aria-label="Upload a new document"
+            className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg transition-transform active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-primary"
+            aria-label="Upload a single document"
           >
-            <Upload className="h-4 w-4" aria-hidden /> Upload Document
+            <Upload className="h-4 w-4" aria-hidden /> Upload
+          </button>
+          <button
+            type="button"
+            onClick={openBulkUpload}
+            className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground shadow-lg backdrop-blur-md transition-transform active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-primary"
+            aria-label="Upload multiple documents at once"
+          >
+            <Layers className="h-4 w-4" aria-hidden /> Multiple
           </button>
         </div>
       )}
@@ -335,6 +366,13 @@ export function DocumentsView() {
         replaceId={replaceTarget?.id}
         replaceName={replaceTarget?.name}
         defaultCategory={replaceTarget?.category ?? undefined}
+        onUploaded={handleUploaded}
+      />
+
+      <BulkUploadSheet
+        key={bulkSheetInstance}
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
         onUploaded={handleUploaded}
       />
 
