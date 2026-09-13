@@ -58,30 +58,51 @@ export default async function StudentDashboard() {
 
   return (
     <MobilePage>
-      {/* ─── 1. HEADER ─── */}
-      <section aria-labelledby="greeting" className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm text-muted-foreground">{greeting()},</p>
-          <h2 id="greeting" className="text-xl font-bold">
-            {student.firstName} {student.lastName}
-          </h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {student.studentId}
-            {application?.country ? ` · ${application.country}` : ""}
-          </p>
+      {/* ─── 1. GREETING CARD with profile image ─── */}
+      <section aria-labelledby="greeting">
+        <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
+          {/* Profile image / initials */}
+          <Link href="/student/profile" aria-label="View profile" className="shrink-0">
+            {student.profilePhotoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={student.profilePhotoUrl}
+                alt={student.firstName}
+                className="h-16 w-16 rounded-2xl object-cover ring-2 ring-border"
+              />
+            ) : (
+              <span className="grid h-16 w-16 place-items-center rounded-2xl bg-primary/10 text-xl font-bold text-primary ring-2 ring-border">
+                {student.firstName[0]}{student.lastName[0]}
+              </span>
+            )}
+          </Link>
+
+          {/* Greeting text */}
+          <div className="min-w-0 flex-1">
+            <p className="text-sm text-muted-foreground">{greeting()},</p>
+            <h2 id="greeting" className="text-xl font-bold tracking-tight">
+              {student.firstName} {student.lastName}
+            </h2>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              {student.studentId}
+              {application?.country ? ` · ${application.country}` : ""}
+            </p>
+          </div>
+
+          {/* Notifications bell */}
+          <Link
+            href="/student/notifications"
+            className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="Notifications"
+          >
+            <Bell className="h-5 w-5" aria-hidden />
+            {notifications.filter((n) => !n.readAt).length > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground ring-2 ring-card">
+                {notifications.filter((n) => !n.readAt).length > 9 ? "9+" : notifications.filter((n) => !n.readAt).length}
+              </span>
+            )}
+          </Link>
         </div>
-        <Link
-          href="/student/notifications"
-          className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground transition-colors hover:text-foreground"
-          aria-label="Notifications"
-        >
-          <Bell className="h-5 w-5" aria-hidden />
-          {notifications.filter((n) => !n.readAt).length > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-              {notifications.filter((n) => !n.readAt).length > 9 ? "9+" : notifications.filter((n) => !n.readAt).length}
-            </span>
-          )}
-        </Link>
       </section>
 
       {/* ─── 2. APPLICATION PROGRESS CARD ─── */}
