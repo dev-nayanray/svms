@@ -37,19 +37,19 @@ export function ServicesSection() {
           </MarketingReveal>
         </div>
 
-        <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {SERVICES.map((service, i) => (
             <MarketingReveal key={service.title} delay={(i % 3) * 80}>
-              <div className="group relative h-full overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5">
+              <div className="group relative h-full overflow-hidden rounded-2xl border border-border bg-card p-7 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5">
                 <div
                   className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                   aria-hidden
                 />
-                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
-                  <FaIcon icon={service.icon} className="h-5 w-5" aria-hidden />
+                <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
+                  <FaIcon icon={service.icon} className="h-6 w-6" aria-hidden />
                 </div>
-                <h3 className="font-display text-lg font-bold tracking-tight">{service.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{service.body}</p>
+                <h3 className="font-display text-xl font-bold tracking-tight">{service.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{service.body}</p>
               </div>
             </MarketingReveal>
           ))}
@@ -100,18 +100,18 @@ export function WhyEuroscopeSection() {
           </MarketingReveal>
         </div>
 
-        <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {REASONS.map((reason, i) => (
             <MarketingReveal key={reason.title} delay={(i % 3) * 80}>
-              <div className="flex h-full gap-4 rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+              <div className="flex h-full gap-4 rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-accent/30">
                 <div className="shrink-0">
-                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-accent/10 text-accent">
+                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 text-accent ring-1 ring-accent/10">
                     <FaIcon icon={reason.icon} className="h-5 w-5" aria-hidden />
                   </span>
                 </div>
                 <div>
                   <h3 className="font-display text-base font-bold tracking-tight">{reason.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{reason.body}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{reason.body}</p>
                 </div>
               </div>
             </MarketingReveal>
@@ -154,19 +154,19 @@ export function HowWeHelp() {
           </MarketingReveal>
         </div>
 
-        <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {HELP_STEPS.map((step, i) => (
             <MarketingReveal key={step.num} delay={i * 100}>
-              <div className="group relative h-full rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg">
+              <div className="group relative h-full overflow-hidden rounded-2xl border border-border bg-card p-7 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg">
                 <div className="flex items-center justify-between">
                   <span className="font-display text-5xl font-bold text-primary/15" aria-hidden>
                     {step.num}
                   </span>
-                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
+                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10 transition-all duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
                     <FaIcon icon={step.icon} className="h-5 w-5" aria-hidden />
                   </span>
                 </div>
-                <h3 className="mt-4 font-display text-lg font-bold tracking-tight">{step.title}</h3>
+                <h3 className="mt-5 font-display text-lg font-bold tracking-tight">{step.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
               </div>
             </MarketingReveal>

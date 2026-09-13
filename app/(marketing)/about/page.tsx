@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Container, Section, Eyebrow } from "@/components/marketing/ui";
 import { MarketingReveal } from "@/components/marketing/reveal";
 import { CTASection } from "@/components/marketing/sections";
+import { PageHero } from "@/components/marketing/page-hero";
 import { APP_NAME } from "@/lib/constants/app";
 
 export const metadata: Metadata = {
@@ -13,33 +14,12 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
-      <Section tone="dark" className="relative overflow-hidden">
-        <div className="absolute inset-0" aria-hidden>
-          <div
-            className="absolute -top-40 left-1/2 h-[600px] w-[800px] -translate-x-1/2 rounded-full opacity-35 blur-[120px]"
-            style={{ background: "radial-gradient(circle, #1e40af 0%, transparent 60%)" }}
-          />
-          <div className="absolute inset-0 euroscope-grid-bg opacity-20" />
-        </div>
-        <Container className="relative">
-          <div className="mx-auto max-w-3xl text-center">
-            <MarketingReveal>
-              <Eyebrow tone="accent" className="justify-center">About {APP_NAME}</Eyebrow>
-            </MarketingReveal>
-            <MarketingReveal delay={80}>
-              <h1 className="mt-5 font-display text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
-                We make the European dream achievable
-              </h1>
-            </MarketingReveal>
-            <MarketingReveal delay={160}>
-              <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/70 md:text-lg">
-                {APP_NAME} is a European education consultancy built on one belief:
-                that every student deserves personal guidance — not a faceless portal.
-              </p>
-            </MarketingReveal>
-          </div>
-        </Container>
-      </Section>
+      <PageHero
+        eyebrow={`About ${APP_NAME}`}
+        title="We make the European dream achievable"
+        subtitle={`${APP_NAME} is a European education consultancy built on one belief: that every student deserves personal guidance — not a faceless portal.`}
+        cta={{ href: "/contact", label: "Book a Free Consultation" }}
+      />
 
       <Section tone="default">
         <Container>

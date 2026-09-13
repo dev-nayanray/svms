@@ -38,15 +38,15 @@ export function ProblemSection() {
           </MarketingReveal>
         </div>
 
-        <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {PROBLEMS.map((p, i) => (
             <MarketingReveal key={p.title} delay={i * 80}>
-              <div className="h-full rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
-                  <FaIcon icon={p.icon} className="h-5 w-5" aria-hidden />
+              <div className="h-full rounded-2xl border border-border bg-card p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive ring-1 ring-destructive/10">
+                  <FaIcon icon={p.icon} className="h-6 w-6" aria-hidden />
                 </div>
-                <h3 className="font-display text-lg font-bold tracking-tight">{p.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{p.body}</p>
+                <h3 className="font-display text-xl font-bold tracking-tight">{p.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{p.body}</p>
               </div>
             </MarketingReveal>
           ))}
@@ -177,7 +177,7 @@ export function JourneyTimeline() {
         </div>
 
         <MarketingReveal delay={240}>
-          <ol className="mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <ol className="mt-16 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {JOURNEY_STEPS.map((step, i) => (
               <li
                 key={step.label}
@@ -191,8 +191,8 @@ export function JourneyTimeline() {
                     {step.phase}
                   </span>
                 </div>
-                <div className="mt-4 flex items-center gap-2.5">
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-white transition-transform group-hover:scale-110">
+                <div className="mt-5 flex items-center gap-2.5">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-white ring-1 ring-white/10 transition-transform duration-300 group-hover:scale-110">
                     <FaIcon icon={step.icon} className="h-4 w-4" aria-hidden />
                   </span>
                   <span className="text-sm font-semibold text-white">{step.label}</span>
@@ -296,18 +296,18 @@ export function TrustSection() {
           </MarketingReveal>
         </div>
 
-        <div className="mt-14 grid gap-6 sm:grid-cols-2">
+        <div className="mt-16 grid gap-6 sm:grid-cols-2">
           {TRUST_ITEMS.map((item, i) => (
             <MarketingReveal key={item.title} delay={i * 80}>
-              <div className="flex h-full gap-4 rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+              <div className="flex h-full gap-5 rounded-2xl border border-border bg-card p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/30">
                 <div className="shrink-0">
-                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <FaIcon icon={item.icon} className="h-5 w-5" aria-hidden />
+                  <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10">
+                    <FaIcon icon={item.icon} className="h-6 w-6" aria-hidden />
                   </span>
                 </div>
                 <div>
-                  <h3 className="font-display text-lg font-bold tracking-tight">{item.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{item.body}</p>
+                  <h3 className="font-display text-xl font-bold tracking-tight">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.body}</p>
                 </div>
               </div>
             </MarketingReveal>

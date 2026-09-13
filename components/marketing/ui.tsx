@@ -35,11 +35,11 @@ export function Section({
 }: React.HTMLAttributes<HTMLElement> & { tone?: "default" | "muted" | "dark" }) {
   const tones = {
     default: "bg-background text-foreground",
-    muted: "bg-muted/40 text-foreground",
+    muted: "bg-muted/30 text-foreground",
     dark: "bg-ink text-white",
   };
   return (
-    <section className={cn("py-20 md:py-28", tones[tone], className)} {...props} />
+    <section className={cn("py-24 md:py-32", tones[tone], className)} {...props} />
   );
 }
 

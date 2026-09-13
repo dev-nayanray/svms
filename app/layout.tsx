@@ -8,6 +8,8 @@ const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-inter",
+  // Inter is the body font — preload it for fast LCP.
+  preload: true,
 });
 
 const sora = Sora({
@@ -15,6 +17,10 @@ const sora = Sora({
   display: "swap",
   variable: "--font-sora",
   weight: ["400", "500", "600", "700", "800"],
+  // Sora is the display/heading font only — don't preload it (avoids
+  // the "preloaded but not used within a few seconds" browser warning
+  // since headings render after the initial viewport paint).
+  preload: false,
 });
 
 export const metadata: Metadata = {

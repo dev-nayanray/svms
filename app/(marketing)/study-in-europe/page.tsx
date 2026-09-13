@@ -15,11 +15,16 @@ export default function StudyInEuropePage() {
     <>
       <Section tone="dark" className="relative overflow-hidden">
         <div className="absolute inset-0" aria-hidden>
+          <div className="absolute inset-0 bg-gradient-to-b from-ink via-ink to-ink-surface" />
           <div
-            className="absolute -top-40 left-1/2 h-[600px] w-[800px] -translate-x-1/2 rounded-full opacity-35 blur-[120px]"
-            style={{ background: "radial-gradient(circle, #1e40af 0%, transparent 60%)" }}
+            className="absolute -top-32 left-1/2 h-[700px] w-[1000px] -translate-x-1/2 rounded-full opacity-40 blur-[140px]"
+            style={{ background: "radial-gradient(ellipse, #1e40af 0%, transparent 60%)" }}
           />
-          <div className="absolute inset-0 euroscope-grid-bg opacity-20" />
+          <div
+            className="absolute -bottom-32 -left-32 h-[500px] w-[500px] rounded-full opacity-15 blur-[120px]"
+            style={{ background: "radial-gradient(circle, #f59e0b 0%, transparent 70%)" }}
+          />
+          <div className="absolute inset-0 euroscope-grid-bg opacity-[0.15]" />
         </div>
         <Container className="relative">
           <div className="mx-auto max-w-3xl text-center">
@@ -27,19 +32,19 @@ export default function StudyInEuropePage() {
               <Eyebrow tone="accent" className="justify-center">Study in Europe</Eyebrow>
             </MarketingReveal>
             <MarketingReveal delay={80}>
-              <h1 className="mt-5 font-display text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
+              <h1 className="mt-6 font-display text-[2.75rem] font-bold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
                 Where will you study?
               </h1>
             </MarketingReveal>
             <MarketingReveal delay={160}>
-              <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/70 md:text-lg">
+              <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/70 md:text-xl">
                 Europe is home to some of the world&apos;s oldest universities and most
                 innovative research institutions. Our counselors help you find the
                 right destination for your goals.
               </p>
             </MarketingReveal>
             <MarketingReveal delay={240}>
-              <div className="mt-8 flex justify-center">
+              <div className="mt-10 flex justify-center">
                 <MarketingButton href="/contact" variant="primary" size="lg">
                   Book a Free Consultation
                 </MarketingButton>

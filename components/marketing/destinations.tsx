@@ -95,12 +95,12 @@ export function DestinationSection() {
           </MarketingReveal>
         </div>
 
-        <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {EUROPEAN_DESTINATIONS.map((dest, i) => (
             <MarketingReveal key={dest.slug} delay={(i % 4) * 80}>
               <Link
                 href={`/study-in-europe/${dest.slug}`}
-                className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5"
+                className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5"
               >
                 {/* Accent gradient on hover */}
                 <div
@@ -109,7 +109,7 @@ export function DestinationSection() {
                 />
                 {/* Flag + name */}
                 <div className="flex items-center gap-3">
-                  <span className="text-4xl" aria-hidden>{dest.flag}</span>
+                  <span className="text-4xl drop-shadow-sm" aria-hidden>{dest.flag}</span>
                   <div>
                     <h3 className="font-display text-xl font-bold tracking-tight">
                       {dest.name}
