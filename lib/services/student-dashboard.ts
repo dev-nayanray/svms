@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/db";
 import type { StudentProfile } from "@/lib/student/guard";
+import {
+  computeProfileCompletion,
+  type ProfileCompletionResult,
+} from "@/lib/utils/profile-completion";
 
 /**
  * Student dashboard service — one optimized aggregate per concern, no N+1.
@@ -423,6 +427,8 @@ export async function getStudentDashboard(student: StudentProfile, userId: strin
     recentDocs,
     recentMessages,
     todayAppointments,
+    academicRecordsCount,
+    englishProficienciesCount,
   ] = await Promise.all([
     prisma.application.findMany({
       where: { studentId: student.id, deletedAt: null },
@@ -498,6 +504,11 @@ export async function getStudentDashboard(student: StudentProfile, userId: strin
       select: { id: true, scheduledAt: true, purpose: true, meetingMethod: true, status: true },
       orderBy: { scheduledAt: "asc" },
     }),
+    // ── Profile completion — only need the count, not the rows.
+    // The completion helper only inspects array length for these
+    // two "meta-sections", so we avoid fetching full rows.
+    prisma.academicRecord.count({ where: { studentId: student.id } }),
+    prisma.englishProficiency.count({ where: { studentId: student.id } }),
   ]);
 
   const mainApp = applications[0] ?? null;
@@ -529,6 +540,16 @@ export async function getStudentDashboard(student: StudentProfile, userId: strin
     })),
   });
 
+  // ── Profile completion — surface on dashboard when below 100%
+  // The completion helper only inspects array length for academic +
+  // english meta-sections, so we synthesize minimal arrays from the
+  // counts we fetched. No real ids leak through.
+  const profileCompletion: ProfileCompletionResult = computeProfileCompletion({
+    ...student,
+    academicRecords: Array.from({ length: academicRecordsCount }, () => ({ id: "x" })),
+    englishProficiencies: Array.from({ length: englishProficienciesCount }, () => ({ id: "x" })),
+  });
+
   return {
     student: {
       firstName: student.firstName,
@@ -552,6 +573,7 @@ export async function getStudentDashboard(student: StudentProfile, userId: strin
     progress,
     nextAction,
     todayAgenda,
+    profileCompletion,
     documents: documentSummaryFromCounts(docCounts),
     deadlines,
     payments: paymentSummaryFromInvoices(invoices),

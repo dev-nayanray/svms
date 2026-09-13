@@ -24,6 +24,7 @@ import {
   MobileCard,
 } from "@/components/student/ui";
 import { TodayAgenda } from "@/components/student/dashboard/today-agenda";
+import { ProfileCompletionCard } from "@/components/student/dashboard/profile-completion-card";
 import { formatDate, formatMoney, titleCase, cn } from "@/lib/utils";
 import {
   getStudentDashboard,
@@ -50,6 +51,7 @@ export default async function StudentDashboard() {
     progress,
     nextAction,
     todayAgenda,
+    profileCompletion,
     documents: docSummary,
     deadlines,
     payments: paymentSummary,
@@ -109,6 +111,9 @@ export default async function StudentDashboard() {
 
       {/* ─── 2. TODAY'S AGENDA — appointments + tasks due today ─── */}
       <TodayAgenda data={todayAgenda} />
+
+      {/* ─── 2b. PROFILE COMPLETION nudge — hidden when 100% ─── */}
+      <ProfileCompletionCard completion={profileCompletion} />
 
       {/* ─── 3. APPLICATION PROGRESS CARD ─── */}
       {application ? (
