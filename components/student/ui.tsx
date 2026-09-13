@@ -2,11 +2,9 @@
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { Card, CardContent, Badge } from "@/components/ui";
 import { Skeleton } from "@/components/ui/overlays";
 import { House, FolderKanban, FileText, MessageSquare, UserRound, Building2, BookOpen, Stamp, CheckSquare, CreditCard, Receipt, CalendarClock, Bell, LifeBuoy, Settings } from "lucide-react";
 
-/** Re-exported registry so serialized nav configs can resolve icons client-side. */
 export const STUDENT_NAV_ICONS = {
   House, FolderKanban, FileText, MessageSquare, UserRound, Building2, BookOpen,
   Stamp, CheckSquare, CreditCard, Receipt, CalendarClock, Bell, LifeBuoy, Settings,
@@ -19,14 +17,13 @@ export function StudentNavIcon({ name, className }: { name: string; className?: 
   return <Icon className={className} aria-hidden />;
 }
 
-/** Small numeric badge for notification counts; hidden when zero. */
 export function NotificationBadge({ count, className }: { count: number; className?: string }) {
   if (!count) return null;
   return (
     <span
       aria-label={`${count} unread notifications`}
       className={cn(
-        "absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-white",
+        "absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-white ring-2 ring-card",
         className
       )}
     >
@@ -35,12 +32,12 @@ export function NotificationBadge({ count, className }: { count: number; classNa
   );
 }
 
-/** Mobile page container: consistent padding + safe spacing above bottom nav. */
+/** Mobile page container — generous spacing above bottom nav. */
 export function MobilePage({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("space-y-4 pb-28 md:pb-6", className)}>{children}</div>;
+  return <div className={cn("space-y-5 pb-28 md:pb-6", className)}>{children}</div>;
 }
 
-/** Compact touch-friendly card used across the student panel. */
+/** Premium card with hover lift + shadow. */
 export function MobileCard({
   as = "div",
   href,
@@ -53,22 +50,22 @@ export function MobileCard({
   className?: string;
   children: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>) {
-  const classes = cn("rounded-xl border border-border bg-card p-4 shadow-sm", className);
+  const classes = cn(
+    "rounded-2xl border border-border bg-card p-4 shadow-sm transition-all duration-200",
+    href && "hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99]",
+    className,
+  );
   if (as === "link" && href) {
     return (
-      <Link href={href} className={cn(classes, "active:scale-[0.99] transition-transform")} {...(props as object)}>
+      <Link href={href} className={classes} {...(props as object)}>
         {children}
       </Link>
     );
   }
-  return (
-    <div className={classes} {...props}>
-      {children}
-    </div>
-  );
+  return <div className={classes} {...props}>{children}</div>;
 }
 
-/** Horizontal progress indicator with accessible semantics. */
+/** Progress card with gradient bar + percentage badge. */
 export function ProgressCard({
   title,
   subtitle,
@@ -82,14 +79,16 @@ export function ProgressCard({
 }) {
   const pct = Math.max(0, Math.min(100, Math.round(percent)));
   return (
-    <Card>
-      <CardContent className="p-4">
+    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold">{title}</p>
+            <p className="text-sm font-bold tracking-tight">{title}</p>
             {subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>}
           </div>
-          <Badge tone="info">{pct}%</Badge>
+          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
+            {pct}%
+          </span>
         </div>
         <div
           role="progressbar"
@@ -99,15 +98,18 @@ export function ProgressCard({
           aria-label={title}
           className="mt-3 h-2.5 overflow-hidden rounded-full bg-muted"
         >
-          <div className="h-full rounded-full bg-primary transition-[width] motion-reduce:transition-none" style={{ width: `${pct}%` }} />
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-primary to-primary-hover transition-[width] motion-reduce:transition-none"
+            style={{ width: `${pct}%` }}
+          />
         </div>
         {footer && <div className="mt-3 text-xs text-muted-foreground">{footer}</div>}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
-/** Touch-friendly quick action tile (min 44px target). */
+/** Premium quick action tile with icon badge + hover. */
 export function QuickAction({
   href,
   icon,
@@ -122,16 +124,18 @@ export function QuickAction({
   return (
     <Link
       href={href}
-      className="flex min-h-[76px] flex-col items-start gap-2 rounded-xl border border-border bg-card p-3 shadow-sm transition-transform active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="group flex min-h-[80px] flex-col items-start gap-2.5 rounded-2xl border border-border bg-card p-3.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
-      <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">{icon}</span>
-      <span className="text-sm font-medium leading-tight">{label}</span>
+      <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary transition-all duration-200 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
+        {icon}
+      </span>
+      <span className="text-sm font-semibold leading-tight">{label}</span>
       {description && <span className="text-xs leading-tight text-muted-foreground">{description}</span>}
     </Link>
   );
 }
 
-/** Vertical stage timeline with completed/current/pending states. */
+/** Visual timeline with connecting lines + state dots. */
 export function Timeline({
   steps,
 }: {
@@ -145,7 +149,7 @@ export function Timeline({
             <span
               aria-hidden
               className={cn(
-                "absolute left-[9px] top-5 h-[calc(100%-16px)] w-0.5",
+                "absolute left-[10px] top-6 h-[calc(100%-20px)] w-0.5 rounded-full",
                 step.state === "done" ? "bg-primary" : "bg-border"
               )}
             />
@@ -153,25 +157,25 @@ export function Timeline({
           <span
             aria-hidden
             className={cn(
-              "mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 text-[10px]",
+              "mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 text-[10px] font-bold transition-colors",
               step.state === "done" && "border-primary bg-primary text-primary-foreground",
-              step.state === "current" && "border-primary bg-primary/15 text-primary",
+              step.state === "current" && "border-primary bg-primary/15 text-primary ring-4 ring-primary/10",
               step.state === "pending" && "border-border bg-card text-muted-foreground"
             )}
           >
             {step.state === "done" ? "✓" : i + 1}
           </span>
-          <div className="min-w-0">
+          <div className="min-w-0 pt-0.5">
             <p
               className={cn(
                 "text-sm leading-5",
-                step.state === "pending" ? "text-muted-foreground" : "font-medium"
+                step.state === "pending" ? "text-muted-foreground" : "font-semibold"
               )}
             >
               {step.label}
               {step.state === "current" && <span className="sr-only"> (current stage)</span>}
             </p>
-            {step.caption && <p className="text-xs text-muted-foreground">{step.caption}</p>}
+            {step.caption && <p className="mt-0.5 text-xs text-muted-foreground">{step.caption}</p>}
           </div>
         </li>
       ))}
@@ -179,12 +183,12 @@ export function Timeline({
   );
 }
 
-/** Skeleton grid for mobile card lists. */
+/** Skeleton grid with premium shimmer. */
 export function LoadingCards({ count = 3 }: { count?: number }) {
   return (
     <div className="space-y-3" aria-busy="true" aria-label="Loading">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="rounded-xl border border-border bg-card p-4">
+        <div key={i} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <Skeleton className="h-4 w-2/3" />
           <Skeleton className="mt-3 h-3 w-1/2" />
         </div>

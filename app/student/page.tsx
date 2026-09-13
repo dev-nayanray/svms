@@ -164,7 +164,7 @@ export default async function StudentDashboard() {
       {/* ─── 4. APPLICATION TIMELINE ─── */}
       {application && stages.length > 0 && (
         <section aria-labelledby="timeline-heading">
-          <h3 id="timeline-heading" className="mb-2 text-sm font-semibold text-muted-foreground">
+          <h3 id="timeline-heading" className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Application timeline
           </h3>
           <MobileCard>
@@ -185,12 +185,12 @@ export default async function StudentDashboard() {
       {/* ─── 5. DOCUMENT SUMMARY ─── */}
       <section aria-labelledby="docs-heading">
         <div className="mb-2 flex items-center justify-between">
-          <h3 id="docs-heading" className="text-sm font-semibold text-muted-foreground">
+          <h3 id="docs-heading" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Documents
           </h3>
           <Link
             href="/student/documents"
-            className="text-xs font-medium text-primary"
+            className="text-xs font-semibold text-primary"
           >
             View all →
           </Link>
@@ -198,23 +198,23 @@ export default async function StudentDashboard() {
         <MobileCard className="p-3">
           <div className="grid grid-cols-5 gap-2 text-center">
             <div>
-              <p className="text-lg font-bold">{docSummary.required}</p>
+              <p className="text-xl font-bold">{docSummary.required}</p>
               <p className="text-[10px] text-muted-foreground">Required</p>
             </div>
             <div>
-              <p className="text-lg font-bold text-success">{docSummary.approved}</p>
+              <p className="text-xl font-bold text-success">{docSummary.approved}</p>
               <p className="text-[10px] text-muted-foreground">Approved</p>
             </div>
             <div>
-              <p className="text-lg font-bold text-info">{docSummary.underReview}</p>
+              <p className="text-xl font-bold text-info">{docSummary.underReview}</p>
               <p className="text-[10px] text-muted-foreground">Review</p>
             </div>
             <div>
-              <p className="text-lg font-bold text-destructive">{docSummary.rejected}</p>
+              <p className="text-xl font-bold text-destructive">{docSummary.rejected}</p>
               <p className="text-[10px] text-muted-foreground">Rejected</p>
             </div>
             <div>
-              <p className="text-lg font-bold text-warning">{docSummary.pending}</p>
+              <p className="text-xl font-bold text-warning">{docSummary.pending}</p>
               <p className="text-[10px] text-muted-foreground">Pending</p>
             </div>
           </div>
@@ -224,7 +224,7 @@ export default async function StudentDashboard() {
       {/* ─── 6. UPCOMING DEADLINES ─── */}
       {deadlines.length > 0 && (
         <section aria-labelledby="deadlines-heading">
-          <h3 id="deadlines-heading" className="mb-2 text-sm font-semibold text-muted-foreground">
+          <h3 id="deadlines-heading" className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Upcoming deadlines
           </h3>
           <div className="space-y-2">
@@ -270,10 +270,10 @@ export default async function StudentDashboard() {
       {paymentSummary.totalAmount > 0 && (
         <section aria-labelledby="payments-heading">
           <div className="mb-2 flex items-center justify-between">
-            <h3 id="payments-heading" className="text-sm font-semibold text-muted-foreground">
+            <h3 id="payments-heading" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Payment summary
             </h3>
-            <Link href="/student/invoices" className="text-xs font-medium text-primary">
+            <Link href="/student/invoices" className="text-xs font-semibold text-primary">
               View details →
             </Link>
           </div>
@@ -308,7 +308,7 @@ export default async function StudentDashboard() {
 
       {/* ─── 8. QUICK ACTIONS ─── */}
       <section aria-labelledby="quick-actions">
-        <h3 id="quick-actions" className="mb-2 text-sm font-semibold text-muted-foreground">
+        <h3 id="quick-actions" className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Quick actions
         </h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -342,7 +342,7 @@ export default async function StudentDashboard() {
       {/* ─── 9. COUNSELOR CARD ─── */}
       {counselor && (
         <section aria-labelledby="counselor-heading">
-          <h3 id="counselor-heading" className="mb-2 text-sm font-semibold text-muted-foreground">
+          <h3 id="counselor-heading" className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Your counselor
           </h3>
           <MobileCard className="flex items-center gap-3">
@@ -378,7 +378,7 @@ export default async function StudentDashboard() {
       {/* ─── 10. RECENT ACTIVITY ─── */}
       {activities.length > 0 && (
         <section aria-labelledby="activity-heading">
-          <h3 id="activity-heading" className="mb-2 text-sm font-semibold text-muted-foreground">
+          <h3 id="activity-heading" className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Recent activity
           </h3>
           <MobileCard className="divide-y divide-border p-0">
@@ -412,10 +412,10 @@ export default async function StudentDashboard() {
       {notifications.length > 0 && (
         <section aria-labelledby="notif-heading">
           <div className="mb-2 flex items-center justify-between">
-            <h3 id="notif-heading" className="text-sm font-semibold text-muted-foreground">
+            <h3 id="notif-heading" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Latest notifications
             </h3>
-            <Link href="/student/notifications" className="text-xs font-medium text-primary">
+            <Link href="/student/notifications" className="text-xs font-semibold text-primary">
               See all →
             </Link>
           </div>

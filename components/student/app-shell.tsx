@@ -162,15 +162,14 @@ export function StudentAppShell({
                   href={tab.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "relative flex min-h-[56px] flex-col items-center justify-center gap-0.5 px-1 py-1.5 text-[11px] font-medium focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary",
+                    "relative flex min-h-[56px] flex-col items-center justify-center gap-0.5 px-1 py-1.5 text-[11px] font-semibold transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary",
                     active ? "text-primary" : "text-muted-foreground"
                   )}
                 >
-                  <span className="relative">
+                  <span className={cn("relative grid h-8 w-8 place-items-center rounded-lg transition-colors", active && "bg-primary/10")}>
                     <StudentNavIcon name={TAB_ICONS[tab.href]} className="h-5 w-5" />
                   </span>
                   {tab.label}
-                  {active && <span aria-hidden className="absolute top-0 h-0.5 w-8 rounded-full bg-primary" />}
                 </Link>
               </li>
             );
