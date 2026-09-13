@@ -175,7 +175,12 @@ model Course {
   duration        String?
   tuitionFee      Float?
   currency        String    @default("EUR")
+  applicationFee  Float?
   description      String?
+  academicRequirements String?
+  ieltsRequirement String?
+  toeflRequirement String?
+  pteRequirement   String?
   status          String    @default("ACTIVE")
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
