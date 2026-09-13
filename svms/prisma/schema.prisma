@@ -103,6 +103,7 @@ model Employee {
   leads     Lead[]
   conversations Conversation[]
   appointments Appointment[]
+  assignedApplications Application[] @relation("AssignedApplications")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }
@@ -198,6 +199,8 @@ model Intake {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  applications Application[]
+
   @@index([courseId])
   @@index([status])
 }
@@ -217,9 +220,16 @@ model Application {
   university       University? @relation(fields: [universityId], references: [id])
   courseId         String?   @db.ObjectId
   course           Course?   @relation(fields: [courseId], references: [id])
+  intakeId         String?   @db.ObjectId
+  intake           Intake?   @relation(fields: [intakeId], references: [id])
+  assignedEmployeeId String? @db.ObjectId
+  assignedEmployee Employee? @relation("AssignedApplications", fields: [assignedEmployeeId], references: [id])
   stageKey         String    @default("LEAD")
   status           String    @default("NEW")
+  priority         String    @default("MEDIUM") // LOW | MEDIUM | HIGH | URGENT
+  deadline         DateTime?
   notes            String?
+  archivedAt       DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
@@ -229,9 +239,13 @@ model Application {
   appointments     Appointment[]
   payments         Payment[]
   invoices         Invoice[]
+  stageHistory     ApplicationStageHistory[]
 
   @@index([studentId])
   @@index([stageKey])
+  @@index([status])
+  @@index([assignedEmployeeId])
+  @@index([archivedAt])
 }
 
 model Document {
@@ -470,4 +484,22 @@ model Note {
 
   @@index([studentId])
   @@index([authorId])
+}
+
+// ─────────────────────────────────────────────
+// Application stage history — audit trail for stage transitions
+// ─────────────────────────────────────────────
+
+model ApplicationStageHistory {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  applicationId   String      @db.ObjectId
+  application     Application @relation(fields: [applicationId], references: [id])
+  fromStage       String?
+  toStage         String
+  changedById     String      @db.ObjectId
+  note            String?
+  createdAt       DateTime    @default(now())
+
+  @@index([applicationId])
+  @@index([createdAt])
 }
