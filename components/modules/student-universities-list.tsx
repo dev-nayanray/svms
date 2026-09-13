@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Button,
@@ -15,6 +16,7 @@ import { EmptyState } from "@/components/shared";
 import { Drawer, Dialog, DialogContent } from "@/components/ui/overlays";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch, type Paged } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 import {
   formatApplicationFee,
   rankingTier,
@@ -28,11 +30,13 @@ import {
   Globe,
   Heart,
   ExternalLink,
+  GitCompare,
   SlidersHorizontal,
   Search,
   Star,
   Bookmark,
   X,
+  Check,
 } from "lucide-react";
 
 type Country = { id: string; name: string; flag: string | null };
@@ -102,11 +106,18 @@ const SORT_OPTIONS: { value: StudentUniversitySort; label: string }[] = [
 export function StudentUniversitiesList({ basePath }: { basePath: string }) {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [pendingFilters, setPendingFilters] = useState<Filters>(EMPTY_FILTERS);
   const [counselingFor, setCounselingFor] = useState<University | null>(null);
+  // Compare-mode state — up to 3 universities selectable at once.
+  // On toggle, the card shows a checkmark + accent border. When 2+
+  // are selected, a sticky bottom CTA appears with the count + a
+  // "Compare" button that navigates to /student/universities/compare.
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const compareMax = 3;
 
   // Pull filter metadata once on mount.
   const { data: meta } = useQuery({
@@ -192,6 +203,39 @@ export function StudentUniversitiesList({ basePath }: { basePath: string }) {
       toast({ title: "Failed", description: (err as Error).message, variant: "error" });
     }
   };
+
+  // ── Compare-mode helpers ──
+  function toggleCompare(id: string) {
+    setCompareIds((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= compareMax) {
+        toast({
+          title: "Compare limit reached",
+          description: `You can compare up to ${compareMax} universities at once.`,
+          variant: "error",
+        });
+        return prev;
+      }
+      return [...prev, id];
+    });
+  }
+
+  function clearCompare() {
+    setCompareIds([]);
+  }
+
+  function goToCompare() {
+    if (compareIds.length < 2) {
+      toast({
+        title: "Pick at least 2 universities",
+        description: "Select 2 or 3 universities to compare side-by-side.",
+        variant: "error",
+      });
+      return;
+    }
+    const idsParam = compareIds.join(",");
+    router.push(`/student/universities/compare?ids=${encodeURIComponent(idsParam)}`);
+  }
 
   return (
     <div className="space-y-4">
@@ -370,8 +414,46 @@ export function StudentUniversitiesList({ basePath }: { basePath: string }) {
               basePath={basePath}
               onToggleFavorite={() => toggleFavorite(u)}
               onRequestCounseling={() => setCounselingFor(u)}
+              isSelectedForCompare={compareIds.includes(u.id)}
+              onToggleCompare={() => toggleCompare(u.id)}
             />
           ))}
+        </div>
+      )}
+
+      {/* Sticky compare CTA — appears when 1+ universities are selected.
+          Visible on both mobile and desktop; positioned above the
+          bottom-nav safe area on mobile. */}
+      {compareIds.length > 0 && (
+        <div
+          className={cn(
+            "fixed inset-x-0 z-30 mx-auto flex max-w-md items-center gap-2 px-3",
+            "bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] md:bottom-6",
+          )}
+        >
+          <button
+            type="button"
+            onClick={clearCompare}
+            aria-label="Clear selection"
+            className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground shadow-lg backdrop-blur-md transition-transform active:scale-95 hover:text-foreground"
+          >
+            <X className="h-4 w-4" aria-hidden />
+          </button>
+          <button
+            type="button"
+            onClick={goToCompare}
+            disabled={compareIds.length < 2}
+            className={cn(
+              "flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold shadow-lg transition-transform active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-primary",
+              compareIds.length >= 2
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground",
+            )}
+          >
+            <GitCompare className="h-4 w-4" aria-hidden />
+            Compare {compareIds.length} {compareIds.length === 1 ? "university" : "universities"}
+            {compareIds.length < 2 && " (pick 1 more)"}
+          </button>
         </div>
       )}
 
@@ -536,11 +618,15 @@ function UniversityCard({
   basePath,
   onToggleFavorite,
   onRequestCounseling,
+  isSelectedForCompare,
+  onToggleCompare,
 }: {
   university: University;
   basePath: string;
   onToggleFavorite: () => void;
   onRequestCounseling: () => void;
+  isSelectedForCompare: boolean;
+  onToggleCompare: () => void;
 }) {
   const logo = resolveUniversityLogo(university.logo);
   const tier = rankingTier(university.ranking);
@@ -549,7 +635,12 @@ function UniversityCard({
     .join(", ");
 
   return (
-    <Card className="flex flex-col overflow-hidden">
+    <Card
+      className={cn(
+        "relative flex flex-col overflow-hidden transition-all",
+        isSelectedForCompare && "ring-2 ring-primary ring-offset-2 ring-offset-background",
+      )}
+    >
       <CardContent className="flex flex-1 flex-col gap-3 p-4">
         {/* Header row: avatar + name + favorite */}
         <div className="flex items-start gap-3">
@@ -597,7 +688,7 @@ function UniversityCard({
           </button>
         </div>
 
-        {/* Chips row: ranking tier + course count */}
+        {/* Chips row: ranking tier + course count + compare toggle */}
         <div className="flex flex-wrap gap-1.5">
           {university.ranking != null && (
             <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
@@ -643,6 +734,32 @@ function UniversityCard({
           >
             Request counseling
           </Button>
+        </div>
+
+        {/* Compare toggle — secondary action row */}
+        <div className="flex items-center justify-between gap-2 pt-1">
+          <button
+            type="button"
+            onClick={onToggleCompare}
+            aria-pressed={isSelectedForCompare}
+            aria-label={isSelectedForCompare ? `Remove ${university.name} from comparison` : `Add ${university.name} to comparison`}
+            className={cn(
+              "inline-flex min-h-[36px] items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-primary",
+              isSelectedForCompare
+                ? "bg-primary text-primary-foreground"
+                : "border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
+          >
+            {isSelectedForCompare ? (
+              <>
+                <Check className="h-3 w-3" aria-hidden /> Selected for compare
+              </>
+            ) : (
+              <>
+                <GitCompare className="h-3 w-3" aria-hidden /> Add to compare
+              </>
+            )}
+          </button>
         </div>
 
         {university.website && (
