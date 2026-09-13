@@ -112,7 +112,8 @@ export function TasksAdmin() {
     {
       type: "select",
       name: "studentId",
-      label: "Student (optional)",
+      label: "Student (required for student visibility)",
+      required: true,
       options: studentOptions,
     },
     { type: "select", name: "priority", label: "Priority", options: priorityOptions },
@@ -126,7 +127,8 @@ export function TasksAdmin() {
     {
       type: "select",
       name: "studentId",
-      label: "Student (optional)",
+      label: "Student (required for student visibility)",
+      required: true,
       options: studentOptions,
     },
     { type: "select", name: "priority", label: "Priority", options: priorityOptions },

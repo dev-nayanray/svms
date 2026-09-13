@@ -64,7 +64,7 @@ export const taskSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().max(5000).optional(),
   assignedToId: z.string().min(1, "Assignee is required"),
-  studentId: z.string().optional(),
+  studentId: z.string().min(1, "Student is required — the task must be linked to a student so they can see it in their panel"),
   applicationId: z.string().optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).default("MEDIUM"),
   dueDate: z.coerce.date().optional(),
