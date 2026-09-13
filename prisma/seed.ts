@@ -636,8 +636,11 @@ async function main() {
 
   // ════════════════════════════════════════════
   //  ENSURE deletedAt EXISTS (MongoDB schemaless quirk)
+  //  Only run on models that HAVE a deletedAt field —
+  //  Appointment, Conversation, Message, SupportRequest, etc.
+  //  don't have deletedAt and would throw a validation error.
   // ════════════════════════════════════════════
-  for (const m of ["application","branch","country","course","document","employee","intake","invoice","lead","payment","student","task","university","user","visaApplication","appointment","supportRequest","conversation","message"] as const) {
+  for (const m of ["application","branch","country","course","document","employee","intake","invoice","lead","payment","student","task","university","user","visaApplication"] as const) {
     // @ts-expect-error dynamic model access
     await prisma[m].updateMany({ data: { deletedAt: null } });
   }
