@@ -19,9 +19,9 @@ type Kpi = {
   hint?: string;
   tone?: "default" | "warning" | "danger" | "success";
   icon?: string;
+  href?: string;
 };
 
-// Icon mapping for KPI cards
 const KPI_ICONS: Record<string, LucideIcon> = {
   students: Users,
   leads: Target,
@@ -53,17 +53,8 @@ export function KpiGrid({ kpis, isPending }: { kpis: Kpi[]; isPending: boolean }
                   : k.tone === "success"
                     ? "text-success"
                     : "text-foreground";
-            return (
-              <div
-                key={k.label}
-                className={cn(
-                  "group relative overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
-                  k.tone === "success" && "border-success/20",
-                  k.tone === "warning" && "border-warning/20",
-                  k.tone === "danger" && "border-destructive/20",
-                )}
-              >
-                {/* Subtle top accent line for tone cards */}
+            const content = (
+              <>
                 {k.tone && k.tone !== "default" && (
                   <div
                     className={cn(
@@ -89,6 +80,30 @@ export function KpiGrid({ kpis, isPending }: { kpis: Kpi[]; isPending: boolean }
                     <Icon className="h-7 w-7" aria-hidden />
                   </span>
                 )}
+                {k.href && (
+                  <span className="absolute bottom-2 right-3 text-[10px] font-semibold text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                    View →
+                  </span>
+                )}
+              </>
+            );
+            const cardClasses = cn(
+              "group relative overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+              k.tone === "success" && "border-success/20",
+              k.tone === "warning" && "border-warning/20",
+              k.tone === "danger" && "border-destructive/20",
+              k.href && "cursor-pointer",
+            );
+            if (k.href) {
+              return (
+                <a key={k.label} href={k.href} className={cardClasses}>
+                  {content}
+                </a>
+              );
+            }
+            return (
+              <div key={k.label} className={cardClasses}>
+                {content}
               </div>
             );
           })}

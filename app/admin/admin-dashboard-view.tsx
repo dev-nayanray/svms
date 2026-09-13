@@ -8,7 +8,7 @@ import { SimpleBarChart, SimplePieChart } from "@/components/charts";
 import { ChartCard, DateRangeFilter, KpiGrid, WidgetCard, type RangeValue } from "@/components/dashboard";
 import { formatMoney, formatDate } from "@/lib/utils";
 import Link from "next/link";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw, Plus, UserPlus, FileText, CreditCard, CheckSquare } from "lucide-react";
 
 type Point = { name: string; value: number };
 
@@ -81,6 +81,25 @@ export function AdminDashboardView() {
         <DateRangeFilter value={filter} onChange={setFilter} isPending={isPending} />
       </div>
 
+      {/* ── Quick Actions ── */}
+      <div className="flex flex-wrap gap-2">
+        <Link href="/admin/students" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary-hover hover:-translate-y-0.5">
+          <UserPlus className="h-4 w-4" /> New Student
+        </Link>
+        <Link href="/admin/tasks" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
+          <CheckSquare className="h-4 w-4" /> New Task
+        </Link>
+        <Link href="/admin/invoices" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
+          <CreditCard className="h-4 w-4" /> New Invoice
+        </Link>
+        <Link href="/admin/leads" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
+          <Plus className="h-4 w-4" /> New Lead
+        </Link>
+        <Link href="/admin/applications" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
+          <FileText className="h-4 w-4" /> New Application
+        </Link>
+      </div>
+
       {/* ── Error state ── */}
       {isError && (
         <div role="alert" className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
@@ -92,23 +111,23 @@ export function AdminDashboardView() {
         </div>
       )}
 
-      {/* ── KPI Cards — grouped into 2 rows of 5 ── */}
+      {/* ── KPI Cards — clickable, navigate to filtered list ── */}
       <KpiGrid
         isPending={loading}
         kpis={
           !k
             ? Array.from({ length: 10 }, (_, i) => ({ label: `kpi-${i}`, value: "" }))
             : [
-                { label: "Total Students", value: k.totalStudents, icon: "students" },
-                { label: "Active Students", value: k.activeStudents, icon: "students" },
-                { label: "New Leads", value: k.newLeads, icon: "leads" },
-                { label: "Active Applications", value: k.activeApplications, icon: "applications" },
-                { label: "Revenue (period)", value: formatMoney(k.monthlyRevenue), tone: "success", icon: "revenue" },
-                { label: "Visa Submitted", value: k.visaSubmitted, icon: "visa" },
-                { label: "Visa Approved", value: k.visaApproved, tone: "success", icon: "visa" },
-                { label: "Visa Refused", value: k.visaRefused, tone: "danger", icon: "visa" },
-                { label: "Pending Documents", value: k.pendingDocuments, tone: k.pendingDocuments > 0 ? "warning" : "default", icon: "documents" },
-                { label: "Outstanding", value: formatMoney(k.outstandingPayments), tone: k.outstandingPayments > 0 ? "warning" : "default", icon: "payments" },
+                { label: "Total Students", value: k.totalStudents, icon: "students", href: "/admin/students" },
+                { label: "Active Students", value: k.activeStudents, icon: "students", href: "/admin/students?status=ACTIVE" },
+                { label: "New Leads", value: k.newLeads, icon: "leads", href: "/admin/leads" },
+                { label: "Active Applications", value: k.activeApplications, icon: "applications", href: "/admin/applications" },
+                { label: "Revenue (period)", value: formatMoney(k.monthlyRevenue), tone: "success", icon: "revenue", href: "/admin/payments" },
+                { label: "Visa Submitted", value: k.visaSubmitted, icon: "visa", href: "/admin/visa" },
+                { label: "Visa Approved", value: k.visaApproved, tone: "success", icon: "visa", href: "/admin/visa" },
+                { label: "Visa Refused", value: k.visaRefused, tone: "danger", icon: "visa", href: "/admin/visa" },
+                { label: "Pending Documents", value: k.pendingDocuments, tone: k.pendingDocuments > 0 ? "warning" : "default", icon: "documents", href: "/admin/documents" },
+                { label: "Outstanding", value: formatMoney(k.outstandingPayments), tone: k.outstandingPayments > 0 ? "warning" : "default", icon: "payments", href: "/admin/invoices" },
               ]
         }
       />
@@ -164,10 +183,10 @@ export function AdminDashboardView() {
 
         <WidgetCard title="Upcoming Deadlines" isPending={loading}>
           {w && w.upcomingDeadlines.length === 0 && <p className="text-muted-foreground">Nothing scheduled.</p>}
-          {w?.upcomingDeadlines.map((t) => (
-            <div key={t.id} className="flex justify-between border-b border-border py-1.5 last:border-0 last:pb-0">
-              <span className="min-w-0 truncate pr-2">{t.title}</span>
-              <span className="shrink-0 text-xs font-medium text-muted-foreground">{formatDate(t.dueDate)}</span>
+          {w?.upcomingDeadlines.map((d) => (
+            <div key={d.id} className="flex justify-between border-b border-border py-1.5 last:border-0 last:pb-0">
+              <span className="min-w-0 truncate pr-2">{d.title}</span>
+              <span className="shrink-0 text-xs font-medium text-muted-foreground">{formatDate(d.dueDate)}</span>
             </div>
           ))}
         </WidgetCard>
