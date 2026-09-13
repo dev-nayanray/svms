@@ -312,22 +312,25 @@ export function StudentRealtimeProvider({ children }: { children: React.ReactNod
     // Initial connection
     connect();
 
-    // Reconnect when the tab becomes visible again — the browser may
-    // have killed the SSE connection while the tab was hidden to
-    // save resources.
+    // Reconnect when the tab becomes visible again — only if the
+    // connection is actually closed (not if it's already connecting/open).
     function onVisibilityChange() {
       if (
         document.visibilityState === "visible" &&
-        es?.readyState === EventSource.CLOSED
+        (!es || es.readyState === EventSource.CLOSED)
       ) {
         connect();
       }
     }
     document.addEventListener("visibilitychange", onVisibilityChange);
 
-    // Reconnect when the network comes back online
+    // Reconnect when the network comes back online — only if the
+    // connection is actually closed (prevents unnecessary reconnects
+    // when the connection is already live).
     function onOnline() {
-      connect();
+      if (!es || es.readyState === EventSource.CLOSED) {
+        connect();
+      }
     }
     window.addEventListener("online", onOnline);
 
