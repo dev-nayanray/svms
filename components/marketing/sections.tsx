@@ -322,50 +322,64 @@ export function TrustSection() {
  *  FINAL CTA
  * ════════════════════════════════════════════════════════════ */
 
-export function CTASection() {
+/* ════════════════════════════════════════════════════════════
+ *  FINAL CTA — accepts dynamic content from admin
+ * ════════════════════════════════════════════════════════════ */
+
+export function CTASection({ content }: { content?: { eyebrow: string; headlinePart1: string; headlinePart2: string; subtitle: string; ctaPrimaryText: string; ctaPrimaryHref: string; ctaSecondaryText: string; ctaSecondaryHref: string } }) {
+  const cta = content ?? {
+    eyebrow: "Get Started",
+    headlinePart1: "Your European Future",
+    headlinePart2: "Starts Here.",
+    subtitle: "Talk to our counselors and get a personalized plan for your European study journey. No pressure, no obligation — just honest guidance.",
+    ctaPrimaryText: "Book a Free Consultation",
+    ctaPrimaryHref: "/contact",
+    ctaSecondaryText: "Explore Destinations",
+    ctaSecondaryHref: "/study-in-europe",
+  };
+
   return (
     <Section tone="dark" className="relative overflow-hidden">
       <div className="absolute inset-0" aria-hidden>
         <div
           className="absolute -top-40 left-1/2 h-[600px] w-[800px] -translate-x-1/2 rounded-full opacity-40 blur-[120px]"
-          style={{ background: "radial-gradient(circle, #1e40af 0%, transparent 60%)" }}
+          style={{ background: "radial-gradient(circle, #1e293b 0%, transparent 60%)" }}
         />
         <div
           className="absolute -bottom-20 right-0 h-[400px] w-[400px] rounded-full opacity-20 blur-[100px]"
-          style={{ background: "radial-gradient(circle, #f59e0b 0%, transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, #d4af37 0%, transparent 70%)" }}
         />
         <div className="absolute inset-0 euroscope-grid-bg opacity-20" />
       </div>
       <Container className="relative">
         <div className="mx-auto max-w-3xl text-center">
           <MarketingReveal>
-            <Eyebrow tone="accent" className="justify-center">Get Started</Eyebrow>
+            <Eyebrow tone="accent" className="justify-center">{cta.eyebrow}</Eyebrow>
           </MarketingReveal>
           <MarketingReveal delay={80}>
             <h2 className="mt-5 font-display text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
-              Your European Future{" "}
-              <span className="euroscope-gradient-text">Starts Here.</span>
+              {cta.headlinePart1}{" "}
+              <span className="euroscope-gradient-text">{cta.headlinePart2}</span>
             </h2>
           </MarketingReveal>
           <MarketingReveal delay={160}>
             <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-white/70 md:text-lg">
-              Talk to our counselors and get a personalized plan for your European
-              study journey. No pressure, no obligation — just honest guidance.
+              {cta.subtitle}
             </p>
           </MarketingReveal>
           <MarketingReveal delay={240}>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-              <MarketingButton href="/contact" variant="primary" size="lg" className="w-full sm:w-auto">
-                Book a Free Consultation
+              <MarketingButton href={cta.ctaPrimaryHref} variant="primary" size="lg" className="w-full sm:w-auto">
+                {cta.ctaPrimaryText}
                 <FaIcon icon={ICONS.arrowRight} className="h-4 w-4" aria-hidden />
               </MarketingButton>
               <MarketingButton
-                href="/study-in-europe"
+                href={cta.ctaSecondaryHref}
                 variant="secondary"
                 size="lg"
                 className="w-full bg-white/10 text-white border-white/20 hover:bg-white/20 sm:w-auto"
               >
-                Explore Destinations
+                {cta.ctaSecondaryText}
               </MarketingButton>
             </div>
           </MarketingReveal>

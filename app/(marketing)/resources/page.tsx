@@ -5,6 +5,7 @@ import { FAQ } from "@/components/marketing/faq";
 import { CTASection } from "@/components/marketing/sections";
 import { PageHero } from "@/components/marketing/page-hero";
 import { ICONS, FaIcon } from "@/components/marketing/icons";
+import { getMarketingContent } from "@/lib/services/marketing-content";
 
 export const metadata: Metadata = {
   title: "Resources — Guides, FAQs and Help",
@@ -12,7 +13,11 @@ export const metadata: Metadata = {
     "Find answers to common questions about studying in Europe, the Euroscope platform and the student journey.",
 };
 
-export default function ResourcesPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ResourcesPage() {
+  const content = await getMarketingContent();
+
   return (
     <>
       <PageHero
@@ -56,8 +61,8 @@ export default function ResourcesPage() {
         </Container>
       </Section>
 
-      <FAQ />
-      <CTASection />
+      <FAQ items={content.faq} />
+      <CTASection content={content.cta} />
     </>
   );
 }

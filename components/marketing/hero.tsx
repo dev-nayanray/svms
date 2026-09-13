@@ -1,34 +1,31 @@
 import { ICONS, FaIcon } from "./icons";
 import { Container, MarketingButton } from "./ui";
 import { MarketingReveal } from "./reveal";
-import { APP_NAME } from "@/lib/constants/app";
+// APP_NAME is used via the dynamic content, not imported here.
+import type { MarketingContent } from "@/lib/services/marketing-content";
 
 /**
- * HeroSection — editorial company positioning with premium visual design.
+ * HeroSection — editorial company positioning with DYNAMIC content.
  *
- * Design principles:
- *  - Strong visual hierarchy (big headline, clear subtext, prominent CTA)
- *  - Generous whitespace (py-24 md:py-32)
- *  - Multi-layer background (gradient + radial glows + grid)
- *  - Trust indicators below CTAs
- *  - Visual collage on the right (not a product mockup — agency feel)
+ * Content (headline, subtitle, CTAs, badge) is loaded from the DB via
+ * the admin panel. Falls back to defaults if nothing is stored.
  */
-export function HeroSection() {
+export function HeroSection({ content }: { content: MarketingContent }) {
+  const { hero } = content;
   return (
     <section className="relative overflow-hidden bg-ink text-white">
       {/* ── Background layers ── */}
       <div className="absolute inset-0" aria-hidden>
-        {/* Base gradient — deep navy to slightly lighter */}
         <div className="absolute inset-0 bg-gradient-to-b from-ink via-ink to-ink-surface" />
-        {/* Blue radial glow — top center, large */}
+        {/* Navy radial glow — top center, large */}
         <div
-          className="absolute -top-32 left-1/2 h-[700px] w-[1000px] -translate-x-1/2 rounded-full opacity-40 blur-[140px]"
-          style={{ background: "radial-gradient(ellipse, #1e40af 0%, transparent 60%)" }}
+          className="absolute -top-32 left-1/2 h-[700px] w-[1000px] -translate-x-1/2 rounded-full opacity-50 blur-[140px]"
+          style={{ background: "radial-gradient(ellipse, #1e293b 0%, transparent 60%)" }}
         />
-        {/* Gold radial glow — bottom left, smaller, warm accent */}
+        {/* Gold radial glow — bottom left, warm accent */}
         <div
           className="absolute -bottom-32 -left-32 h-[500px] w-[500px] rounded-full opacity-15 blur-[120px]"
-          style={{ background: "radial-gradient(circle, #f59e0b 0%, transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, #d4af37 0%, transparent 70%)" }}
         />
         {/* Subtle grid pattern */}
         <div className="absolute inset-0 euroscope-grid-bg opacity-[0.15]" />
@@ -46,7 +43,7 @@ export function HeroSection() {
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
                 </span>
                 <span className="text-xs font-semibold tracking-wide text-white/85">
-                  European Education Consultancy
+                  {hero.badge}
                 </span>
               </div>
             </MarketingReveal>
@@ -54,9 +51,9 @@ export function HeroSection() {
             {/* Headline */}
             <MarketingReveal delay={80}>
               <h1 className="mt-7 font-display text-[2.75rem] font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-[4rem]">
-                Study in Europe.{" "}
+                {hero.headlinePart1}{" "}
                 <span className="block sm:inline">
-                  <span className="euroscope-gradient-text">Start Your Future.</span>
+                  <span className="euroscope-gradient-text">{hero.headlinePart2}</span>
                 </span>
               </h1>
             </MarketingReveal>
@@ -64,21 +61,19 @@ export function HeroSection() {
             {/* Subheadline */}
             <MarketingReveal delay={160}>
               <p className="mt-7 max-w-xl text-lg leading-relaxed text-white/70 md:text-xl">
-                {APP_NAME} is a European education consultancy that guides students
-                through every step — from choosing the right university to preparing
-                your visa. We don&apos;t just give you a portal — we walk with you.
+                {hero.subtitle}
               </p>
             </MarketingReveal>
 
             {/* CTAs */}
             <MarketingReveal delay={240}>
               <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:gap-4">
-                <MarketingButton href="/contact" variant="primary" size="lg" className="w-full sm:w-auto">
-                  Book a Free Consultation
+                <MarketingButton href={hero.ctaPrimaryHref} variant="primary" size="lg" className="w-full sm:w-auto">
+                  {hero.ctaPrimaryText}
                   <FaIcon icon={ICONS.arrowRight} className="h-4 w-4" aria-hidden />
                 </MarketingButton>
-                <MarketingButton href="/study-in-europe" variant="secondary" size="lg" className="w-full sm:w-auto">
-                  Explore Europe
+                <MarketingButton href={hero.ctaSecondaryHref} variant="secondary" size="lg" className="w-full sm:w-auto">
+                  {hero.ctaSecondaryText}
                 </MarketingButton>
               </div>
             </MarketingReveal>
@@ -118,13 +113,12 @@ function HeroCollage() {
       {/* Glow behind */}
       <div
         className="absolute inset-x-8 -bottom-4 -top-4 -z-10 rounded-3xl opacity-50 blur-3xl"
-        style={{ background: "linear-gradient(135deg, #1e40af 0%, #f59e0b 100%)" }}
+        style={{ background: "linear-gradient(135deg, #1e293b 0%, #d4af37 100%)" }}
         aria-hidden
       />
 
       {/* Main destinations card */}
       <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-ink-surface to-ink p-6 shadow-2xl shadow-black/40">
-        {/* Card header */}
         <div className="flex items-center justify-between border-b border-white/10 pb-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-accent">

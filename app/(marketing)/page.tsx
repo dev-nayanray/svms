@@ -10,16 +10,13 @@ import {
 } from "@/components/marketing/sections";
 import { ServicesSection, WhyEuroscopeSection, HowWeHelp } from "@/components/marketing/services";
 import { FAQ } from "@/components/marketing/faq";
+import { getMarketingContent } from "@/lib/services/marketing-content";
 
 /**
- * Marketing homepage — the public face of Euroscope as a company.
+ * Marketing homepage — the public face of Euroscope.
  *
- * The page positions Euroscope as a European education consultancy:
- *  - Hero with company positioning (not a product mockup)
- *  - Services the company offers (not software features)
- *  - Why choose the company (not why use the platform)
- *  - How the company helps (not how the software works)
- *  - Destinations, journey timeline, trust, FAQ, CTA
+ * Content (hero, CTA, FAQ) is loaded dynamically from the DB so admins
+ * can edit it from the admin panel at /admin/marketing.
  *
  * Authenticated users are redirected to their role's panel.
  * Pass `?preview=1` to bypass the redirect for previewing.
@@ -36,9 +33,12 @@ export default async function HomePage({
     redirect(role === "ADMIN" ? "/admin" : role === "EMPLOYEE" ? "/employee" : "/student");
   }
 
+  // Load dynamic content from DB (falls back to defaults if nothing stored)
+  const content = await getMarketingContent();
+
   return (
     <>
-      <HeroSection />
+      <HeroSection content={content} />
       <ServicesSection />
       <WhyEuroscopeSection />
       <DestinationSection />
@@ -46,8 +46,8 @@ export default async function HomePage({
       <JourneyTimeline />
       <HowWeHelp />
       <TrustSection />
-      <FAQ />
-      <CTASection />
+      <FAQ items={content.faq} />
+      <CTASection content={content.cta} />
     </>
   );
 }

@@ -10,7 +10,7 @@ export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME?.trim() || "Euroscope";
 export const APP_SHORT_NAME = process.env.NEXT_PUBLIC_APP_SHORT_NAME?.trim() || "Euroscope";
 export const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") || "http://localhost:3000";
-export const APP_THEME_COLOR = process.env.NEXT_PUBLIC_APP_THEME_COLOR?.trim() || "#1e40af";
+export const APP_THEME_COLOR = process.env.NEXT_PUBLIC_APP_THEME_COLOR?.trim() || "#1e293b";
 export const APP_BACKGROUND_COLOR = process.env.NEXT_PUBLIC_APP_BACKGROUND_COLOR?.trim() || "#fafaf9";
 
 /**

@@ -3,8 +3,9 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  /* Euroscope — European premium identity.
-     Base: warm neutral off-white, deep blue primary, gold accent. */
+  /* Euroscope — premium navy + gold heritage palette.
+     Matches the official Euroscope logo (black circular badge
+     with gold laurel wreath and serif wordmark). */
   --background: #fafaf9;
   --foreground: #1c1917;
   --card: #ffffff;
@@ -13,16 +14,16 @@
   --muted-foreground: #78716c;
   --border: #e7e5e4;
   --input: #e7e5e4;
-  --ring: #1e40af;
+  --ring: #1e293b;
 
-  /* Brand — European blue + warm gold accent.
-     The deep blue evokes the EU flag and European institutional
-     trust; the gold accent adds premium heritage warmth. */
-  --primary: #1e40af;
-  --primary-hover: #1e3a8a;
+  /* Brand — deep navy primary + metallic gold accent.
+     Navy evokes the logo's black badge; gold matches the laurel
+     wreath. Together they create a premium European heritage feel. */
+  --primary: #1e293b;
+  --primary-hover: #0f172a;
   --primary-foreground: #ffffff;
-  --accent: #f59e0b;
-  --accent-hover: #d97706;
+  --accent: #d4af37;
+  --accent-hover: #b8941f;
   --accent-foreground: #1c1917;
 
   /* Semantic */
@@ -40,8 +41,8 @@
   --warning-bg: #fffbeb;
   --destructive-bg: #fef2f2;
   --info-bg: #eff6ff;
-  --primary-bg: #eff6ff;
-  --accent-bg: #fffbeb;
+  --primary-bg: #f1f5f9;
+  --accent-bg: #fefbf3;
 
   /* Marketing dark surface — used for hero, CTA, and footer.
      Deep navy evokes European night sky; not pure black. */
@@ -60,13 +61,13 @@
   --muted-foreground: #94a3b8;
   --border: #334155;
   --input: #334155;
-  --ring: #60a5fa;
+  --ring: #d4af37;
 
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
+  --primary: #e2e8f0;
+  --primary-hover: #f1f5f9;
   --primary-foreground: #0f172a;
-  --accent: #fbbf24;
-  --accent-hover: #f59e0b;
+  --accent: #d4af37;
+  --accent-hover: #b8941f;
   --accent-foreground: #0f172a;
 
   --destructive: #f87171;
