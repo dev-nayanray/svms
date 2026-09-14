@@ -10,6 +10,7 @@ import {
   extensionMatchesMime,
 } from "@/lib/constants/documents";
 import { titleCase } from "@/lib/utils";
+import { emitNotification } from "@/lib/services/notification-cases";
 
 /**
  * Employee Document Management service — server-side data layer for
@@ -305,16 +306,16 @@ export async function reviewDocument(
       select: { student: { select: { userId: true, firstName: true, lastName: true } }, name: true },
     });
     if (fullDoc) {
-      await prisma.notification.create({
-        data: {
-          userId: fullDoc.student.userId,
-          type: `DOCUMENT_${decision}`,
-          title: `Document ${decision.toLowerCase()}: ${fullDoc.name}`,
-          message: decision === "REJECTED"
-            ? `Your document "${fullDoc.name}" was rejected. Reason: ${reviewNote}`
-            : `Your document "${fullDoc.name}" was ${decision.toLowerCase().replace("_", " ")}.`,
-          link: "/employee/documents",
-        },
+      await emitNotification({
+        userId: fullDoc.student.userId,
+        type: `DOCUMENT_${decision}`,
+        title: `Document ${decision.toLowerCase()}: ${fullDoc.name}`,
+        message: decision === "REJECTED"
+          ? `Your document "${fullDoc.name}" was rejected. Reason: ${reviewNote}`
+          : `Your document "${fullDoc.name}" was ${decision.toLowerCase().replace("_", " ")}.`,
+        link: "/employee/documents",
+        entityType: "Document",
+        entityId: id,
       });
     }
   } catch (err) {
@@ -363,14 +364,14 @@ export async function requestReupload(
       select: { student: { select: { userId: true } }, name: true },
     });
     if (fullDoc) {
-      await prisma.notification.create({
-        data: {
-          userId: fullDoc.student.userId,
-          type: "DOCUMENT_REUPLOAD_REQUESTED",
-          title: "Document re-upload requested",
-          message: `Please re-upload "${fullDoc.name}". Reason: ${reason}`,
-          link: "/employee/documents",
-        },
+      await emitNotification({
+        userId: fullDoc.student.userId,
+        type: "DOCUMENT_REUPLOAD_REQUESTED",
+        title: "Document re-upload requested",
+        message: `Please re-upload "${fullDoc.name}". Reason: ${reason}`,
+        link: "/employee/documents",
+        entityType: "Document",
+        entityId: id,
       });
     }
   } catch (err) {

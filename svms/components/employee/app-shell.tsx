@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
-  Menu, X, Search, Bell, Sun, Moon, ChevronDown, LogOut, UserRound,
+  Menu, X, Search, Sun, Moon, ChevronDown, LogOut, UserRound,
   Settings, HelpCircle, Compass,
 } from "lucide-react";
 import { cn, initials } from "@/lib/utils";
@@ -14,6 +14,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/overlays";
 import { PAGE_TITLES, type NavGroup } from "@/config/employee-nav";
+import { NotificationBell } from "@/components/employee/notifications/notification-bell";
+import type { NotificationRow } from "@/lib/services/notification-cases";
 
 export function EmployeeAppShell({
   userName,
@@ -21,6 +23,8 @@ export function EmployeeAppShell({
   userRole,
   employeeTitle,
   navGroups,
+  initialUnreadCount,
+  initialRecentNotifications,
   children,
 }: {
   userName: string;
@@ -29,6 +33,8 @@ export function EmployeeAppShell({
   employeeId: string | null;
   employeeTitle: string | null;
   navGroups: NavGroup[];
+  initialUnreadCount: number;
+  initialRecentNotifications: NotificationRow[];
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -101,14 +107,10 @@ export function EmployeeAppShell({
               {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
             </button>
 
-            <Link
-              href="/employee/notifications"
-              aria-label="Notifications"
-              className="relative grid h-9 w-9 place-items-center rounded-md text-muted-foreground hover:bg-muted"
-            >
-              <Bell className="h-4 w-4" aria-hidden />
-              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-destructive" aria-hidden />
-            </Link>
+            <NotificationBell
+              initialUnreadCount={initialUnreadCount}
+              initialRecent={initialRecentNotifications}
+            />
 
             <Link
               href="/employee/settings"

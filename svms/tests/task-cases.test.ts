@@ -58,7 +58,7 @@ const prismaMock = vi.hoisted(() => ({
   task: { findFirst: vi.fn(), findMany: vi.fn(), count: vi.fn(), update: vi.fn(), create: vi.fn() },
   user: { findMany: vi.fn(), findUnique: vi.fn() },
   student: { findFirst: vi.fn(), findUnique: vi.fn() },
-  notification: { create: vi.fn() },
+  notification: { create: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
 }));
 
 vi.mock("@/lib/db", () => ({ prisma: prismaMock }));
@@ -242,6 +242,8 @@ describe("createTask", () => {
 
   it("emits notification to assignee when different from actor", async () => {
     prismaMock.task.create.mockResolvedValue({ id: "t1", assignedToId: "u-other" });
+    prismaMock.notification.findFirst.mockResolvedValue(null); // no dedup hit
+    prismaMock.notification.create.mockResolvedValue({ id: "n1" });
     await createTask(EMPLOYEE_SCOPE, { title: "Review doc", assignedToId: "u-other" }, { id: "u-emp" });
     expect(prismaMock.notification.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ userId: "u-other", type: "TASK_ASSIGNED" }),
@@ -283,6 +285,8 @@ describe("completeTask", () => {
   it("notifies the assignee on completion", async () => {
     prismaMock.task.findFirst.mockResolvedValue({ id: "t1", status: "TODO", assignedToId: "u-other", title: "Task", studentId: null });
     prismaMock.task.update.mockResolvedValue({});
+    prismaMock.notification.findFirst.mockResolvedValue(null);
+    prismaMock.notification.create.mockResolvedValue({ id: "n1" });
     await completeTask(EMPLOYEE_SCOPE, "t1", { id: "u-emp" });
     expect(prismaMock.notification.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ userId: "u-other", type: "TASK_COMPLETED" }),
@@ -293,6 +297,8 @@ describe("completeTask", () => {
     prismaMock.task.findFirst.mockResolvedValue({ id: "t1", status: "TODO", assignedToId: null, title: "Task", studentId: "s1" });
     prismaMock.task.update.mockResolvedValue({});
     prismaMock.student.findUnique.mockResolvedValue({ userId: "u-stu" });
+    prismaMock.notification.findFirst.mockResolvedValue(null);
+    prismaMock.notification.create.mockResolvedValue({ id: "n2" });
     await completeTask(EMPLOYEE_SCOPE, "t1", { id: "u-emp" });
     expect(prismaMock.notification.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ userId: "u-stu", type: "TASK_COMPLETED" }),
@@ -336,6 +342,8 @@ describe("reassignTask", () => {
     prismaMock.task.findFirst.mockResolvedValue({ id: "t1", assignedToId: "u-old", title: "Task" });
     prismaMock.user.findUnique.mockResolvedValue({ id: "u-new", name: "New Person" });
     prismaMock.task.update.mockResolvedValue({});
+    prismaMock.notification.findFirst.mockResolvedValue(null);
+    prismaMock.notification.create.mockResolvedValue({ id: "n1" });
     await reassignTask(EMPLOYEE_SCOPE, "t1", "u-new", { id: "u-emp" });
     expect(prismaMock.task.update).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ assignedToId: "u-new" }),
@@ -349,6 +357,8 @@ describe("reassignTask", () => {
     prismaMock.task.findFirst.mockResolvedValue({ id: "t1", assignedToId: "u-old", title: "Task" });
     prismaMock.user.findUnique.mockResolvedValue({ id: "u-new", name: "New" });
     prismaMock.task.update.mockResolvedValue({});
+    prismaMock.notification.findFirst.mockResolvedValue(null);
+    prismaMock.notification.create.mockResolvedValue({ id: "n1" });
     await reassignTask(EMPLOYEE_SCOPE, "t1", "u-new", { id: "u-emp" });
     // Two notifications: one to new assignee, one to old
     expect(prismaMock.notification.create).toHaveBeenCalledTimes(2);

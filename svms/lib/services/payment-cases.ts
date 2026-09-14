@@ -3,6 +3,7 @@ import { HttpError } from "@/lib/api";
 import type { EmployeeScope } from "@/lib/services/employee-dashboard";
 import { paymentScope } from "@/lib/services/employee-dashboard";
 import { formatMoney } from "@/lib/utils";
+import { emitNotification } from "@/lib/services/notification-cases";
 
 /**
  * Employee Payments service — server-side data layer for
@@ -364,14 +365,14 @@ export async function refundPayment(
   try {
     const student = await prisma.student.findUnique({ where: { id: payment.studentId }, select: { userId: true } });
     if (student) {
-      await prisma.notification.create({
-        data: {
-          userId: student.userId,
-          type: "PAYMENT_REFUNDED",
-          title: `Payment refunded: ${formatMoney(payment.amount, payment.currency)}`,
-          message: `Your payment of ${formatMoney(payment.amount, payment.currency)} has been refunded.${reason ? ` Reason: ${reason}` : ""}`,
-          link: "/employee/payments",
-        },
+      await emitNotification({
+        userId: student.userId,
+        type: "PAYMENT_REFUNDED",
+        title: `Payment refunded: ${formatMoney(payment.amount, payment.currency)}`,
+        message: `Your payment of ${formatMoney(payment.amount, payment.currency)} has been refunded.${reason ? ` Reason: ${reason}` : ""}`,
+        link: "/employee/payments",
+        entityType: "Payment",
+        entityId: id,
       });
     }
   } catch (err) {

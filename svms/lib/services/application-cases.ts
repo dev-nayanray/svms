@@ -3,6 +3,7 @@ import { HttpError } from "@/lib/api";
 import type { EmployeeScope } from "@/lib/services/employee-dashboard";
 import { APPLICATION_STAGES } from "@/lib/services/employee-dashboard";
 import { titleCase } from "@/lib/utils";
+import { emitNotification } from "@/lib/services/notification-cases";
 import {
   validateTransition,
   loadStageRuleSnapshot,
@@ -672,7 +673,9 @@ export async function changeApplicationStage(
 
   // 7. Notification — push to the student + the assigned employee (if any).
   //    Best-effort — never blocks the transition. Errors are logged, not
-  //    surfaced to the caller.
+  //    surfaced to the caller. Uses emitNotification() so rapid stage
+  //    changes on the same application collapse to a single notification
+  //    (dedup key = type + entityId = application id).
   try {
     const student = await prisma.student.findUnique({
       where: { id: app.studentId },
@@ -681,8 +684,13 @@ export async function changeApplicationStage(
     if (student) {
       const title = `Application stage: ${titleCase(toStage)}`;
       const message = `Your application has moved to ${toStage.replace(/_/g, " ").toLowerCase()} stage.${note ? ` Note: ${note}` : ""}`;
-      await prisma.notification.create({
-        data: { userId: student.userId, type: "APPLICATION_STAGE_CHANGED", title, message, link: `/employee/applications/${id}` },
+      await emitNotification({
+        userId: student.userId,
+        type: "APPLICATION_STAGE_CHANGED",
+        title, message,
+        link: `/employee/applications/${id}`,
+        entityType: "Application",
+        entityId: id,
       });
       // Notify assigned employee too (if different from the actor)
       if (student.assignedEmployeeId) {
@@ -691,14 +699,14 @@ export async function changeApplicationStage(
           select: { userId: true },
         });
         if (emp && emp.userId !== actor.id) {
-          await prisma.notification.create({
-            data: {
-              userId: emp.userId,
-              type: "APPLICATION_STAGE_CHANGED",
-              title: `${student.firstName} ${student.lastName} → ${titleCase(toStage)}`,
-              message: `Application stage changed to ${toStage.replace(/_/g, " ").toLowerCase()} by another employee.`,
-              link: `/employee/applications/${id}`,
-            },
+          await emitNotification({
+            userId: emp.userId,
+            type: "APPLICATION_STAGE_CHANGED",
+            title: `${student.firstName} ${student.lastName} → ${titleCase(toStage)}`,
+            message: `Application stage changed to ${toStage.replace(/_/g, " ").toLowerCase()} by another employee.`,
+            link: `/employee/applications/${id}`,
+            entityType: "Application",
+            entityId: id,
           });
         }
       }

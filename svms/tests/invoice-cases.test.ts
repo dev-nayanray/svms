@@ -115,7 +115,7 @@ const prismaMock = vi.hoisted(() => ({
   invoiceItem: { createMany: vi.fn() },
   student: { findFirst: vi.fn(), findUnique: vi.fn() },
   payment: { findMany: vi.fn() },
-  notification: { create: vi.fn() },
+  notification: { create: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
   auditLog: { create: vi.fn() },
   $transaction: vi.fn((fn: unknown) => {
     if (typeof fn === "function") return fn(prismaMock);
@@ -266,6 +266,7 @@ describe("issueInvoice", () => {
     prismaMock.invoice.findFirst.mockResolvedValue({ id: "inv-1", status: "DRAFT", studentId: "s1", invoiceNumber: "INV-2026-00001" });
     prismaMock.invoice.update.mockResolvedValue({});
     prismaMock.student.findUnique.mockResolvedValue({ userId: "u-stu" });
+    prismaMock.notification.findFirst.mockResolvedValue(null);
     prismaMock.notification.create.mockResolvedValue({});
     prismaMock.auditLog.create.mockResolvedValue({});
     await issueInvoice(EMPLOYEE_SCOPE, "inv-1", { id: "u-emp" });
@@ -283,6 +284,7 @@ describe("issueInvoice", () => {
     prismaMock.invoice.findFirst.mockResolvedValue({ id: "inv-1", status: "DRAFT", studentId: "s1", invoiceNumber: "INV-2026-00001" });
     prismaMock.invoice.update.mockResolvedValue({});
     prismaMock.student.findUnique.mockResolvedValue({ userId: "u-stu" });
+    prismaMock.notification.findFirst.mockResolvedValue(null);
     prismaMock.notification.create.mockResolvedValue({});
     prismaMock.auditLog.create.mockResolvedValue({});
     await issueInvoice(EMPLOYEE_SCOPE, "inv-1", { id: "u-emp" });

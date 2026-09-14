@@ -22,7 +22,7 @@ const prismaMock = vi.hoisted(() => ({
   },
   student: { findFirst: vi.fn() },
   application: { findFirst: vi.fn() },
-  notification: { create: vi.fn() },
+  notification: { create: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
   auditLog: { create: vi.fn() },
 }));
 
@@ -344,6 +344,7 @@ describe("sendMessage", () => {
     prismaMock.conversation.findUnique.mockResolvedValue({
       student: { userId: "u-stu", firstName: "Karim" },
     });
+    prismaMock.notification.findFirst.mockResolvedValue(null);
     prismaMock.notification.create.mockResolvedValue({});
     prismaMock.auditLog.create.mockResolvedValue({});
 
@@ -392,7 +393,7 @@ describe("sendMessage", () => {
     prismaMock.message.create.mockResolvedValue({ id: "m3" });
     prismaMock.conversation.update.mockResolvedValue({});
     prismaMock.conversation.findUnique.mockResolvedValue({ student: { userId: "u-stu", firstName: "K" } });
-    prismaMock.notification.create.mockRejectedValue(new Error("notify failed"));
+    prismaMock.notification.findFirst.mockRejectedValue(new Error("notify failed"));
     prismaMock.auditLog.create.mockResolvedValue({});
 
     // Should NOT throw
@@ -413,6 +414,7 @@ describe("attachment validation", () => {
     prismaMock.message.create.mockResolvedValue({ id: "m1" });
     prismaMock.conversation.update.mockResolvedValue({});
     prismaMock.conversation.findUnique.mockResolvedValue({ student: { userId: "u-stu", firstName: "K" } });
+    prismaMock.notification.findFirst.mockResolvedValue(null);
     prismaMock.notification.create.mockResolvedValue({});
     prismaMock.auditLog.create.mockResolvedValue({});
     await sendMessage(EMPLOYEE_SCOPE, "c1", { body: "see file", attachments: validAttachments }, { id: "u-emp" });

@@ -70,7 +70,7 @@ const prismaMock = vi.hoisted(() => ({
   user: { findMany: vi.fn() },
   appointment: { findMany: vi.fn() },
   visaRequirement: { findMany: vi.fn() },
-  notification: { create: vi.fn() },
+  notification: { create: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
   auditLog: { create: vi.fn() },
   application: { findFirst: vi.fn() },
   country: { findMany: vi.fn() },
@@ -277,6 +277,8 @@ describe("changeVisaStage", () => {
     prismaMock.visaApplication.findFirst.mockResolvedValue({ id: "v1", stage: "PREPARATION", applicationId: "a1" });
     prismaMock.$transaction.mockResolvedValue([{}, { id: "hist-1" }]);
     prismaMock.application.findFirst.mockResolvedValue({ student: { userId: "u-stu", firstName: "K", lastName: "A" } });
+    prismaMock.notification.findFirst.mockResolvedValue(null);
+    prismaMock.notification.create.mockResolvedValue({ id: "n1" });
     await changeVisaStage(EMPLOYEE_SCOPE, "v1", "SUBMITTED", { id: "u-emp" });
     expect(prismaMock.notification.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ userId: "u-stu", type: "VISA_STAGE_CHANGED" }),

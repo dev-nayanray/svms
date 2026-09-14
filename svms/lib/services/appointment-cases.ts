@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { HttpError } from "@/lib/api";
 import type { EmployeeScope } from "@/lib/services/employee-dashboard";
 import { appointmentScope } from "@/lib/services/employee-dashboard";
+import { emitNotification } from "@/lib/services/notification-cases";
 
 /**
  * Employee Appointment Management service — server-side data layer for
@@ -257,14 +258,14 @@ export async function createAppointment(
       select: { userId: true, firstName: true, lastName: true },
     });
     if (student) {
-      await prisma.notification.create({
-        data: {
-          userId: student.userId,
-          type: "APPOINTMENT_CREATED",
-          title: `New appointment: ${input.title}`,
-          message: `An appointment has been scheduled for ${input.scheduledAt.toISOString()}.`,
-          link: "/employee/appointments",
-        },
+      await emitNotification({
+        userId: student.userId,
+        type: "APPOINTMENT_CREATED",
+        title: `New appointment: ${input.title}`,
+        message: `An appointment has been scheduled for ${input.scheduledAt.toISOString()}.`,
+        link: "/employee/appointments",
+        entityType: "Appointment",
+        entityId: appointment.id,
       });
     }
   } catch (err) {
@@ -305,14 +306,14 @@ export async function rescheduleAppointment(
   try {
     const student = await prisma.student.findUnique({ where: { id: appt.studentId }, select: { userId: true } });
     if (student) {
-      await prisma.notification.create({
-        data: {
-          userId: student.userId,
-          type: "APPOINTMENT_RESCHEDULED",
-          title: `Appointment rescheduled: ${appt.title}`,
-          message: `Your appointment has been rescheduled to ${newScheduledAt.toISOString()}.`,
-          link: "/employee/appointments",
-        },
+      await emitNotification({
+        userId: student.userId,
+        type: "APPOINTMENT_RESCHEDULED",
+        title: `Appointment rescheduled: ${appt.title}`,
+        message: `Your appointment has been rescheduled to ${newScheduledAt.toISOString()}.`,
+        link: "/employee/appointments",
+        entityType: "Appointment",
+        entityId: id,
       });
     }
   } catch (err) {
@@ -339,14 +340,14 @@ export async function cancelAppointment(
   try {
     const student = await prisma.student.findUnique({ where: { id: appt.studentId }, select: { userId: true } });
     if (student) {
-      await prisma.notification.create({
-        data: {
-          userId: student.userId,
-          type: "APPOINTMENT_CANCELLED",
-          title: `Appointment cancelled: ${appt.title}`,
-          message: `Your appointment has been cancelled.`,
-          link: "/employee/appointments",
-        },
+      await emitNotification({
+        userId: student.userId,
+        type: "APPOINTMENT_CANCELLED",
+        title: `Appointment cancelled: ${appt.title}`,
+        message: `Your appointment has been cancelled.`,
+        link: "/employee/appointments",
+        entityType: "Appointment",
+        entityId: id,
       });
     }
   } catch (err) {
@@ -390,14 +391,14 @@ export async function confirmAppointment(
     try {
       const student = await prisma.student.findUnique({ where: { id: appt.studentId }, select: { userId: true } });
       if (student) {
-        await prisma.notification.create({
-          data: {
-            userId: student.userId,
-            type: "APPOINTMENT_CONFIRMED",
-            title: `Appointment confirmed: ${appt.title}`,
-            message: `Your appointment has been confirmed.`,
-            link: "/employee/appointments",
-          },
+        await emitNotification({
+          userId: student.userId,
+          type: "APPOINTMENT_CONFIRMED",
+          title: `Appointment confirmed: ${appt.title}`,
+          message: `Your appointment has been confirmed.`,
+          link: "/employee/appointments",
+          entityType: "Appointment",
+          entityId: id,
         });
       }
     } catch (err) {

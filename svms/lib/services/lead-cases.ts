@@ -4,6 +4,7 @@ import type { EmployeeScope } from "@/lib/services/employee-dashboard";
 import { leadScope } from "@/lib/services/employee-dashboard";
 import { titleCase, slugify } from "@/lib/utils";
 import bcrypt from "bcryptjs";
+import { emitNotification } from "@/lib/services/notification-cases";
 
 /**
  * Employee Lead Management service.
@@ -332,16 +333,15 @@ export async function convertLeadToStudent(
   } catch (err) { console.error("[lead-convert] audit failed", err); }
 
   // Notify the new student
-  try {
-    await prisma.notification.create({
-      data: {
-        userId: user.id, type: "WELCOME",
-        title: "Welcome to Euroscope!",
-        message: `Your account has been created. Use your email ${email} to log in.`,
-        link: "/student",
-      },
-    });
-  } catch (err) { console.error("[lead-convert] notification failed", err); }
+  await emitNotification({
+    userId: user.id,
+    type: "WELCOME",
+    title: "Welcome to Euroscope!",
+    message: `Your account has been created. Use your email ${email} to log in.`,
+    link: "/student",
+    entityType: "Student",
+    entityId: student.id,
+  });
 
   return { studentId: student.id };
 }

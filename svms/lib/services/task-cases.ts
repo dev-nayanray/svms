@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { HttpError } from "@/lib/api";
 import type { EmployeeScope } from "@/lib/services/employee-dashboard";
 import { taskScope } from "@/lib/services/employee-dashboard";
+import { emitNotification } from "@/lib/services/notification-cases";
 // titleCase not needed in this file — statuses/priorities are already uppercase
 
 /**
@@ -282,19 +283,15 @@ export async function createTask(
 
   // Notify the assignee if different from the actor
   if (task.assignedToId && task.assignedToId !== actor.id) {
-    try {
-      await prisma.notification.create({
-        data: {
-          userId: task.assignedToId,
-          type: "TASK_ASSIGNED",
-          title: `New task: ${input.title}`,
-          message: `You have been assigned a new task.`,
-          link: "/employee/tasks",
-        },
-      });
-    } catch (err) {
-      console.error("[task-create] notification failed", err);
-    }
+    await emitNotification({
+      userId: task.assignedToId,
+      type: "TASK_ASSIGNED",
+      title: `New task: ${input.title}`,
+      message: `You have been assigned a new task.`,
+      link: "/employee/tasks",
+      entityType: "Task",
+      entityId: task.id,
+    });
   }
 
   return { id: task.id };
@@ -339,19 +336,15 @@ export async function completeTask(
 
   // Notify the creator/assigner if different
   if (task.assignedToId && task.assignedToId !== actor.id) {
-    try {
-      await prisma.notification.create({
-        data: {
-          userId: task.assignedToId,
-          type: "TASK_COMPLETED",
-          title: `Task completed: ${task.title}`,
-          message: `The task "${task.title}" has been completed.`,
-          link: "/employee/tasks",
-        },
-      });
-    } catch (err) {
-      console.error("[task-complete] notification failed", err);
-    }
+    await emitNotification({
+      userId: task.assignedToId,
+      type: "TASK_COMPLETED",
+      title: `Task completed: ${task.title}`,
+      message: `The task "${task.title}" has been completed.`,
+      link: "/employee/tasks",
+      entityType: "Task",
+      entityId: id,
+    });
   }
 
   // Notify the student if linked
@@ -359,14 +352,14 @@ export async function completeTask(
     try {
       const student = await prisma.student.findUnique({ where: { id: task.studentId }, select: { userId: true } });
       if (student) {
-        await prisma.notification.create({
-          data: {
-            userId: student.userId,
-            type: "TASK_COMPLETED",
-            title: `Task completed: ${task.title}`,
-            message: `A task on your application has been completed.`,
-            link: "/employee/tasks",
-          },
+        await emitNotification({
+          userId: student.userId,
+          type: "TASK_COMPLETED",
+          title: `Task completed: ${task.title}`,
+          message: `A task on your application has been completed.`,
+          link: "/employee/tasks",
+          entityType: "Task",
+          entityId: id,
         });
       }
     } catch (err) {
@@ -407,35 +400,27 @@ export async function reassignTask(
 
   // Notify the new assignee
   if (newAssigneeId !== actor.id) {
-    try {
-      await prisma.notification.create({
-        data: {
-          userId: newAssigneeId,
-          type: "TASK_REASSIGNED",
-          title: `Task reassigned: ${task.title}`,
-          message: `This task has been reassigned to you.`,
-          link: "/employee/tasks",
-        },
-      });
-    } catch (err) {
-      console.error("[task-reassign] notification failed", err);
-    }
+    await emitNotification({
+      userId: newAssigneeId,
+      type: "TASK_REASSIGNED",
+      title: `Task reassigned: ${task.title}`,
+      message: `This task has been reassigned to you.`,
+      link: "/employee/tasks",
+      entityType: "Task",
+      entityId: id,
+    });
   }
 
   // Notify the old assignee
   if (task.assignedToId && task.assignedToId !== actor.id && task.assignedToId !== newAssigneeId) {
-    try {
-      await prisma.notification.create({
-        data: {
-          userId: task.assignedToId,
-          type: "TASK_REASSIGNED",
-          title: `Task reassigned: ${task.title}`,
-          message: `The task "${task.title}" has been reassigned to another employee.`,
-          link: "/employee/tasks",
-        },
-      });
-    } catch (err) {
-      console.error("[task-reassign] old assignee notification failed", err);
-    }
+    await emitNotification({
+      userId: task.assignedToId,
+      type: "TASK_REASSIGNED",
+      title: `Task reassigned: ${task.title}`,
+      message: `The task "${task.title}" has been reassigned to another employee.`,
+      link: "/employee/tasks",
+      entityType: "Task",
+      entityId: id,
+    });
   }
 }

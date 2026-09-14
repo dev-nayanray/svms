@@ -7,7 +7,7 @@ const prismaMock = vi.hoisted(() => ({
   user: { create: vi.fn() },
   task: { findMany: vi.fn() },
   appointment: { findMany: vi.fn() },
-  notification: { create: vi.fn() },
+  notification: { create: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
   auditLog: { create: vi.fn() },
   $transaction: vi.fn((fn: unknown) => {
     if (typeof fn === "function") return fn(prismaMock);
@@ -196,6 +196,7 @@ describe("convertLeadToStudent", () => {
     prismaMock.student.update.mockResolvedValue({});
     prismaMock.lead.update.mockResolvedValue({});
     prismaMock.auditLog.create.mockResolvedValue({});
+    prismaMock.notification.findFirst.mockResolvedValue(null);
     prismaMock.notification.create.mockResolvedValue({});
 
     const result = await convertLeadToStudent(EMPLOYEE_SCOPE, "l1", { id: "u-emp" });

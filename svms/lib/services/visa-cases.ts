@@ -3,6 +3,7 @@ import { HttpError } from "@/lib/api";
 import type { EmployeeScope } from "@/lib/services/employee-dashboard";
 import { visaScope } from "@/lib/services/employee-dashboard";
 import { titleCase } from "@/lib/utils";
+import { emitNotification } from "@/lib/services/notification-cases";
 
 /**
  * Employee Visa Management service — server-side data layer for
@@ -416,14 +417,14 @@ export async function changeVisaStage(
       select: { student: { select: { userId: true, firstName: true, lastName: true } } },
     });
     if (app) {
-      await prisma.notification.create({
-        data: {
-          userId: app.student.userId,
-          type: "VISA_STAGE_CHANGED",
-          title: `Visa status: ${titleCase(toStage)}`,
-          message: `Your visa application status has been updated to ${toStage.toLowerCase()}.`,
-          link: "/employee/visa",
-        },
+      await emitNotification({
+        userId: app.student.userId,
+        type: "VISA_STAGE_CHANGED",
+        title: `Visa status: ${titleCase(toStage)}`,
+        message: `Your visa application status has been updated to ${toStage.toLowerCase()}.`,
+        link: "/employee/visa",
+        entityType: "VisaApplication",
+        entityId: id,
       });
     }
   } catch (err) {

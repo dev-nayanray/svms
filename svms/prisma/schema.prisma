@@ -372,16 +372,24 @@ model Message {
 }
 
 model Notification {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  type      String
-  title     String
-  message   String
-  link      String?
-  readAt    DateTime?
-  createdAt DateTime @default(now())
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String    @db.ObjectId
+  type        String   // e.g. APPLICATION_STAGE_CHANGED, TASK_ASSIGNED, MESSAGE_RECEIVED
+  title       String
+  message     String
+  link        String?
+  // Related entity for grouping + dedup. e.g. entityType="Application",
+  // entityId=app-id → used to collapse duplicate notifications of the same
+  // kind on the same entity within a short window.
+  entityType  String?
+  entityId    String?  @db.ObjectId
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
 
   @@index([userId])
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+  @@index([userId, type, entityId, createdAt])
 }
 
 model AuditLog {

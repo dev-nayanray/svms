@@ -3,6 +3,7 @@ import { HttpError } from "@/lib/api";
 import type { EmployeeScope } from "@/lib/services/employee-dashboard";
 import { invoiceScope } from "@/lib/services/employee-dashboard";
 import { formatMoney } from "@/lib/utils";
+import { emitNotification } from "@/lib/services/notification-cases";
 
 /**
  * Employee Invoice Management service — server-side data layer for
@@ -403,14 +404,14 @@ export async function issueInvoice(
   try {
     const student = await prisma.student.findUnique({ where: { id: invoice.studentId }, select: { userId: true } });
     if (student) {
-      await prisma.notification.create({
-        data: {
-          userId: student.userId,
-          type: "INVOICE_ISSUED",
-          title: `Invoice issued: ${invoice.invoiceNumber}`,
-          message: `A new invoice has been issued to you.`,
-          link: "/employee/invoices",
-        },
+      await emitNotification({
+        userId: student.userId,
+        type: "INVOICE_ISSUED",
+        title: `Invoice issued: ${invoice.invoiceNumber}`,
+        message: `A new invoice has been issued to you.`,
+        link: "/employee/invoices",
+        entityType: "Invoice",
+        entityId: id,
       });
     }
   } catch (err) {

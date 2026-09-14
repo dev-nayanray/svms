@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const prismaMock = vi.hoisted(() => ({
   appointment: { findFirst: vi.fn(), findMany: vi.fn(), count: vi.fn(), update: vi.fn(), create: vi.fn() },
   student: { findFirst: vi.fn(), findUnique: vi.fn() },
-  notification: { create: vi.fn() },
+  notification: { create: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
 }));
 
 vi.mock("@/lib/db", () => ({ prisma: prismaMock }));
@@ -185,6 +185,8 @@ describe("createAppointment", () => {
     prismaMock.appointment.findFirst.mockResolvedValue(null);
     prismaMock.appointment.create.mockResolvedValue({ id: "appt-1" });
     prismaMock.student.findUnique.mockResolvedValue({ userId: "u-stu", firstName: "K", lastName: "A" });
+    prismaMock.notification.findFirst.mockResolvedValue(null);
+    prismaMock.notification.create.mockResolvedValue({ id: "n1" });
     await createAppointment(EMPLOYEE_SCOPE, {
       studentId: "s1", type: "COUNSELING", title: "Initial", scheduledAt: new Date(),
     }, { id: "u-emp" });
@@ -234,6 +236,8 @@ describe("rescheduleAppointment", () => {
       .mockResolvedValueOnce(null);
     prismaMock.appointment.update.mockResolvedValue({});
     prismaMock.student.findUnique.mockResolvedValue({ userId: "u-stu" });
+    prismaMock.notification.findFirst.mockResolvedValue(null);
+    prismaMock.notification.create.mockResolvedValue({ id: "n1" });
     await rescheduleAppointment(EMPLOYEE_SCOPE, "a1", new Date("2026-10-15"), { id: "u-emp" });
     expect(prismaMock.notification.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ userId: "u-stu", type: "APPOINTMENT_RESCHEDULED" }),
@@ -276,6 +280,8 @@ describe("cancelAppointment", () => {
     prismaMock.appointment.findFirst.mockResolvedValue({ id: "a1", status: "SCHEDULED", studentId: "s1", title: "X" });
     prismaMock.appointment.update.mockResolvedValue({});
     prismaMock.student.findUnique.mockResolvedValue({ userId: "u-stu" });
+    prismaMock.notification.findFirst.mockResolvedValue(null);
+    prismaMock.notification.create.mockResolvedValue({ id: "n1" });
     await cancelAppointment(EMPLOYEE_SCOPE, "a1", { id: "u-emp" });
     expect(prismaMock.notification.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ userId: "u-stu", type: "APPOINTMENT_CANCELLED" }),
@@ -314,6 +320,8 @@ describe("confirmAppointment", () => {
     prismaMock.appointment.findFirst.mockResolvedValue({ id: "a1", status: "RESCHEDULED", studentId: "s1", title: "X" });
     prismaMock.appointment.update.mockResolvedValue({});
     prismaMock.student.findUnique.mockResolvedValue({ userId: "u-stu" });
+    prismaMock.notification.findFirst.mockResolvedValue(null);
+    prismaMock.notification.create.mockResolvedValue({ id: "n1" });
     await confirmAppointment(EMPLOYEE_SCOPE, "a1", { id: "u-emp" });
     expect(prismaMock.appointment.update).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ status: "SCHEDULED" }),

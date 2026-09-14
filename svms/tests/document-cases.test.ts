@@ -145,6 +145,8 @@ const prismaMock = vi.hoisted(() => ({
   },
   notification: {
     create: vi.fn(),
+    findFirst: vi.fn(),
+    update: vi.fn(),
   },
 }));
 
@@ -230,6 +232,8 @@ describe("reviewDocument — approve", () => {
       .mockResolvedValueOnce({ id: "doc-1", status: "UPLOADED" })
       .mockResolvedValueOnce({ student: { userId: "u-stu", firstName: "Karim", lastName: "Ahmed" }, name: "Passport" });
     prismaMock.document.update.mockResolvedValue({});
+    prismaMock.notification.findFirst.mockResolvedValue(null);
+    prismaMock.notification.create.mockResolvedValue({ id: "n1" });
     await reviewDocument(EMPLOYEE_SCOPE, "doc-1", "APPROVED", undefined, { id: "u-emp" });
     expect(prismaMock.notification.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({
@@ -293,6 +297,8 @@ describe("requestReupload", () => {
       .mockResolvedValueOnce({ id: "doc-1", status: "APPROVED" })
       .mockResolvedValueOnce({ student: { userId: "u-stu" }, name: "Passport" });
     prismaMock.document.update.mockResolvedValue({});
+    prismaMock.notification.findFirst.mockResolvedValue(null);
+    prismaMock.notification.create.mockResolvedValue({ id: "n1" });
     const result = await requestReupload(EMPLOYEE_SCOPE, "doc-1", "File expired, need a fresh copy", { id: "u-emp" });
     expect(result.status).toBe("REQUESTED");
     expect(prismaMock.document.update).toHaveBeenCalledWith(expect.objectContaining({

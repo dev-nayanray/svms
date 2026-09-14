@@ -355,6 +355,8 @@ const prismaMock = vi.hoisted(() => ({
   },
   notification: {
     create: vi.fn(),
+    findFirst: vi.fn(),
+    update: vi.fn(),
   },
   auditLog: {
     create: vi.fn(),
@@ -407,6 +409,8 @@ describe("changeApplicationStage — valid transition", () => {
       });
     prismaMock.$transaction.mockResolvedValue([{}, { id: "hist-1" }]);
     prismaMock.student.findUnique.mockResolvedValue({ userId: "u-stu", firstName: "Karim", lastName: "Ahmed", assignedEmployeeId: null });
+    prismaMock.notification.findFirst.mockResolvedValue(null);
+    prismaMock.notification.create.mockResolvedValue({ id: "n1" });
 
     await changeApplicationStage(EMPLOYEE_SCOPE, "app-1", "COUNSELING", { id: "u-emp" });
     expect(prismaMock.notification.create).toHaveBeenCalledWith(expect.objectContaining({

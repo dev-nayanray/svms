@@ -68,7 +68,7 @@ const prismaMock = vi.hoisted(() => ({
   payment: { findFirst: vi.fn(), findMany: vi.fn(), count: vi.fn(), update: vi.fn(), create: vi.fn() },
   student: { findFirst: vi.fn(), findUnique: vi.fn() },
   user: { findMany: vi.fn() },
-  notification: { create: vi.fn() },
+  notification: { create: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
   auditLog: { create: vi.fn() },
 }));
 
@@ -224,6 +224,8 @@ describe("refundPayment", () => {
     prismaMock.payment.update.mockResolvedValue({});
     prismaMock.auditLog.create.mockResolvedValue({});
     prismaMock.student.findUnique.mockResolvedValue({ userId: "u-stu" });
+    prismaMock.notification.findFirst.mockResolvedValue(null);
+    prismaMock.notification.create.mockResolvedValue({ id: "n1" });
     await refundPayment(EMPLOYEE_SCOPE, "p1", "Test reason", { id: "u-emp" });
     expect(prismaMock.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ action: "payment.refunded" }),

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { HttpError } from "@/lib/api";
 import type { EmployeeScope } from "@/lib/services/employee-dashboard";
 import type { JsonValue } from "@prisma/client/runtime/library";
+import { emitNotification } from "@/lib/services/notification-cases";
 
 /**
  * Employee Messaging service — secure Student ↔ Employee communication.
@@ -519,14 +520,14 @@ export async function sendMessage(
         select: { student: { select: { userId: true, firstName: true } } },
       });
       if (studentRow) {
-        await prisma.notification.create({
-          data: {
-            userId: studentRow.student.userId,
-            type: "MESSAGE_RECEIVED",
-            title: "New message",
-            message: body.slice(0, 120),
-            link: `/student/messages/${conversationId}`,
-          },
+        await emitNotification({
+          userId: studentRow.student.userId,
+          type: "MESSAGE_RECEIVED",
+          title: "New message",
+          message: body.slice(0, 120),
+          link: `/student/messages/${conversationId}`,
+          entityType: "Conversation",
+          entityId: conversationId,
         });
       }
     } catch (err) {

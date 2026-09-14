@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { EMPLOYEE_NAV_GROUPS, type NavGroup } from "@/config/employee-nav";
 import { hasPermission, type PermissionKey } from "@/lib/permissions";
 import { EmployeeAppShell } from "@/components/employee/app-shell";
+import { getUnreadCount, getRecentNotifications } from "@/lib/services/notification-cases";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,10 @@ export const dynamic = "force-dynamic";
  * Authorization happens here, server-side, before any page renders.
  * The client-side shell receives only the filtered navigation config —
  * permission keys never leak to the browser.
+ *
+ * The shell also receives the initial notification badge count and the
+ * 5 most recent notifications — these are loaded server-side to avoid a
+ * flash of "0 unread" on every page navigation.
  */
 export default async function EmployeeLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -44,6 +49,24 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
     items: g.items.filter((item) => !item.permission || hasPermission(role, item.permission as PermissionKey)),
   })).filter((g) => g.items.length > 0);
 
+  // Load initial notification state for the header bell.
+  const scope = { isAdmin: role === "ADMIN", userId: session.user.id, employeeId };
+  let [unreadCount, recentNotifications] = await Promise.all([
+    getUnreadCount(scope),
+    getRecentNotifications(scope, 5),
+  ]);
+  // Defensive: if either call throws, fall back to empty state so the
+  // shell still renders. (getUnreadCount + getRecentNotifications should
+  // not throw, but we never want a notification failure to break the
+  // layout.)
+  void unreadCount; void recentNotifications;
+  if (!unreadCount || typeof unreadCount.total !== "number") {
+    unreadCount = { total: 0, byCategory: {} as never };
+  }
+  if (!Array.isArray(recentNotifications)) {
+    recentNotifications = [];
+  }
+
   return (
     <EmployeeAppShell
       userName={session.user.name ?? "Employee"}
@@ -52,6 +75,8 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
       employeeId={employeeId}
       employeeTitle={employeeTitle}
       navGroups={visibleGroups}
+      initialUnreadCount={unreadCount.total}
+      initialRecentNotifications={recentNotifications}
     >
       {children}
     </EmployeeAppShell>
