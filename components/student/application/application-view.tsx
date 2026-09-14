@@ -217,44 +217,44 @@ function ApplicationDetail({ id }: { id: string }) {
 
   return (
     <div className="space-y-4">
-      {/* ── Premium hero header card ──
-          Modern dark-gradient hero with country flag, university name,
-          stage pill, progress ring, and quick-fact chips. Replaces the
-          old flat white header card. */}
-      <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-lg dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
-        {/* Decorative gradient orbs */}
-        <div aria-hidden className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-gradient-to-br from-primary/30 to-info/20 blur-3xl" />
-        <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-16 h-48 w-48 rounded-full bg-gradient-to-tr from-info/20 to-primary/10 blur-3xl" />
+      {/* ── Premium warm cream hero header card ──
+          Modern cream-gradient hero with country flag, university name,
+          stage pill, progress ring, and quick-fact chips. Matches the
+          dashboard greeting card's warm palette (cream + gold + amber). */}
+      <div className="relative overflow-hidden rounded-3xl border border-amber-200/60 bg-gradient-to-br from-amber-50 via-white to-yellow-50 shadow-lg dark:from-amber-950/30 dark:via-card dark:to-yellow-950/20">
+        {/* Decorative gold gradient orbs */}
+        <div aria-hidden className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-gradient-to-br from-amber-300/40 to-yellow-200/30 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-16 h-48 w-48 rounded-full bg-gradient-to-tr from-yellow-200/30 to-amber-200/20 blur-3xl" />
         {/* Subtle dotted pattern */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.04]"
+          className="pointer-events-none absolute inset-0 opacity-[0.03]"
           style={{
-            backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
+            backgroundImage: "radial-gradient(circle, #92400e 1px, transparent 1px)",
             backgroundSize: "20px 20px",
           }}
         />
 
-        <div className="relative p-5 text-white">
+        <div className="relative p-5">
           {/* Top row: app number + stage pill */}
           <div className="flex items-center justify-between gap-3">
-            <p className="font-mono text-xs text-white/50">
+            <p className="font-mono text-xs text-amber-700/60">
               Application #{app.applicationNumber}
             </p>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/20 px-2.5 py-1 text-xs font-semibold text-primary ring-1 ring-primary/30">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-300/40">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden />
               {app.stageLabel}
             </span>
           </div>
 
           {/* Country + university + course */}
           <div className="mt-3">
-            <h1 className="text-xl font-bold tracking-tight text-white">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-foreground">
               {app.country?.flag ? `${app.country.flag} ` : ""}
               {app.country?.name ?? "—"}
             </h1>
             {app.university?.name && (
-              <p className="mt-1 truncate text-sm text-white/70">
+              <p className="mt-1 truncate text-sm text-amber-700/70 dark:text-muted-foreground">
                 {app.university.name}
                 {app.course?.name ? ` · ${app.course.name}` : ""}
               </p>
@@ -266,7 +266,7 @@ function ApplicationDetail({ id }: { id: string }) {
             {/* Progress ring */}
             <div className="relative grid h-16 w-16 shrink-0 place-items-center">
               <svg className="h-16 w-16 -rotate-90" viewBox="0 0 36 36">
-                <circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" strokeWidth="3" className="text-white/10" />
+                <circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" strokeWidth="3" className="text-amber-100" />
                 <circle
                   cx="18"
                   cy="18"
@@ -280,15 +280,15 @@ function ApplicationDetail({ id }: { id: string }) {
                 <defs>
                   <linearGradient id="appProgressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#D4AF37" />
-                    <stop offset="100%" stopColor="#3b82f6" />
+                    <stop offset="100%" stopColor="#AA7C11" />
                   </linearGradient>
                 </defs>
               </svg>
               <div className="absolute flex flex-col items-center">
-                <span className="text-base font-bold leading-none text-white tabular-nums">
+                <span className="text-base font-bold leading-none text-slate-900 tabular-nums dark:text-foreground">
                   {app.progress.percent}%
                 </span>
-                <span className="text-[8px] uppercase tracking-wider text-white/50">
+                <span className="text-[8px] uppercase tracking-wider text-amber-700/50">
                   {app.progress.passed}/{app.progress.total}
                 </span>
               </div>
@@ -297,22 +297,22 @@ function ApplicationDetail({ id }: { id: string }) {
             {/* Quick fact chips */}
             <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
               {app.course?.degreeLevel && (
-                <span className="inline-flex items-center rounded-md bg-white/10 px-2 py-1 text-[11px] font-medium text-white/80">
+                <span className="inline-flex items-center rounded-md bg-white/70 px-2 py-1 text-[11px] font-medium text-amber-800 ring-1 ring-amber-200/50">
                   {app.course.degreeLevel}
                 </span>
               )}
               {app.course?.duration && (
-                <span className="inline-flex items-center rounded-md bg-white/10 px-2 py-1 text-[11px] font-medium text-white/80">
+                <span className="inline-flex items-center rounded-md bg-white/70 px-2 py-1 text-[11px] font-medium text-amber-800 ring-1 ring-amber-200/50">
                   {app.course.duration}
                 </span>
               )}
               {app.university?.ranking != null && (
-                <span className="inline-flex items-center rounded-md bg-amber-500/15 px-2 py-1 text-[11px] font-medium text-amber-400">
+                <span className="inline-flex items-center rounded-md bg-amber-400/15 px-2 py-1 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-300/40">
                   Rank #{app.university.ranking}
                 </span>
               )}
               {app.intake && (
-                <span className="inline-flex items-center rounded-md bg-blue-500/15 px-2 py-1 text-[11px] font-medium text-blue-400">
+                <span className="inline-flex items-center rounded-md bg-blue-500/10 px-2 py-1 text-[11px] font-medium text-blue-600 ring-1 ring-blue-200/40">
                   {app.intake.name} {app.intake.year}
                 </span>
               )}
@@ -326,10 +326,10 @@ function ApplicationDetail({ id }: { id: string }) {
             aria-valuemin={0}
             aria-valuemax={100}
             aria-label="Application progress"
-            className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/10"
+            className="mt-4 h-1.5 overflow-hidden rounded-full bg-amber-100"
           >
             <div
-              className="h-full rounded-full bg-gradient-to-r from-primary to-info transition-[width] motion-reduce:transition-none"
+              className="h-full rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 transition-[width] motion-reduce:transition-none"
               style={{ width: `${app.progress.percent}%` }}
             />
           </div>
