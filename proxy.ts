@@ -3,7 +3,7 @@ import { getToken } from "next-auth/jwt";
 
 const PROTECTED_PREFIXES = ["/admin", "/employee", "/student", "/dashboard"];
 
-/** Coarse per-role home so users never land in another panel's prefix. */
+/** Coarse per-role home for post-login redirect. */
 export function roleHome(role: string | undefined): string {
   if (role === "ADMIN") return "/admin";
   if (role === "EMPLOYEE") return "/employee";
@@ -12,10 +12,11 @@ export function roleHome(role: string | undefined): string {
 
 /**
  * Edge proxy (Next.js 16 replacement for middleware):
- * - unauthenticated users hitting protected routes → /login?callbackUrl=…
- * - authenticated users are kept inside their own role's prefix
- * Role checks here are a fast edge gate only — full authorization is still
- * enforced server-side in layouts and API guards (never only here).
+ * - Unauthenticated users hitting protected routes → /login?callbackUrl=…
+ * - STUDENT role is blocked from /admin and /employee (server-side layouts
+ *   also enforce this, but the proxy catches it early at the edge)
+ * - ADMIN and EMPLOYEE can access BOTH /admin and /employee (server-side
+ *   layouts + RBAC decide what they can actually see/do)
  */
 export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -30,10 +31,18 @@ export default async function proxy(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  const home = roleHome(token.role as string | undefined);
-  if (home !== pathname && !pathname.startsWith(home + "/") && pathname !== "/403") {
-    return NextResponse.redirect(new URL(home, req.url));
+  const role = token.role as string | undefined;
+
+  // STUDENT can only access /student — redirect away from /admin and /employee
+  if (role === "STUDENT") {
+    if (!pathname.startsWith("/student") && pathname !== "/403") {
+      return NextResponse.redirect(new URL("/student", req.url));
+    }
+    return NextResponse.next();
   }
+
+  // ADMIN and EMPLOYEE can access both /admin and /employee.
+  // Full authorization is enforced server-side in layouts + RBAC.
   return NextResponse.next();
 }
 
