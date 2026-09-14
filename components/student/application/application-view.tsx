@@ -18,7 +18,7 @@ import { MobilePage, MobileCard } from "@/components/student/ui";
 import { Skeleton } from "@/components/ui/overlays";
 import { Tabs, TabsContent } from "@/components/ui/overlays";
 import { ApplicationSelector, type ApplicationOption } from "./application-selector";
-import { PipelineProgress, ProgressBar } from "./pipeline-progress";
+import { PipelineProgress } from "./pipeline-progress";
 import {
   CounselorCard,
   CourseCard,
@@ -217,34 +217,124 @@ function ApplicationDetail({ id }: { id: string }) {
 
   return (
     <div className="space-y-4">
-      {/* Header card */}
-      <MobileCard className="space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="font-mono text-xs text-muted-foreground">
+      {/* ── Premium hero header card ──
+          Modern dark-gradient hero with country flag, university name,
+          stage pill, progress ring, and quick-fact chips. Replaces the
+          old flat white header card. */}
+      <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-lg dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
+        {/* Decorative gradient orbs */}
+        <div aria-hidden className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-gradient-to-br from-primary/30 to-info/20 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-16 h-48 w-48 rounded-full bg-gradient-to-tr from-info/20 to-primary/10 blur-3xl" />
+        {/* Subtle dotted pattern */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
+            backgroundSize: "20px 20px",
+          }}
+        />
+
+        <div className="relative p-5 text-white">
+          {/* Top row: app number + stage pill */}
+          <div className="flex items-center justify-between gap-3">
+            <p className="font-mono text-xs text-white/50">
               Application #{app.applicationNumber}
             </p>
-            <h1 className="mt-1 truncate text-lg font-semibold">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/20 px-2.5 py-1 text-xs font-semibold text-primary ring-1 ring-primary/30">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
+              {app.stageLabel}
+            </span>
+          </div>
+
+          {/* Country + university + course */}
+          <div className="mt-3">
+            <h1 className="text-xl font-bold tracking-tight text-white">
               {app.country?.flag ? `${app.country.flag} ` : ""}
               {app.country?.name ?? "—"}
             </h1>
             {app.university?.name && (
-              <p className="truncate text-sm text-muted-foreground">
+              <p className="mt-1 truncate text-sm text-white/70">
                 {app.university.name}
                 {app.course?.name ? ` · ${app.course.name}` : ""}
               </p>
             )}
           </div>
-          <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-            {app.stageLabel}
-          </span>
+
+          {/* Progress ring + quick facts */}
+          <div className="mt-4 flex items-center gap-4">
+            {/* Progress ring */}
+            <div className="relative grid h-16 w-16 shrink-0 place-items-center">
+              <svg className="h-16 w-16 -rotate-90" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" strokeWidth="3" className="text-white/10" />
+                <circle
+                  cx="18"
+                  cy="18"
+                  r="15"
+                  fill="none"
+                  stroke="url(#appProgressGradient)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeDasharray={`${(app.progress.percent / 100) * 94.2} 94.2`}
+                />
+                <defs>
+                  <linearGradient id="appProgressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#D4AF37" />
+                    <stop offset="100%" stopColor="#3b82f6" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div className="absolute flex flex-col items-center">
+                <span className="text-base font-bold leading-none text-white tabular-nums">
+                  {app.progress.percent}%
+                </span>
+                <span className="text-[8px] uppercase tracking-wider text-white/50">
+                  {app.progress.passed}/{app.progress.total}
+                </span>
+              </div>
+            </div>
+
+            {/* Quick fact chips */}
+            <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+              {app.course?.degreeLevel && (
+                <span className="inline-flex items-center rounded-md bg-white/10 px-2 py-1 text-[11px] font-medium text-white/80">
+                  {app.course.degreeLevel}
+                </span>
+              )}
+              {app.course?.duration && (
+                <span className="inline-flex items-center rounded-md bg-white/10 px-2 py-1 text-[11px] font-medium text-white/80">
+                  {app.course.duration}
+                </span>
+              )}
+              {app.university?.ranking != null && (
+                <span className="inline-flex items-center rounded-md bg-amber-500/15 px-2 py-1 text-[11px] font-medium text-amber-400">
+                  Rank #{app.university.ranking}
+                </span>
+              )}
+              {app.intake && (
+                <span className="inline-flex items-center rounded-md bg-blue-500/15 px-2 py-1 text-[11px] font-medium text-blue-400">
+                  {app.intake.name} {app.intake.year}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Linear progress bar (in addition to the ring — gives a sense of motion) */}
+          <div
+            role="progressbar"
+            aria-valuenow={app.progress.percent}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Application progress"
+            className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/10"
+          >
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-primary to-info transition-[width] motion-reduce:transition-none"
+              style={{ width: `${app.progress.percent}%` }}
+            />
+          </div>
         </div>
-        <ProgressBar
-          percent={app.progress.percent}
-          isComplete={app.progress.isComplete}
-          label="Application Progress"
-        />
-      </MobileCard>
+      </div>
 
       {/* Next action sticky banner */}
       <NextActionBanner app={app} />
