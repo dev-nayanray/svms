@@ -6,10 +6,13 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
-  ArrowRight,
   Compass,
+  FileUp,
   FolderOpen,
+  MessageSquare,
   RefreshCw,
+  Stamp,
+  Wallet,
   WifiOff,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
@@ -353,7 +356,12 @@ function ApplicationDetail({ id }: { id: string }) {
         {/* Overview tab — always visible on mobile, primary tab on desktop */}
         <TabsContent value="overview" className="space-y-4 pt-4">
           <MobileCard className="space-y-3">
-            <h2 className="text-sm font-semibold">Pipeline</h2>
+            <div className="flex items-center gap-2">
+              <span className="grid h-7 w-7 place-items-center rounded-lg bg-amber-500/10 text-amber-600">
+                <Compass className="h-3.5 w-3.5" aria-hidden />
+              </span>
+              <h2 className="text-sm font-semibold">Application Pipeline</h2>
+            </div>
             {/* Vertical pipeline on mobile, horizontal on desktop */}
             <div className="md:hidden">
               <PipelineProgress stages={app.stages} variant="vertical" />
@@ -414,12 +422,17 @@ function ApplicationDetail({ id }: { id: string }) {
         <CounselorCard app={app} />
       </div>
 
-      {/* CTA row */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <QuickCta href="/student/documents" label="Upload Document" icon={<FolderOpen className="h-4 w-4" aria-hidden />} />
-        <QuickCta href="/student/payments" label="Pay Outstanding" icon={<ArrowRight className="h-4 w-4" aria-hidden />} />
-        <QuickCta href="/student/messages" label="Message Counselor" icon={<ArrowRight className="h-4 w-4" aria-hidden />} />
-        <QuickCta href="/student/visa" label="Visa Info" icon={<ArrowRight className="h-4 w-4" aria-hidden />} />
+      {/* CTA row — quick actions with icons */}
+      <div className="space-y-2">
+        <h3 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Quick actions
+        </h3>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <QuickCta href="/student/documents" label="Upload Document" icon={<FileUp className="h-3.5 w-3.5" aria-hidden />} />
+          <QuickCta href="/student/payments" label="Pay Outstanding" icon={<Wallet className="h-3.5 w-3.5" aria-hidden />} />
+          <QuickCta href="/student/messages" label="Message Counselor" icon={<MessageSquare className="h-3.5 w-3.5" aria-hidden />} />
+          <QuickCta href="/student/visa" label="Visa Info" icon={<Stamp className="h-3.5 w-3.5" aria-hidden />} />
+        </div>
       </div>
     </div>
   );
@@ -429,10 +442,12 @@ function QuickCta({ href, label, icon }: { href: string; label: string; icon: Re
   return (
     <Link
       href={href}
-      className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary"
+      className="group flex min-h-[48px] flex-col items-center justify-center gap-1 rounded-xl border border-border bg-card px-3 py-2 transition-all hover:border-amber-300 hover:bg-amber-50/50 focus-visible:outline-2 focus-visible:outline-primary active:scale-95 dark:hover:bg-amber-950/10"
     >
-      {icon}
-      {label}
+      <span className="grid h-7 w-7 place-items-center rounded-lg bg-amber-500/10 text-amber-600 transition-transform group-hover:scale-110">
+        {icon}
+      </span>
+      <span className="text-[11px] font-medium leading-tight">{label}</span>
     </Link>
   );
 }

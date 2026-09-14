@@ -4,8 +4,11 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import {
+  AlertTriangle,
+  ArrowRight,
   CalendarClock,
   ClipboardList,
+  Clock,
   CreditCard,
   FileText,
   GraduationCap,
@@ -762,22 +765,51 @@ export function NotesCard({ app }: { app: AppView }) {
 /** Next-action sticky banner — rendered at the top of the page. */
 export function NextActionBanner({ app }: { app: AppView }) {
   const action = app.nextAction;
-  const toneCls =
-    action.priority === "HIGH"
-      ? "border-warning/40 bg-warning/10"
-      : action.priority === "MEDIUM"
-        ? "border-info/40 bg-info/10"
-        : "border-border bg-muted/30";
+  const isHigh = action.priority === "HIGH";
+  const isMedium = action.priority === "MEDIUM";
+
+  // Premium treatment: each priority gets its own accent color + icon bg
+  const toneCls = isHigh
+    ? "border-red-200 bg-red-50 dark:bg-red-950/20"
+    : isMedium
+      ? "border-amber-200 bg-amber-50 dark:bg-amber-950/20"
+      : "border-blue-200 bg-blue-50 dark:bg-blue-950/20";
+  const iconBgCls = isHigh
+    ? "bg-red-500 text-white"
+    : isMedium
+      ? "bg-amber-500 text-white"
+      : "bg-blue-500 text-white";
+  const labelCls = isHigh
+    ? "text-red-700 dark:text-red-300"
+    : isMedium
+      ? "text-amber-700 dark:text-amber-300"
+      : "text-blue-700 dark:text-blue-300";
+
   return (
-    <div className={cn("flex items-center justify-between gap-3 rounded-lg border p-3", toneCls)}>
+    <div className={cn("flex items-center gap-3 rounded-2xl border p-3.5", toneCls)}>
+      {/* Priority icon badge */}
+      <span className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-xl", iconBgCls)}>
+        {isHigh ? (
+          <AlertTriangle className="h-5 w-5" aria-hidden />
+        ) : isMedium ? (
+          <Clock className="h-5 w-5" aria-hidden />
+        ) : (
+          <ArrowRight className="h-5 w-5" aria-hidden />
+        )}
+      </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold">{action.title}</p>
-        <p className="text-xs text-muted-foreground">{action.reason}</p>
+        <p className={cn("text-[10px] font-bold uppercase tracking-wider", labelCls)}>
+          {isHigh ? "Urgent" : isMedium ? "Next up" : "Suggested"}
+        </p>
+        <p className="truncate text-sm font-semibold text-slate-900 dark:text-foreground">
+          {action.title}
+        </p>
+        <p className="truncate text-xs text-muted-foreground">{action.reason}</p>
       </div>
       <NavButton
         href={action.ctaHref}
         size="sm"
-        variant={action.priority === "HIGH" ? "default" : "outline"}
+        variant={isHigh ? "default" : "outline"}
       >
         {action.ctaLabel}
       </NavButton>
