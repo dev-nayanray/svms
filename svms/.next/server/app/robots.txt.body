@@ -1,0 +1,8 @@
+User-Agent: *
+Allow: /
+Disallow: /api/
+Disallow: /employee/
+Disallow: /admin/
+Disallow: /student/
+
+Sitemap: http://localhost:3000/sitemap.xml

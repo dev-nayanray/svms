@@ -1,0 +1,1 @@
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,70535,e=>{"use strict";var a=e.i(51137);let l={name:"loader-circle",size:24,node:[["path",{d:"M21 12a9 9 0 1 1-6.219-8.56",key:"13zald"}]],aliases:["loader-2"]};l.node;let o=(0,a.default)(l);e.s(["Loader2",0,o],70535)}]);

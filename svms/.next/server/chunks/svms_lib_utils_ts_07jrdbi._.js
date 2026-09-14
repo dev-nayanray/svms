@@ -1,0 +1,3 @@
+module.exports=[28837,e=>{"use strict";e.s(["formatMoney",0,function(e,r="EUR"){return null==e?"—":`${r} ${e.toLocaleString("en-US",{maximumFractionDigits:2})}`},"slugify",0,function(e){return e.toLowerCase().trim().replace(/[^a-z0-9\s-]/g,"").replace(/\s+/g,"-").replace(/-+/g,"-")},"titleCase",0,function(e){return e.replace(/_/g," ").toLowerCase().replace(/\b\w/g,e=>e.toUpperCase())}])}];
+
+//# sourceMappingURL=svms_lib_utils_ts_07jrdbi._.js.map

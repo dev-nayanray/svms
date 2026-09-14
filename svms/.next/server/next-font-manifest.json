@@ -1,0 +1,171 @@
+{
+  "app": {
+    "[project]/svms/app/(auth)/login/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/(marketing)/about/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/(marketing)/contact/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/(marketing)/courses/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/(marketing)/features/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/(marketing)/home/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/(marketing)/how-it-works/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/(marketing)/resources/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/(marketing)/study-in-europe/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/(marketing)/universities/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/403/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/_not-found/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/applications/[id]/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/applications/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/appointments/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/courses/[id]/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/courses/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/dashboard/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/documents/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/intakes/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/invoices/[id]/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/invoices/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/leads/[id]/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/leads/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/messages/[conversationId]/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/messages/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/notifications/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/payments/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/performance/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/profile/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/reports/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/settings/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/students/[id]/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/students/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/tasks/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/universities/[id]/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/universities/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/visa/[id]/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/employee/visa/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ],
+    "[project]/svms/app/page": [
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/2a65768255d6b625-s.p.3u4lli0-axodc.woff2"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pages": {},
+  "pagesUsingSizeAdjust": false
+}
