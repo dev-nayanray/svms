@@ -277,6 +277,7 @@ export function StudentAppShell({
             unread={unread}
             userName={userName}
             profilePhotoUrl={profilePhotoUrl}
+            onSearchOpen={openSearch}
             onSignOut={() => signOut({ callbackUrl: "/login" })}
           />
         </aside>
@@ -404,12 +405,14 @@ function DesktopNav({
   unread,
   userName,
   profilePhotoUrl,
+  onSearchOpen,
   onSignOut,
 }: {
   pathname: string;
   unread: number;
   userName: string;
   profilePhotoUrl?: string | null;
+  onSearchOpen: () => void;
   onSignOut: () => void;
 }) {
   const { status: realtimeStatus } = useRealtime();
@@ -431,30 +434,28 @@ function DesktopNav({
 
   return (
     <div className="flex h-full flex-col">
-      {/* ── Premium top section — brand + avatar + name ── */}
+      {/* ── Premium top section — search + user card ──
+          The brand is NOT duplicated here — it lives in the header
+          on the home page (and the back-arrow takes you home on
+          inner pages). The sidebar starts directly with search +
+          the user card, which is what students need quick access to. */}
       <div className="border-b border-border/60 p-3">
-        <Link
-          href="/student"
-          aria-label="Home"
-          className="group mb-3 flex items-center gap-2.5 rounded-xl transition-all hover:bg-muted/50 active:scale-[0.98]"
+        {/* Search button — full-width pill that opens the global search overlay.
+            Shows the Cmd+K hint on the right so the shortcut is discoverable. */}
+        <button
+          type="button"
+          onClick={onSearchOpen}
+          className="group mb-2 flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-card/60 px-2.5 text-sm text-muted-foreground transition-all hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-2 focus-visible:outline-primary"
+          aria-label="Search (Cmd+K)"
         >
-          <span className="relative grid h-9 w-9 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-primary to-info shadow-sm ring-1 ring-primary/20 transition-transform group-hover:scale-105">
-            <Image
-              src="/euroscope-mark.png"
-              alt="Euroscope"
-              fill
-              className="object-cover object-top p-1.5"
-            />
+          <Search className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />
+          <span className="min-w-0 flex-1 truncate text-left text-xs font-medium">
+            Search…
           </span>
-          <span className="flex flex-col leading-none">
-            <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-sm font-bold tracking-tight text-transparent">
-              {APP_NAME}
-            </span>
-            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-              Student Portal
-            </span>
-          </span>
-        </Link>
+          <kbd className="hidden shrink-0 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground lg:inline">
+            ⌘K
+          </kbd>
+        </button>
 
         {/* User card — avatar + name + live indicator */}
         <Link
