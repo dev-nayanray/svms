@@ -32,7 +32,7 @@ function isInputFocused(): boolean {
   if (!el) return false;
   const tag = el.tagName.toLowerCase();
   if (tag === "input" || tag === "textarea" || tag === "select") return true;
-  if (el.isContentEditable) return true;
+  if ((el as HTMLElement).isContentEditable) return true;
   return false;
 }
 
@@ -88,6 +88,7 @@ export function StudentAppShell({
   const { status: realtimeStatus } = useRealtime();
   const [moreOpen, setMoreOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchInstance, setSearchInstance] = useState(0);
   const isHome = pathname === "/student" || pathname.startsWith("/student/dashboard");
   const isMoreActive = STUDENT_MORE.some((m) => isActivePath(pathname, m.href));
 
@@ -100,19 +101,26 @@ export function StudentAppShell({
       // Cmd/Ctrl+K — open search
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        setSearchOpen(true);
+        openSearch();
         return;
       }
       // Forward-slash opens search when not focused in an input —
       // the GitHub / Linear / Notion pattern. Catches users mid-flow.
       if (e.key === "/" && !isInputFocused()) {
         e.preventDefault();
-        setSearchOpen(true);
+        openSearch();
       }
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  // Open search — bumps the key so the overlay remounts with fresh
+  // state (clears the query + debouncedQuery from the previous session).
+  function openSearch() {
+    setSearchInstance((n) => n + 1);
+    setSearchOpen(true);
+  }
 
   const initials = userName
     .split(/\s+/)
@@ -132,7 +140,7 @@ export function StudentAppShell({
       <OfflineBanner />
 
       {/* ── Global search overlay ── */}
-      <GlobalSearchOverlay open={searchOpen} onOpenChange={setSearchOpen} />
+      <GlobalSearchOverlay key={searchInstance} open={searchOpen} onOpenChange={setSearchOpen} />
 
       {/* ── Mobile header — premium glassmorphism + gradient brand ── */}
       <header
@@ -200,7 +208,7 @@ export function StudentAppShell({
 
           {/* ── Search button — opens the global search overlay ── */}
           <button
-            onClick={() => setSearchOpen(true)}
+            onClick={openSearch}
             aria-label="Search (Cmd+K)"
             className="group grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary active:scale-95"
           >

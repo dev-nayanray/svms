@@ -106,16 +106,15 @@ export function GlobalSearchOverlay({
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
-  // Auto-focus the input when the overlay opens + clear state on close.
+  // Auto-focus the input when the overlay opens. State clearing is
+  // handled by the parent via the `key` prop — each open bumps the
+  // key, which remounts this component with fresh useState initializers.
+  // This avoids the "setState in effect" anti-pattern.
   useEffect(() => {
-    if (open) {
-      // Small delay so Radix's focus-trap setup completes first.
-      const t = setTimeout(() => inputRef.current?.focus(), 50);
-      return () => clearTimeout(t);
-    }
-    // Clear query when closing so the next open starts fresh.
-    setQuery("");
-    setDebouncedQuery("");
+    if (!open) return;
+    // Small delay so Radix's focus-trap setup completes first.
+    const t = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(t);
   }, [open]);
 
   // Debounce the query — 250ms is enough that fast typing doesn't

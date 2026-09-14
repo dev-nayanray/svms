@@ -53,7 +53,6 @@ export async function GET(req: NextRequest) {
     const q = params.q;
     const limit = params.limit;
     const studentId = g.student.id;
-    const userId = g.userId;
 
     // Fire all 5 queries in parallel — total latency = max(latency),
     // not sum(latency). Each query is independent and scoped by the
