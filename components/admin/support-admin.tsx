@@ -85,7 +85,8 @@ export function SupportAdmin() {
     {
       label: "View",
       onClick: (s: SupportRequest) => {
-        router.push(`/admin/support/${s.id}`);
+        const base = window.location.pathname.startsWith("/employee") ? "/employee" : "/admin";
+        router.push(`${base}/support/${s.id}`);
       },
     },
     {

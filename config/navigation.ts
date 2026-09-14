@@ -80,6 +80,8 @@ export const EMPLOYEE_NAV: NavItem[] = [
   { href: "/employee/leads", label: "Leads", icon: "Target" },
   { href: "/employee/applications", label: "Applications", icon: "FolderKanban" },
   { href: "/employee/documents", label: "Documents", icon: "FileText" },
+  { href: "/employee/appointments", label: "Appointments", icon: "CalendarClock" },
+  { href: "/employee/support", label: "Support", icon: "LifeBuoy" },
   { href: "/employee/universities", label: "Universities", icon: "Building2" },
   { href: "/employee/courses", label: "Courses", icon: "BookOpen" },
   { href: "/employee/tasks", label: "Tasks", icon: "CheckSquare" },
