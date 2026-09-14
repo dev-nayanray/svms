@@ -3,7 +3,7 @@ import { ok, handleApiError, HttpError } from "@/lib/api";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { hasPermission } from "@/lib/permissions";
-import { cancelInvoice } from "@/lib/services/invoice-cases";
+import { convertLeadToStudent } from "@/lib/services/lead-cases";
 
 export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
@@ -11,7 +11,7 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     if (!session?.user?.id) throw new HttpError(401, "UNAUTHORIZED", "Authentication required");
     const role = (session.user as { role?: string }).role;
     if (role !== "EMPLOYEE" && role !== "ADMIN") throw new HttpError(403, "FORBIDDEN", "Employees only");
-    if (!hasPermission(role, "payments.read")) throw new HttpError(403, "FORBIDDEN", "Missing payments.read permission");
+    if (!hasPermission(role, "leads.manage")) throw new HttpError(403, "FORBIDDEN", "Missing leads.manage permission");
 
     let employeeId: string | null = null;
     if (role === "EMPLOYEE") {
@@ -21,8 +21,8 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     }
     const scope = { isAdmin: role === "ADMIN", userId: session.user.id, employeeId };
     const { id } = await ctx.params;
-    await cancelInvoice(scope, id, { id: session.user.id });
-    return ok({ ok: true });
+    const result = await convertLeadToStudent(scope, id, { id: session.user.id });
+    return ok(result, { status: 201 });
   } catch (err) {
     return handleApiError(err);
   }

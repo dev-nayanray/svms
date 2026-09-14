@@ -4,21 +4,17 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { hasPermission } from "@/lib/permissions";
 import { z } from "zod";
-import { listInvoices, createInvoice, type InvoiceListFilters } from "@/lib/services/invoice-cases";
+import { listLeads, createLead, type LeadListFilters } from "@/lib/services/lead-cases";
 
 const createSchema = z.object({
-  studentId: z.string().min(1, "Student is required"),
-  applicationId: z.string().optional(),
-  items: z.array(z.object({
-    description: z.string().min(1, "Description required"),
-    quantity: z.number().int().positive(),
-    unitPrice: z.number().nonnegative(),
-  })).min(1, "At least one item required"),
-  discount: z.number().nonnegative().default(0),
-  taxRate: z.number().nonnegative().max(100).default(0),
-  currency: z.string().default("EUR"),
-  dueDate: z.string().datetime().optional(),
-  notes: z.string().max(2000).optional(),
+  name: z.string().min(1, "Name is required").max(200),
+  phone: z.string().max(40).optional(),
+  email: z.string().email().optional().or(z.literal("")),
+  interestedCountry: z.string().max(100).optional(),
+  preferredCourse: z.string().max(200).optional(),
+  source: z.string().max(50).optional(),
+  notes: z.string().max(5000).optional(),
+  nextFollowUp: z.string().datetime().optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -36,12 +32,12 @@ export async function GET(req: NextRequest) {
     }
     const scope = { isAdmin: role === "ADMIN", userId: session.user.id, employeeId };
     const sp = req.nextUrl.searchParams;
-    const result = await listInvoices(scope, {
+    const result = await listLeads(scope, {
       filters: {
         search: sp.get("search") ?? undefined,
         status: sp.get("status") ?? undefined,
-        studentId: sp.get("studentId") ?? undefined,
-        applicationId: sp.get("applicationId") ?? undefined,
+        source: sp.get("source") ?? undefined,
+        employeeId: sp.get("employeeId") ?? undefined,
       },
       page: Number(sp.get("page") ?? 1),
       pageSize: Number(sp.get("pageSize") ?? 20),
@@ -58,7 +54,7 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) throw new HttpError(401, "UNAUTHORIZED", "Authentication required");
     const role = (session.user as { role?: string }).role;
     if (role !== "EMPLOYEE" && role !== "ADMIN") throw new HttpError(403, "FORBIDDEN", "Employees only");
-    if (!hasPermission(role, "payments.read")) throw new HttpError(403, "FORBIDDEN", "Missing payments.read permission");
+    if (!hasPermission(role, "leads.manage")) throw new HttpError(403, "FORBIDDEN", "Missing leads.manage permission");
 
     let employeeId: string | null = null;
     if (role === "EMPLOYEE") {
@@ -68,20 +64,12 @@ export async function POST(req: NextRequest) {
     }
     const scope = { isAdmin: role === "ADMIN", userId: session.user.id, employeeId };
     const body = createSchema.parse(await req.json());
-    const result = await createInvoice(scope, {
-      studentId: body.studentId,
-      applicationId: body.applicationId,
-      items: body.items,
-      discount: body.discount,
-      taxRate: body.taxRate,
-      currency: body.currency,
-      dueDate: body.dueDate ? new Date(body.dueDate) : undefined,
-      notes: body.notes,
-    }, {
-      id: session.user.id,
-      ipAddress: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip"),
-      userAgent: req.headers.get("user-agent"),
-    });
+    const result = await createLead(scope, {
+      name: body.name, phone: body.phone, email: body.email || undefined,
+      interestedCountry: body.interestedCountry, preferredCourse: body.preferredCourse,
+      source: body.source, notes: body.notes,
+      nextFollowUp: body.nextFollowUp ? new Date(body.nextFollowUp) : undefined,
+    }, { id: session.user.id });
     return ok(result, { status: 201 });
   } catch (err) {
     return handleApiError(err);

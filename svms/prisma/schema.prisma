@@ -115,17 +115,32 @@ model Lead {
   phone              String?
   email              String?
   interestedCountry  String?
+  preferredCourse    String?
   status             String    @default("NEW") // NEW | CONTACTED | COUNSELING | QUALIFIED | CONVERTED | LOST
   source             String?
   notes              String?
+  nextFollowUp       DateTime?
   assignedEmployeeId String?   @db.ObjectId
   assignedEmployee   Employee? @relation(fields: [assignedEmployeeId], references: [id])
   convertedStudentId String?   @db.ObjectId
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
+  leadNotes         LeadNote[]
+
   @@index([status])
   @@index([assignedEmployeeId])
+}
+
+model LeadNote {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  leadId      String   @db.ObjectId
+  lead        Lead     @relation(fields: [leadId], references: [id])
+  authorId    String   @db.ObjectId
+  body        String
+  createdAt   DateTime @default(now())
+
+  @@index([leadId])
 }
 
 // ─────────────────────────────────────────────
