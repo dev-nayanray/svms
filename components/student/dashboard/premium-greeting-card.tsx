@@ -67,29 +67,29 @@ export function PremiumGreetingCard({
 
   return (
     <section aria-labelledby="greeting" className="relative">
-      {/* ── Premium warm cream hero card ── */}
+      {/* ── Premium white hero card ──
+          Pure white background with subtle gold accents — clean,
+          modern, and matches the Euroscope gold brand identity. */}
       <div
         className={cn(
-          "relative overflow-hidden rounded-3xl border border-amber-200/60 shadow-lg",
-          // Warm cream gradient — matches the Euroscope gold brand
-          "bg-gradient-to-br from-amber-50 via-white to-yellow-50",
-          "dark:from-amber-950/30 dark:via-card dark:to-yellow-950/20",
+          "relative overflow-hidden rounded-3xl border border-amber-200/50",
+          "bg-white dark:bg-card",
         )}
       >
-        {/* ── Decorative gold gradient orbs ── */}
+        {/* ── Decorative gold gradient orbs (subtle, no shadow) ── */}
         <div
           aria-hidden
-          className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-gradient-to-br from-amber-300/40 to-yellow-200/30 blur-3xl"
+          className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-gradient-to-br from-amber-200/30 to-yellow-100/20 blur-3xl"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute -bottom-24 -left-16 h-48 w-48 rounded-full bg-gradient-to-tr from-yellow-200/30 to-amber-200/20 blur-3xl"
+          className="pointer-events-none absolute -bottom-24 -left-16 h-48 w-48 rounded-full bg-gradient-to-tr from-yellow-100/20 to-amber-100/15 blur-3xl"
         />
 
         {/* ── Subtle dotted pattern overlay ── */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.03]"
+          className="pointer-events-none absolute inset-0 opacity-[0.02]"
           style={{
             backgroundImage: "radial-gradient(circle, #92400e 1px, transparent 1px)",
             backgroundSize: "20px 20px",
