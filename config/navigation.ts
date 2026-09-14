@@ -38,6 +38,8 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
     label: "Operations",
     items: [
       { href: "/admin/tasks", label: "Tasks", icon: "CheckSquare" },
+      { href: "/admin/appointments", label: "Appointments", icon: "CalendarClock" },
+      { href: "/admin/support", label: "Support", icon: "LifeBuoy" },
       { href: "/admin/messages", label: "Messages", icon: "MessageSquare" },
       { href: "/admin/notifications", label: "Notifications", icon: "Bell" },
     ],

@@ -21,6 +21,7 @@ import {
   GitBranch,
   ShieldCheck,
   Megaphone,
+  LifeBuoy,
   type LucideIcon,
 } from "lucide-react";
 
@@ -51,6 +52,7 @@ export const NAV_ICONS = {
   GitBranch,
   ShieldCheck,
   Megaphone,
+  LifeBuoy,
 } satisfies Record<string, LucideIcon>;
 
 export type NavIconName = keyof typeof NAV_ICONS;
