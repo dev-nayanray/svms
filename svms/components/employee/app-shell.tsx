@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
-  Menu, X, Search, Sun, Moon, ChevronDown, LogOut, UserRound,
+  Menu, X, Search, Sun, Moon, Monitor, ChevronDown, LogOut, UserRound,
   Settings, HelpCircle, Compass,
 } from "lucide-react";
 import { cn, initials } from "@/lib/utils";
@@ -16,6 +16,7 @@ import {
 import { PAGE_TITLES, type NavGroup } from "@/config/employee-nav";
 import { NotificationBell } from "@/components/employee/notifications/notification-bell";
 import type { NotificationRow } from "@/lib/services/notification-cases";
+import type { Theme } from "@/lib/services/settings-cases";
 
 export function EmployeeAppShell({
   userName,
@@ -25,6 +26,7 @@ export function EmployeeAppShell({
   navGroups,
   initialUnreadCount,
   initialRecentNotifications,
+  initialTheme,
   children,
 }: {
   userName: string;
@@ -35,16 +37,63 @@ export function EmployeeAppShell({
   navGroups: NavGroup[];
   initialUnreadCount: number;
   initialRecentNotifications: NotificationRow[];
+  initialTheme: Theme;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<Theme>(initialTheme);
 
-  const toggleTheme = () => {
-    const next = theme === "light" ? "dark" : "light";
+  // Apply theme on mount + whenever it changes.
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme]);
+
+  // Listen for OS theme changes when in "system" mode.
+  useEffect(() => {
+    if (theme !== "system") return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = () => applyTheme("system");
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [theme]);
+
+  // Listen for cross-tab preference changes (settings page → shell sync).
+  useEffect(() => {
+    const handler = (e: StorageEvent) => {
+      if (e.key === "euroscope:theme" && e.newValue) {
+        try {
+          const next = JSON.parse(e.newValue) as Theme;
+          if (["system", "light", "dark"].includes(next)) {
+            setTheme(next);
+          }
+        } catch {
+          // ignore malformed value
+        }
+      }
+    };
+    window.addEventListener("storage", handler);
+    return () => window.removeEventListener("storage", handler);
+  }, []);
+
+  const cycleTheme = () => {
+    // system → light → dark → system
+    const order: Theme[] = ["system", "light", "dark"];
+    const next = order[(order.indexOf(theme) + 1) % order.length];
     setTheme(next);
-    document.documentElement.classList.toggle("dark", next === "dark");
+    // Persist via API + storage event so other tabs pick it up.
+    try {
+      localStorage.setItem("euroscope:theme", JSON.stringify(next));
+    } catch {
+      // ignore — read-only storage
+    }
+    void fetch("/api/employee/settings/theme", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ theme: next }),
+    }).catch(() => {
+      // best-effort — the local state already reflects the change
+    });
   };
 
   const pageTitle = derivePageTitle(pathname);
@@ -100,11 +149,11 @@ export function EmployeeAppShell({
             <GlobalSearch />
 
             <button
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
+              onClick={cycleTheme}
+              aria-label={`Toggle theme (currently ${theme})`}
               className="grid h-9 w-9 place-items-center rounded-md text-muted-foreground hover:bg-muted"
             >
-              {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              {theme === "light" ? <Sun className="h-4 w-4" /> : theme === "dark" ? <Moon className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
             </button>
 
             <NotificationBell
@@ -257,4 +306,25 @@ function derivePageTitle(pathname: string): string {
   const seg = pathname.split("/")[2] ?? "";
   if (!seg) return "Dashboard";
   return seg.charAt(0).toUpperCase() + seg.slice(1).replace(/-/g, " ");
+}
+
+/**
+ * Apply the theme to the document root. "system" follows the OS
+ * prefers-color-scheme; "light" and "dark" are explicit.
+ *
+ * Exported separately so the settings page can reuse it for the
+ * immediate-visual-feedback path before the API round-trip completes.
+ */
+export function applyTheme(theme: Theme) {
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  if (theme === "dark") {
+    root.classList.add("dark");
+  } else if (theme === "light") {
+    root.classList.remove("dark");
+  } else {
+    // system — respect prefers-color-scheme
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    root.classList.toggle("dark", prefersDark);
+  }
 }

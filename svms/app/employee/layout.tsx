@@ -5,6 +5,7 @@ import { EMPLOYEE_NAV_GROUPS, type NavGroup } from "@/config/employee-nav";
 import { hasPermission, type PermissionKey } from "@/lib/permissions";
 import { EmployeeAppShell } from "@/components/employee/app-shell";
 import { getUnreadCount, getRecentNotifications } from "@/lib/services/notification-cases";
+import { getSettings, DEFAULT_THEME, type Theme } from "@/lib/services/settings-cases";
 
 export const dynamic = "force-dynamic";
 
@@ -18,9 +19,10 @@ export const dynamic = "force-dynamic";
  * The client-side shell receives only the filtered navigation config —
  * permission keys never leak to the browser.
  *
- * The shell also receives the initial notification badge count and the
- * 5 most recent notifications — these are loaded server-side to avoid a
- * flash of "0 unread" on every page navigation.
+ * The shell also receives the initial notification badge count, the 5
+ * most recent notifications, and the user's theme preference — all
+ * loaded server-side to avoid a flash of wrong state on every page
+ * navigation.
  */
 export default async function EmployeeLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -49,23 +51,21 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
     items: g.items.filter((item) => !item.permission || hasPermission(role, item.permission as PermissionKey)),
   })).filter((g) => g.items.length > 0);
 
-  // Load initial notification state for the header bell.
+  // Load initial notification state for the header bell + the user's
+  // theme preference (server-side, so no flash).
   const scope = { isAdmin: role === "ADMIN", userId: session.user.id, employeeId };
-  let [unreadCount, recentNotifications] = await Promise.all([
+  const [unreadCountRaw, recentNotificationsRaw, settings] = await Promise.all([
     getUnreadCount(scope),
     getRecentNotifications(scope, 5),
+    getSettings(session.user.id).catch(() => null),
   ]);
-  // Defensive: if either call throws, fall back to empty state so the
-  // shell still renders. (getUnreadCount + getRecentNotifications should
-  // not throw, but we never want a notification failure to break the
-  // layout.)
-  void unreadCount; void recentNotifications;
-  if (!unreadCount || typeof unreadCount.total !== "number") {
-    unreadCount = { total: 0, byCategory: {} as never };
-  }
-  if (!Array.isArray(recentNotifications)) {
-    recentNotifications = [];
-  }
+  // Defensive: if any call throws, fall back to empty state so the
+  // shell still renders.
+  const unreadCount = unreadCountRaw && typeof unreadCountRaw.total === "number"
+    ? unreadCountRaw
+    : { total: 0, byCategory: {} as never };
+  const recentNotifications = Array.isArray(recentNotificationsRaw) ? recentNotificationsRaw : [];
+  const theme: Theme = settings?.theme ?? DEFAULT_THEME;
 
   return (
     <EmployeeAppShell
@@ -77,6 +77,7 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
       navGroups={visibleGroups}
       initialUnreadCount={unreadCount.total}
       initialRecentNotifications={recentNotifications}
+      initialTheme={theme}
     >
       {children}
     </EmployeeAppShell>
