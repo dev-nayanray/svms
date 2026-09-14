@@ -810,3 +810,17 @@ model StudentPreference {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }
+
+// ─────────────────────────────────────────────
+// Site Settings (branding, logo, contact info)
+// ─────────────────────────────────────────────
+
+model SiteSetting {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  key             String   @unique // 'brand_logo' | 'brand_logo_light' | 'brand_name' | etc.
+  value           String?  // URL for logos, text for strings
+  label           String?  // human-readable label shown in admin
+  type            String   @default("text") // text | image | url | color
+  updatedAt       DateTime @updatedAt
+  updatedById     String?  @db.ObjectId
+}

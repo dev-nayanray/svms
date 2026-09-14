@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   Megaphone,
   LifeBuoy,
+  Image,
   type LucideIcon,
 } from "lucide-react";
 
@@ -53,6 +54,7 @@ export const NAV_ICONS = {
   ShieldCheck,
   Megaphone,
   LifeBuoy,
+  Image,
 } satisfies Record<string, LucideIcon>;
 
 export type NavIconName = keyof typeof NAV_ICONS;
