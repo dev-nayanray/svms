@@ -452,15 +452,18 @@ model Payment {
   invoiceId          String?   @db.ObjectId
   amount             Float
   currency           String    @default("EUR")
-  paymentMethod      String    @default("OTHER") // CASH | BANK_TRANSFER | CARD | OTHER
+  paymentMethod      String    @default("OTHER") // CASH | BANK_TRANSFER | BKASH | NAGAD | CARD | OTHER
   transactionReference String?
   paymentDate        DateTime?
-  status             String    @default("PENDING") // PENDING | PAID | REFUNDED | CANCELLED
+  status             String    @default("PENDING") // PENDING | PAID | PARTIAL | REFUNDED | CANCELLED
+  recordedById       String?   @db.ObjectId
+  refundReason       String?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
   @@index([studentId])
   @@index([status])
+  @@index([recordedById])
 }
 
 model Invoice {
