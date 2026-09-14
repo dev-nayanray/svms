@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "@/lib/validations/auth";
@@ -15,6 +15,7 @@ export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const { update } = useSession();
 
   const {
     register,
@@ -34,8 +35,18 @@ export function LoginForm() {
       setError("Invalid email or password");
       return;
     }
-    // Role-based redirect happens on the home route
-    router.push(params.get("callbackUrl") ?? "/");
+    // Force a session refresh so the client has the updated role
+    await update();
+    // If there's a callbackUrl, use it (e.g. the user tried to access
+    // /employee/appointments directly). Otherwise redirect to the
+    // role-based home via the root page.
+    const callbackUrl = params.get("callbackUrl");
+    if (callbackUrl && callbackUrl !== "/") {
+      router.push(callbackUrl);
+    } else {
+      // Go to the root page which redirects based on role
+      router.push("/");
+    }
     router.refresh();
   };
 
