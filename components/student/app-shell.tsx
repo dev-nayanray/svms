@@ -179,12 +179,15 @@ export function StudentAppShell({
               aria-label="Home"
               className="group flex items-center gap-2.5 rounded-xl transition-all focus-visible:outline-2 focus-visible:outline-primary active:scale-[0.98]"
             >
-              <span className="relative grid h-9 w-9 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-primary to-info shadow-sm ring-1 ring-primary/20 transition-transform group-hover:scale-105">
+              {/* Logo icon — transparent PNG, no background container.
+                  The new mark has its own gold gradient on transparent
+                  bg, so we show it directly without a colored wrapper. */}
+              <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg transition-transform group-hover:scale-105">
                 <Image
                   src="/euroscope-mark.png"
                   alt="Euroscope"
                   fill
-                  className="object-cover object-top p-1.5"
+                  className="object-contain"
                 />
               </span>
               <span className="flex flex-col leading-none">

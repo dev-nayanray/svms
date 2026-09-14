@@ -4,15 +4,16 @@ import { cn } from "@/lib/utils";
 /**
  * EuroscopeLogo — the official brand logo.
  *
- * Uses the actual Euroscope emblem (a black circular badge with gold
- * laurel wreath, "EE" monogram, and "EUROSCOPE" wordmark — a premium
- * European heritage seal style).
+ * Uses the modern Euroscope mark (gold laurel wreath + "E" monogram
+ * on transparent background — no circle, no black bg). Premium,
+ * clean, works on both light and dark surfaces.
  *
  * VARIANTS
  * =========
- *  - `mark`      — just the circular emblem (for navbar, header)
+ *  - `mark`      — just the emblem icon (for navbar, header)
  *  - `full`      — the full logo with wordmark text (for footer, hero)
- *  - `markLight` — the emblem on a white rounded container (for dark backgrounds)
+ *  - `markLight` — same as mark (kept for backwards compat — the new
+ *                  transparent mark works on dark backgrounds natively)
  *
  * SIZES
  * ======
@@ -41,7 +42,7 @@ export function EuroscopeLogo({
   // Full logo (emblem + wordmark text built into the image)
   if (variant === "full") {
     return (
-      <div className={cn("relative", s.full, className)} style={{ aspectRatio: "221 / 205" }}>
+      <div className={cn("relative", s.full, className)} style={{ aspectRatio: "1024 / 320" }}>
         <Image
           src="/euroscope-logo-full.png"
           alt="Euroscope"
@@ -53,37 +54,16 @@ export function EuroscopeLogo({
     );
   }
 
-  // Mark on a white rounded container (for dark backgrounds)
-  if (variant === "markLight") {
-    return (
-      <span className={cn("inline-flex items-center gap-2.5", className)}>
-        <span className={cn("relative overflow-hidden rounded-full bg-white shadow-sm", s.mark)}>
-          <Image
-            src="/euroscope-mark.png"
-            alt="Euroscope"
-            fill
-            className="object-cover object-top"
-            priority
-          />
-        </span>
-        {showWordmark && (
-          <span className={cn("font-display font-bold tracking-tight text-white", s.text)}>
-            Euroscope
-          </span>
-        )}
-      </span>
-    );
-  }
-
-  // Default: just the circular emblem (for light backgrounds like navbar)
+  // markLight + mark — both use the same transparent mark now.
+  // The new logo has no background, so it works on any surface.
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <span className={cn("relative overflow-hidden rounded-full", s.mark)}>
+      <span className={cn("relative overflow-hidden rounded-lg", s.mark)}>
         <Image
           src="/euroscope-mark.png"
           alt="Euroscope"
           fill
-          className="object-cover object-top"
+          className="object-contain"
           priority
         />
       </span>

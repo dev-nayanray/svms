@@ -165,12 +165,12 @@ export function AdminShell({
             collapsed && "justify-center px-0",
           )}
         >
-          <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full">
+          <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg">
             <Image
               src="/euroscope-mark.png"
               alt="Euroscope"
               fill
-              className="object-cover object-top"
+              className="object-contain"
             />
           </span>
           {!collapsed && (
@@ -209,12 +209,12 @@ export function AdminShell({
           />
           <aside className="absolute left-0 top-0 h-full w-64 border-r border-border bg-card">
             <div className="flex h-14 items-center gap-2.5 border-b border-border px-3">
-              <span className="relative h-8 w-8 overflow-hidden rounded-full">
+              <span className="relative h-8 w-8 overflow-hidden rounded-lg">
                 <Image
                   src="/euroscope-mark.png"
                   alt="Euroscope"
                   fill
-                  className="object-cover object-top"
+                  className="object-contain"
                 />
               </span>
               <div>
