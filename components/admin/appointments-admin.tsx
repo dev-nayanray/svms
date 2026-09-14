@@ -126,7 +126,8 @@ export function AppointmentsAdmin() {
     {
       label: "View",
       onClick: (a: Appointment) => {
-        router.push(`/admin/appointments/${a.id}`);
+        const base = window.location.pathname.startsWith("/employee") ? "/employee" : "/admin";
+        router.push(`${base}/appointments/${a.id}`);
       },
     },
     {

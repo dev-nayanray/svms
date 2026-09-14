@@ -133,7 +133,7 @@ export function AppointmentDetail({ id }: { id: string }) {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Link href="/admin/appointments" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <Link href=".." className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Back to appointments
         </Link>
         <div className="h-48 animate-pulse rounded-xl bg-muted" />
@@ -144,7 +144,7 @@ export function AppointmentDetail({ id }: { id: string }) {
   if (error || !appt) {
     return (
       <div className="space-y-4">
-        <Link href="/admin/appointments" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <Link href=".." className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Back to appointments
         </Link>
         <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-destructive">
@@ -158,7 +158,7 @@ export function AppointmentDetail({ id }: { id: string }) {
 
   return (
     <div className="space-y-4">
-      <Link href="/admin/appointments" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+      <Link href=".." className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Back to appointments
       </Link>
 
