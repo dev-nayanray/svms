@@ -170,6 +170,7 @@ export function AdminShell({
               src="/euroscope-mark.png"
               alt="Euroscope"
               fill
+              sizes="32px"
               className="object-contain"
             />
           </span>
@@ -214,6 +215,7 @@ export function AdminShell({
                   src="/euroscope-mark.png"
                   alt="Euroscope"
                   fill
+                  sizes="32px"
                   className="object-contain"
                 />
               </span>

@@ -187,6 +187,7 @@ export function StudentAppShell({
                   src="/euroscope-mark.png"
                   alt="Euroscope"
                   fill
+                  sizes="36px"
                   className="object-contain"
                 />
               </span>
