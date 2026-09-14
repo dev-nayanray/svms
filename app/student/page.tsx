@@ -25,19 +25,13 @@ import {
 } from "@/components/student/ui";
 import { TodayAgenda } from "@/components/student/dashboard/today-agenda";
 import { ProfileCompletionCard } from "@/components/student/dashboard/profile-completion-card";
+import { PremiumGreetingCard } from "@/components/student/dashboard/premium-greeting-card";
 import { formatDate, formatMoney, titleCase, cn } from "@/lib/utils";
 import {
   getStudentDashboard,
 } from "@/lib/services/student-dashboard";
 
 export const dynamic = "force-dynamic";
-
-function greeting(): string {
-  const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  return "Good evening";
-}
 
 export default async function StudentDashboard() {
   const { userId, student } = await requireStudentProfile();
@@ -62,52 +56,19 @@ export default async function StudentDashboard() {
 
   return (
     <MobilePage>
-      {/* ─── 1. GREETING CARD with profile image ─── */}
-      <section aria-labelledby="greeting">
-        <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
-          {/* Profile image / initials */}
-          <Link href="/student/profile" aria-label="View profile" className="shrink-0">
-            {student.profilePhotoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={student.profilePhotoUrl}
-                alt={student.firstName}
-                className="h-16 w-16 rounded-2xl object-cover ring-2 ring-border"
-              />
-            ) : (
-              <span className="grid h-16 w-16 place-items-center rounded-2xl bg-primary/10 text-xl font-bold text-primary ring-2 ring-border">
-                {student.firstName[0]}{student.lastName[0]}
-              </span>
-            )}
-          </Link>
-
-          {/* Greeting text */}
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-muted-foreground">{greeting()},</p>
-            <h2 id="greeting" className="text-xl font-bold tracking-tight">
-              {student.firstName} {student.lastName}
-            </h2>
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">
-              {student.studentId}
-              {application?.country ? ` · ${application.country}` : ""}
-            </p>
-          </div>
-
-          {/* Notifications bell */}
-          <Link
-            href="/student/notifications"
-            className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground transition-colors hover:text-foreground"
-            aria-label="Notifications"
-          >
-            <Bell className="h-5 w-5" aria-hidden />
-            {notifications.filter((n) => !n.readAt).length > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground ring-2 ring-card">
-                {notifications.filter((n) => !n.readAt).length > 9 ? "9+" : notifications.filter((n) => !n.readAt).length}
-              </span>
-            )}
-          </Link>
-        </div>
-      </section>
+      {/* ─── 1. PREMIUM GREETING CARD with quick stats ─── */}
+      <PremiumGreetingCard
+        student={student}
+        application={application ? {
+          country: application.country,
+          course: application.course,
+          stageKey: application.stageKey,
+        } : null}
+        progress={progress}
+        docSummary={docSummary}
+        unreadCount={notifications.filter((n) => !n.readAt).length}
+        notifications={notifications}
+      />
 
       {/* ─── 2. TODAY'S AGENDA — appointments + tasks due today ─── */}
       <TodayAgenda data={todayAgenda} />
