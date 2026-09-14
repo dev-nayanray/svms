@@ -30,7 +30,11 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     }
 
     const scope = { isAdmin: role === "ADMIN", userId: session.user.id, employeeId };
-    const result = await reviewDocument(scope, id, body.decision, body.reviewNote, { id: session.user.id });
+    const result = await reviewDocument(scope, id, body.decision, body.reviewNote, {
+      id: session.user.id,
+      ipAddress: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? undefined,
+      userAgent: req.headers.get("user-agent") ?? undefined,
+    });
     return ok(result);
   } catch (err) {
     return handleApiError(err);

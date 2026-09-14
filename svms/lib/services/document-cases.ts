@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { HttpError } from "@/lib/api";
 import type { EmployeeScope } from "@/lib/services/employee-dashboard";
 import { documentScope } from "@/lib/services/employee-dashboard";
+import type { JsonValue } from "@prisma/client/runtime/library";
 import {
   DOCUMENT_STATUSES,
   DOCUMENT_TYPES,
@@ -265,12 +266,12 @@ export async function reviewDocument(
   id: string,
   decision: "APPROVED" | "REJECTED" | "UNDER_REVIEW",
   reviewNote: string | undefined,
-  actor: { id: string },
+  actor: { id: string; ipAddress?: string; userAgent?: string },
 ): Promise<{ status: string; reviewedAt: Date }> {
   const owner = documentScope(scope);
   const doc = await prisma.document.findFirst({
     where: { id, ...owner },
-    select: { id: true, status: true },
+    select: { id: true, status: true, name: true },
   });
   if (!doc) throw new HttpError(404, "NOT_FOUND", "Document not found");
 
@@ -288,6 +289,7 @@ export async function reviewDocument(
     );
   }
 
+  const oldValue = { status: doc.status };
   const now = new Date();
   await prisma.document.update({
     where: { id },
@@ -298,6 +300,26 @@ export async function reviewDocument(
       reviewedAt: now,
     },
   });
+
+  // Audit log — document review decisions on PII (passports,
+  // transcripts, financial statements) are security-sensitive and
+  // MUST be auditable.
+  try {
+    await prisma.auditLog.create({
+      data: {
+        userId: actor.id,
+        action: `document.reviewed_${decision.toLowerCase()}`,
+        entity: "Document",
+        entityId: id,
+        oldValue: oldValue as unknown as JsonValue,
+        newValue: { status: decision, reviewNote: reviewNote?.trim() ?? null, reviewedAt: now.toISOString() } as unknown as JsonValue,
+        ipAddress: actor.ipAddress,
+        userAgent: actor.userAgent,
+      },
+    });
+  } catch (err) {
+    console.error("[document-review] audit failed", err);
+  }
 
   // Notify the student
   try {
@@ -333,7 +355,7 @@ export async function requestReupload(
   scope: EmployeeScope,
   id: string,
   reason: string,
-  actor: { id: string },
+  actor: { id: string; ipAddress?: string; userAgent?: string },
 ): Promise<{ status: string }> {
   if (!reason || reason.trim().length === 0) {
     throw new HttpError(422, "VALIDATION_ERROR", "A re-upload reason is required");
@@ -346,6 +368,7 @@ export async function requestReupload(
   });
   if (!doc) throw new HttpError(404, "NOT_FOUND", "Document not found");
 
+  const oldValue = { status: doc.status };
   await prisma.document.update({
     where: { id },
     data: {
@@ -356,6 +379,26 @@ export async function requestReupload(
       // Keep the old fileUrl — the student replaces it on re-upload
     },
   });
+
+  // Audit log — re-upload requests change the case state and impose
+  // an obligation on the student; the audit trail protects against
+  // harassment patterns (repeated re-uploads on the same document).
+  try {
+    await prisma.auditLog.create({
+      data: {
+        userId: actor.id,
+        action: "document.reupload_requested",
+        entity: "Document",
+        entityId: id,
+        oldValue: oldValue as unknown as JsonValue,
+        newValue: { status: "REQUESTED", reason: reason.trim() } as unknown as JsonValue,
+        ipAddress: actor.ipAddress,
+        userAgent: actor.userAgent,
+      },
+    });
+  } catch (err) {
+    console.error("[document-reupload] audit failed", err);
+  }
 
   // Notify
   try {

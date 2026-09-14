@@ -59,6 +59,7 @@ const prismaMock = vi.hoisted(() => ({
   user: { findMany: vi.fn(), findUnique: vi.fn() },
   student: { findFirst: vi.fn(), findUnique: vi.fn() },
   notification: { create: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
+  auditLog: { create: vi.fn() },
 }));
 
 vi.mock("@/lib/db", () => ({ prisma: prismaMock }));
@@ -242,6 +243,8 @@ describe("createTask", () => {
 
   it("emits notification to assignee when different from actor", async () => {
     prismaMock.task.create.mockResolvedValue({ id: "t1", assignedToId: "u-other" });
+    prismaMock.user.findUnique.mockResolvedValue({ id: "u-other", roleName: "EMPLOYEE", status: "ACTIVE" });
+    prismaMock.auditLog.create.mockResolvedValue({});
     prismaMock.notification.findFirst.mockResolvedValue(null); // no dedup hit
     prismaMock.notification.create.mockResolvedValue({ id: "n1" });
     await createTask(EMPLOYEE_SCOPE, { title: "Review doc", assignedToId: "u-other" }, { id: "u-emp" });
@@ -340,8 +343,9 @@ describe("cancelTask", () => {
 describe("reassignTask", () => {
   it("reassigns and notifies the new assignee", async () => {
     prismaMock.task.findFirst.mockResolvedValue({ id: "t1", assignedToId: "u-old", title: "Task" });
-    prismaMock.user.findUnique.mockResolvedValue({ id: "u-new", name: "New Person" });
+    prismaMock.user.findUnique.mockResolvedValue({ id: "u-new", name: "New Person", roleName: "EMPLOYEE", status: "ACTIVE" });
     prismaMock.task.update.mockResolvedValue({});
+    prismaMock.auditLog.create.mockResolvedValue({});
     prismaMock.notification.findFirst.mockResolvedValue(null);
     prismaMock.notification.create.mockResolvedValue({ id: "n1" });
     await reassignTask(EMPLOYEE_SCOPE, "t1", "u-new", { id: "u-emp" });
@@ -355,7 +359,7 @@ describe("reassignTask", () => {
 
   it("notifies the old assignee (if different from actor and new)", async () => {
     prismaMock.task.findFirst.mockResolvedValue({ id: "t1", assignedToId: "u-old", title: "Task" });
-    prismaMock.user.findUnique.mockResolvedValue({ id: "u-new", name: "New" });
+    prismaMock.user.findUnique.mockResolvedValue({ id: "u-new", name: "New", roleName: "EMPLOYEE", status: "ACTIVE" });
     prismaMock.task.update.mockResolvedValue({});
     prismaMock.notification.findFirst.mockResolvedValue(null);
     prismaMock.notification.create.mockResolvedValue({ id: "n1" });

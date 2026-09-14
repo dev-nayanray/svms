@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { HttpError } from "@/lib/api";
 import bcrypt from "bcryptjs";
 import type { JsonValue } from "@prisma/client/runtime/library";
+import { invalidateUserCache } from "@/lib/auth/user-cache";
 
 /**
  * Employee Profile service — read + update the caller's own profile.
@@ -383,8 +384,22 @@ export async function updateProfileAsAdmin(
     address: existing.employee?.address ?? null,
   };
 
+  // If role or status changed, we MUST bump tokenVersion so the
+  // target user's outstanding JWTs are invalidated. Otherwise a just-
+  // suspended employee can keep acting for up to 8 hours (the session
+  // maxAge), and a just-demoted employee retains their old permissions.
+  const roleOrStatusChanged = userData.roleName !== undefined || userData.status !== undefined;
+  if (roleOrStatusChanged) {
+    userData.tokenVersion = { increment: 1 };
+  }
+
   if (Object.keys(userData).length > 0) {
     await prisma.user.update({ where: { id: targetUserId }, data: { ...userData, updatedAt: new Date() } });
+    if (roleOrStatusChanged) {
+      // Invalidate the in-process user cache so the jwt callback
+      // immediately rejects the target user's next request.
+      invalidateUserCache(targetUserId);
+    }
   }
   if (employeeData && existing.employee) {
     await prisma.employee.update({
@@ -443,10 +458,23 @@ export async function changePassword(
   }
 
   const newHash = await bcrypt.hash(newPassword, 10);
+  // Bump tokenVersion so all outstanding JWTs are invalidated. The
+  // user's current session (the one calling this) will also need to
+  // re-authenticate, but that's the correct tradeoff — a stolen JWT
+  // can no longer be used after the password change.
   await prisma.user.update({
     where: { id: userId },
-    data: { passwordHash: newHash, updatedAt: new Date() },
+    data: {
+      passwordHash: newHash,
+      tokenVersion: { increment: 1 },
+      // Clear the mustChangePassword flag — the user just changed it.
+      mustChangePassword: false,
+      updatedAt: new Date(),
+    },
   });
+  // Invalidate the in-process user cache so the jwt callback sees the
+  // new tokenVersion immediately on the next request.
+  invalidateUserCache(userId);
 
   // Audit — never log the password itself; only the fact that it changed.
   try {
@@ -510,7 +538,7 @@ export async function listSessions(userId: string): Promise<{
         current: true,
       },
     ],
-    note: "Auth.js v5 uses stateless JWT sessions. To revoke all sessions, change your password — existing tokens will continue to work until they expire, but the password change is logged for audit.",
+    note: "JWT sessions are stateless, so we can only enumerate this device. Click \"Revoke all\" below to invalidate every outstanding JWT — you'll be signed out everywhere and will need to sign in again.",
   };
 }
 
@@ -518,8 +546,17 @@ export async function revokeAllSessions(
   userId: string,
   actor: { id: string; ipAddress?: string; userAgent?: string },
 ): Promise<{ revoked: number; note: string }> {
-  // Audit the request even though we can't physically revoke stateless
-  // JWTs without the tokenVersion mechanism.
+  // Bump the user's tokenVersion. The jwt callback re-validates the
+  // embedded tokenVersion against the DB on each token refresh
+  // (≤60s cache). Any outstanding JWT whose embedded version ≠ DB
+  // version is invalidated — the session callback returns null and
+  // the request is treated as unauthenticated.
+  await prisma.user.update({
+    where: { id: userId },
+    data: { tokenVersion: { increment: 1 }, updatedAt: new Date() },
+  });
+  invalidateUserCache(userId);
+
   try {
     await prisma.auditLog.create({
       data: {
@@ -527,7 +564,7 @@ export async function revokeAllSessions(
         action: "security.sessions_revoked",
         entity: "User",
         entityId: userId,
-        newValue: { requestedAt: new Date().toISOString() } as unknown as JsonValue,
+        newValue: { requestedAt: new Date().toISOString(), mechanism: "tokenVersion_increment" } as unknown as JsonValue,
         ipAddress: actor.ipAddress,
         userAgent: actor.userAgent,
       },
@@ -537,7 +574,7 @@ export async function revokeAllSessions(
   }
 
   return {
-    revoked: 0,
-    note: "JWT sessions are stateless. Please sign out from each device, or change your password to invalidate credentials.",
+    revoked: 1,
+    note: "All sessions have been invalidated. You will need to sign in again on every device.",
   };
 }

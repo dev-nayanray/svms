@@ -202,15 +202,34 @@ describe("convertLeadToStudent", () => {
     const result = await convertLeadToStudent(EMPLOYEE_SCOPE, "l1", { id: "u-emp" });
     expect(result.studentId).toBe("stu-1");
 
+    // SECURITY: the result must include a per-conversion random temp
+    // password — NOT the previously-hardcoded "ChangeMe@123".
+    expect(result.tempPassword).toBeTruthy();
+    expect(result.tempPassword.length).toBeGreaterThanOrEqual(12);
+    expect(result.tempPassword).not.toBe("ChangeMe@123");
+
+    // SECURITY: the new user account must be flagged with
+    // mustChangePassword=true so the student is forced to set their
+    // own password on first login.
+    expect(prismaMock.user.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        mustChangePassword: true,
+        roleName: "STUDENT",
+        status: "ACTIVE",
+      }),
+    }));
+
     // Verify lead was marked CONVERTED
     expect(prismaMock.lead.update).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ status: "CONVERTED", convertedStudentId: "stu-1" }),
     }));
 
-    // Verify audit log
-    expect(prismaMock.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ action: "lead.converted" }),
-    }));
+    // SECURITY: the audit log must NOT contain the tempPassword itself.
+    const auditCall = prismaMock.auditLog.create.mock.calls[0][0].data;
+    const auditJson = JSON.stringify(auditCall);
+    expect(auditJson).not.toContain(result.tempPassword);
+    expect(auditJson).toContain("tempPasswordGenerated");
+    expect(auditCall.action).toBe("lead.converted");
 
     // Verify notification
     expect(prismaMock.notification.create).toHaveBeenCalledWith(expect.objectContaining({

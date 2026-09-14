@@ -4,6 +4,7 @@ import type { EmployeeScope } from "@/lib/services/employee-dashboard";
 import { leadScope } from "@/lib/services/employee-dashboard";
 import { titleCase, slugify } from "@/lib/utils";
 import bcrypt from "bcryptjs";
+import crypto from "node:crypto";
 import { emitNotification } from "@/lib/services/notification-cases";
 
 /**
@@ -149,7 +150,7 @@ export async function createLead(
     interestedCountry?: string; preferredCourse?: string;
     source?: string; notes?: string; nextFollowUp?: Date;
   },
-  actor: { id: string },
+  actor: { id: string; ipAddress?: string; userAgent?: string },
 ): Promise<{ id: string }> {
   if (!input.name?.trim()) throw new HttpError(422, "VALIDATION_ERROR", "Name is required");
 
@@ -170,7 +171,7 @@ export async function createLead(
 
   try {
     await prisma.auditLog.create({
-      data: { userId: actor.id, action: "lead.created", entity: "Lead", entityId: lead.id, newValue: { name: lead.name } as object },
+      data: { userId: actor.id, action: "lead.created", entity: "Lead", entityId: lead.id, newValue: { name: lead.name } as object, ipAddress: actor.ipAddress, userAgent: actor.userAgent },
     });
   } catch (err) { console.error("[lead-create] audit failed", err); }
 
@@ -187,7 +188,7 @@ export async function updateLead(
     interestedCountry?: string; preferredCourse?: string;
     source?: string; notes?: string; nextFollowUp?: Date | null;
   },
-  actor: { id: string },
+  actor: { id: string; ipAddress?: string; userAgent?: string },
 ): Promise<void> {
   const owner = leadScope(scope);
   const lead = await prisma.lead.findFirst({ where: { id, ...owner }, select: { id: true } });
@@ -207,7 +208,7 @@ export async function updateLead(
 
   try {
     await prisma.auditLog.create({
-      data: { userId: actor.id, action: "lead.updated", entity: "Lead", entityId: id, newValue: data as object },
+      data: { userId: actor.id, action: "lead.updated", entity: "Lead", entityId: id, newValue: data as object, ipAddress: actor.ipAddress, userAgent: actor.userAgent },
     });
   } catch (err) { console.error("[lead-update] audit failed", err); }
 }
@@ -218,7 +219,7 @@ export async function changeLeadStatus(
   scope: EmployeeScope,
   id: string,
   newStatus: string,
-  actor: { id: string },
+  actor: { id: string; ipAddress?: string; userAgent?: string },
 ): Promise<void> {
   if (!LEAD_STATUSES.includes(newStatus as (typeof LEAD_STATUSES)[number])) {
     throw new HttpError(400, "BAD_REQUEST", `Invalid status: ${newStatus}`);
@@ -240,7 +241,8 @@ export async function changeLeadStatus(
   try {
     await prisma.auditLog.create({
       data: { userId: actor.id, action: "lead.status_changed", entity: "Lead", entityId: id,
-        oldValue: { status: lead.status } as object, newValue: { status: newStatus } as object },
+        oldValue: { status: lead.status } as object, newValue: { status: newStatus } as object,
+        ipAddress: actor.ipAddress, userAgent: actor.userAgent },
     });
   } catch (err) { console.error("[lead-status] audit failed", err); }
 }
@@ -250,8 +252,8 @@ export async function changeLeadStatus(
 export async function convertLeadToStudent(
   scope: EmployeeScope,
   id: string,
-  actor: { id: string },
-): Promise<{ studentId: string }> {
+  actor: { id: string; ipAddress?: string; userAgent?: string },
+): Promise<{ studentId: string; tempPassword: string }> {
   const owner = leadScope(scope);
   const lead = await prisma.lead.findFirst({
     where: { id, ...owner },
@@ -282,7 +284,15 @@ export async function convertLeadToStudent(
 
   // Create user + student in a transaction
   const email = lead.email ?? `${slugify(lead.name)}@lead.euroscope.example`;
-  const passwordHash = await bcrypt.hash("ChangeMe@123", 10);
+  // SECURITY: generate a random per-conversion temp password. The
+  // previous hardcoded "ChangeMe@123" was a known exploit — anyone who
+  // learned the convention could sign in as any freshly-converted
+  // student before the student changed it. The new password is
+  // returned to the converting employee (who shares it out-of-band)
+  // and the account is flagged with mustChangePassword=true so the
+  // student is forced to set their own password on first login.
+  const tempPassword = crypto.randomBytes(9).toString("base64url").slice(0, 16);
+  const passwordHash = await bcrypt.hash(tempPassword, 10);
   const year = new Date().getFullYear();
   const studentCount = await prisma.student.count();
   const studentId = `STD-${year}-${String(studentCount + 1).padStart(6, "0")}`;
@@ -296,6 +306,11 @@ export async function convertLeadToStudent(
         passwordHash,
         roleName: "STUDENT",
         status: "ACTIVE",
+        // Force password change on first login — the temp password is
+        // a one-time credential shared out-of-band by the converting
+        // employee. The student must set their own password before
+        // they can do anything else.
+        mustChangePassword: true,
       },
     }),
     prisma.student.create({
@@ -321,13 +336,18 @@ export async function convertLeadToStudent(
     data: { status: "CONVERTED", convertedStudentId: student.id, updatedAt: new Date() },
   });
 
-  // Audit log
+  // Audit log — include the fact that a temp password was generated,
+  // but NEVER log the password itself. The password is returned to
+  // the converting employee in the API response so they can share it
+  // out-of-band with the student.
   try {
     await prisma.auditLog.create({
       data: {
         userId: actor.id, action: "lead.converted", entity: "Lead", entityId: lead.id,
         oldValue: { status: "QUALIFIED" } as object,
-        newValue: { status: "CONVERTED", studentId: student.id } as object,
+        newValue: { status: "CONVERTED", studentId: student.id, tempPasswordGenerated: true } as object,
+        ipAddress: actor.ipAddress,
+        userAgent: actor.userAgent,
       },
     });
   } catch (err) { console.error("[lead-convert] audit failed", err); }
@@ -343,7 +363,7 @@ export async function convertLeadToStudent(
     entityId: student.id,
   });
 
-  return { studentId: student.id };
+  return { studentId: student.id, tempPassword };
 }
 
 // ─── Notes ───
@@ -352,7 +372,7 @@ export async function addLeadNote(
   scope: EmployeeScope,
   id: string,
   body: string,
-  actor: { id: string },
+  actor: { id: string; ipAddress?: string; userAgent?: string },
 ): Promise<{ id: string }> {
   if (!body.trim()) throw new HttpError(422, "VALIDATION_ERROR", "Note cannot be empty");
 

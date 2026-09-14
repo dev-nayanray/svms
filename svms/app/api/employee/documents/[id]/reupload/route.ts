@@ -29,7 +29,11 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     }
 
     const scope = { isAdmin: role === "ADMIN", userId: session.user.id, employeeId };
-    const result = await requestReupload(scope, id, body.reason, { id: session.user.id });
+    const result = await requestReupload(scope, id, body.reason, {
+      id: session.user.id,
+      ipAddress: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? undefined,
+      userAgent: req.headers.get("user-agent") ?? undefined,
+    });
     return ok(result, { status: 201 });
   } catch (err) {
     return handleApiError(err);

@@ -60,7 +60,11 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     await updateLead(scope, id, {
       ...body, email: body.email || undefined,
       nextFollowUp: body.nextFollowUp === null ? null : body.nextFollowUp ? new Date(body.nextFollowUp) : undefined,
-    }, { id: session.user.id });
+    }, {
+      id: session.user.id,
+      ipAddress: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? undefined,
+      userAgent: req.headers.get("user-agent") ?? undefined,
+    });
     return ok({ ok: true });
   } catch (err) {
     return handleApiError(err);

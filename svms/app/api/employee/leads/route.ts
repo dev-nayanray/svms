@@ -69,7 +69,11 @@ export async function POST(req: NextRequest) {
       interestedCountry: body.interestedCountry, preferredCourse: body.preferredCourse,
       source: body.source, notes: body.notes,
       nextFollowUp: body.nextFollowUp ? new Date(body.nextFollowUp) : undefined,
-    }, { id: session.user.id });
+    }, {
+      id: session.user.id,
+      ipAddress: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? undefined,
+      userAgent: req.headers.get("user-agent") ?? undefined,
+    });
     return ok(result, { status: 201 });
   } catch (err) {
     return handleApiError(err);

@@ -25,7 +25,11 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     const scope = { isAdmin: role === "ADMIN", userId: session.user.id, employeeId };
     const { id } = await ctx.params;
     const body = statusSchema.parse(await req.json());
-    await changeLeadStatus(scope, id, body.status, { id: session.user.id });
+    await changeLeadStatus(scope, id, body.status, {
+      id: session.user.id,
+      ipAddress: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? undefined,
+      userAgent: req.headers.get("user-agent") ?? undefined,
+    });
     return ok({ ok: true });
   } catch (err) {
     return handleApiError(err);

@@ -40,6 +40,18 @@ model User {
   avatar           String?
   lastLoginAt      DateTime?
   emailVerifiedAt  DateTime?
+  // tokenVersion — incremented to invalidate outstanding JWTs. The jwt
+  // callback embeds the current DB value into each new token; if the
+  // embedded version ≠ DB version (e.g., after password change, role
+  // change, status suspension, or explicit "logout everywhere"), the
+  // session callback returns null and the request is treated as
+  // unauthenticated. Without this field, JWTs remain valid until their
+  // natural 30-day expiry even after the underlying user record changes.
+  tokenVersion     Int           @default(0)
+  // mustChangePassword — set true when an admin creates/resets a user
+  // account. The session callback exposes this so the UI can force a
+  // password-change screen before any other action.
+  mustChangePassword Boolean     @default(false)
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 

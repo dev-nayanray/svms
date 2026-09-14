@@ -7,10 +7,38 @@ import { signIn } from "next-auth/react";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Button, Input, Label } from "@/components/ui";
 
+/**
+ * Validate a callback URL to prevent open-redirect / phishing attacks.
+ *
+ * Only same-origin absolute paths (starting with "/") are accepted.
+ * Anything else — including protocol-relative URLs like "//evil.com"
+ * and absolute URLs like "https://evil.com" — falls back to "/",
+ * which routes to the role-aware home page after sign-in.
+ *
+ * Without this check, an attacker could send a victim a link like
+ *   /login?callbackUrl=https://eur0scope.evil.com/phish
+ * and the victim — after signing in successfully on the real site —
+ * would be auto-redirected to the attacker's mirror site, which then
+ * prompts for credentials again "to confirm".
+ */
+function safeCallbackUrl(raw: string | null): string {
+  if (!raw) return "/";
+  // Reject anything that isn't a same-origin path. The check for
+  // "//" catches protocol-relative URLs that would resolve against
+  // the current origin's scheme (https://evil.com).
+  if (!raw.startsWith("/") || raw.startsWith("//")) return "/";
+  // Reject any value containing a scheme (e.g. "/\\evil.com" or
+  // "/\tevil.com" — backslash + tab are browser-quirky escapes).
+  if (/[a-zA-Z][a-zA-Z0-9+.-]*:/.test(raw)) return "/";
+  // Reject control characters
+  if (/[\x00-\x1f\x7f]/.test(raw)) return "/";
+  return raw;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const params = useSearchParams();
-  const callbackUrl = params.get("callbackUrl") ?? "/";
+  const callbackUrl = safeCallbackUrl(params.get("callbackUrl"));
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

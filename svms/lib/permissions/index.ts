@@ -36,7 +36,10 @@ export const PERMISSIONS = {
   "visa.manage": ["ADMIN", "EMPLOYEE"],
   // Finance
   "payments.read": ["ADMIN", "EMPLOYEE"],
+  "payments.manage": ["ADMIN", "EMPLOYEE"], // create / record / cancel
+  "payments.refund": ["ADMIN", "EMPLOYEE"], // refund (separation of duties)
   "invoices.read": ["ADMIN", "EMPLOYEE"],
+  "invoices.manage": ["ADMIN", "EMPLOYEE"], // create / issue / cancel
   // Messaging
   "messages.read": ["ADMIN", "EMPLOYEE"],
   "messages.create": ["ADMIN", "EMPLOYEE"],
@@ -87,7 +90,7 @@ export const PERMISSION_GROUPS: { label: string; permissions: PermissionKey[] }[
   { label: "Documents", permissions: ["documents.read", "documents.review"] },
   { label: "Visa", permissions: ["visa.read", "visa.manage"] },
   { label: "Tasks", permissions: ["tasks.read", "tasks.manage"] },
-  { label: "Finance", permissions: ["payments.read", "invoices.read"] },
+  { label: "Finance", permissions: ["payments.read", "payments.manage", "payments.refund", "invoices.read", "invoices.manage"] },
   { label: "Messaging", permissions: ["messages.read", "messages.create"] },
   { label: "Reports", permissions: ["reports.read"] },
 ];

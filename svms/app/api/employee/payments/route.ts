@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) throw new HttpError(401, "UNAUTHORIZED", "Authentication required");
     const role = (session.user as { role?: string }).role;
     if (role !== "EMPLOYEE" && role !== "ADMIN") throw new HttpError(403, "FORBIDDEN", "Employees only");
-    if (!hasPermission(role, "payments.read")) throw new HttpError(403, "FORBIDDEN", "Missing payments.read permission");
+    if (!hasPermission(role, "payments.manage")) throw new HttpError(403, "FORBIDDEN", "Missing payments.manage permission");
 
     let employeeId: string | null = null;
     if (role === "EMPLOYEE") {

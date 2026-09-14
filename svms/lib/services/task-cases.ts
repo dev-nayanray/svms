@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { HttpError } from "@/lib/api";
 import type { EmployeeScope } from "@/lib/services/employee-dashboard";
 import { taskScope } from "@/lib/services/employee-dashboard";
+import type { JsonValue } from "@prisma/client/runtime/library";
 import { emitNotification } from "@/lib/services/notification-cases";
 // titleCase not needed in this file — statuses/priorities are already uppercase
 
@@ -257,7 +258,7 @@ export async function createTask(
     priority?: string;
     dueDate?: Date | null;
   },
-  actor: { id: string },
+  actor: { id: string; ipAddress?: string; userAgent?: string },
 ): Promise<{ id: string }> {
   // EMPLOYEE can only create tasks for students they own (or without a student link)
   if (input.studentId && !scope.isAdmin) {
@@ -266,6 +267,20 @@ export async function createTask(
       select: { id: true },
     });
     if (!student) throw new HttpError(403, "FORBIDDEN", "You can only create tasks for your own students");
+  }
+
+  // SECURITY: if assignedToId is provided, verify it points at a real
+  // Employee user. Without this, a malicious employee could assign
+  // tasks to arbitrary user ids (e.g. the admin's), polluting their
+  // task list with fabricated items.
+  if (input.assignedToId && input.assignedToId !== actor.id) {
+    const target = await prisma.user.findUnique({
+      where: { id: input.assignedToId },
+      select: { id: true, roleName: true },
+    });
+    if (!target || (target.roleName !== "EMPLOYEE" && target.roleName !== "ADMIN")) {
+      throw new HttpError(400, "BAD_REQUEST", "Assignee must be an employee");
+    }
   }
 
   const task = await prisma.task.create({
@@ -280,6 +295,21 @@ export async function createTask(
       status: "TODO",
     },
   });
+
+  // Audit log — task creation affects the assignee's workload.
+  try {
+    await prisma.auditLog.create({
+      data: {
+        userId: actor.id,
+        action: "task.created",
+        entity: "Task",
+        entityId: task.id,
+        newValue: { title: input.title, assignedToId: input.assignedToId ?? actor.id, priority: input.priority ?? "MEDIUM" } as unknown as JsonValue,
+        ipAddress: actor.ipAddress,
+        userAgent: actor.userAgent,
+      },
+    });
+  } catch (err) { console.error("[task-create] audit failed", err); }
 
   // Notify the assignee if different from the actor
   if (task.assignedToId && task.assignedToId !== actor.id) {
@@ -306,10 +336,10 @@ export async function updateTask(
     priority?: string;
     dueDate?: Date | null;
   },
-  _actor: { id: string },
+  actor: { id: string; ipAddress?: string; userAgent?: string },
 ): Promise<void> {
   const owner = taskScope(scope);
-  const task = await prisma.task.findFirst({ where: { id, ...owner }, select: { id: true, title: true, dueDate: true } });
+  const task = await prisma.task.findFirst({ where: { id, ...owner }, select: { id: true, title: true, dueDate: true, priority: true, status: true } });
   if (!task) throw new HttpError(404, "NOT_FOUND", "Task not found");
 
   const data: Record<string, unknown> = {};
@@ -319,12 +349,28 @@ export async function updateTask(
   if (input.dueDate !== undefined) data.dueDate = input.dueDate;
 
   await prisma.task.update({ where: { id }, data: { ...data, updatedAt: new Date() } });
+
+  // Audit log
+  try {
+    await prisma.auditLog.create({
+      data: {
+        userId: actor.id,
+        action: "task.updated",
+        entity: "Task",
+        entityId: id,
+        oldValue: { title: task.title, priority: task.priority, dueDate: task.dueDate } as unknown as JsonValue,
+        newValue: data as unknown as JsonValue,
+        ipAddress: actor.ipAddress,
+        userAgent: actor.userAgent,
+      },
+    });
+  } catch (err) { console.error("[task-update] audit failed", err); }
 }
 
 export async function completeTask(
   scope: EmployeeScope,
   id: string,
-  actor: { id: string },
+  actor: { id: string; ipAddress?: string; userAgent?: string },
 ): Promise<void> {
   const owner = taskScope(scope);
   const task = await prisma.task.findFirst({ where: { id, ...owner }, select: { id: true, status: true, assignedToId: true, title: true, studentId: true } });
@@ -333,6 +379,22 @@ export async function completeTask(
   if (task.status === "CANCELLED") throw new HttpError(409, "CONFLICT", "Cannot complete a cancelled task");
 
   await prisma.task.update({ where: { id }, data: { status: "COMPLETED", updatedAt: new Date() } });
+
+  // Audit log
+  try {
+    await prisma.auditLog.create({
+      data: {
+        userId: actor.id,
+        action: "task.completed",
+        entity: "Task",
+        entityId: id,
+        oldValue: { status: task.status } as unknown as JsonValue,
+        newValue: { status: "COMPLETED" } as unknown as JsonValue,
+        ipAddress: actor.ipAddress,
+        userAgent: actor.userAgent,
+      },
+    });
+  } catch (err) { console.error("[task-complete] audit failed", err); }
 
   // Notify the creator/assigner if different
   if (task.assignedToId && task.assignedToId !== actor.id) {
@@ -371,32 +433,77 @@ export async function completeTask(
 export async function cancelTask(
   scope: EmployeeScope,
   id: string,
-  _actor: { id: string },
+  actor: { id: string; ipAddress?: string; userAgent?: string },
 ): Promise<void> {
   const owner = taskScope(scope);
-  const task = await prisma.task.findFirst({ where: { id, ...owner }, select: { id: true, status: true } });
+  const task = await prisma.task.findFirst({ where: { id, ...owner }, select: { id: true, status: true, title: true } });
   if (!task) throw new HttpError(404, "NOT_FOUND", "Task not found");
   if (task.status === "CANCELLED") return; // no-op
   if (task.status === "COMPLETED") throw new HttpError(409, "CONFLICT", "Cannot cancel a completed task");
 
   await prisma.task.update({ where: { id }, data: { status: "CANCELLED", updatedAt: new Date() } });
+
+  // Audit log
+  try {
+    await prisma.auditLog.create({
+      data: {
+        userId: actor.id,
+        action: "task.cancelled",
+        entity: "Task",
+        entityId: id,
+        oldValue: { status: task.status } as unknown as JsonValue,
+        newValue: { status: "CANCELLED" } as unknown as JsonValue,
+        ipAddress: actor.ipAddress,
+        userAgent: actor.userAgent,
+      },
+    });
+  } catch (err) { console.error("[task-cancel] audit failed", err); }
 }
 
 export async function reassignTask(
   scope: EmployeeScope,
   id: string,
   newAssigneeId: string,
-  actor: { id: string },
+  actor: { id: string; ipAddress?: string; userAgent?: string },
 ): Promise<void> {
   const owner = taskScope(scope);
   const task = await prisma.task.findFirst({ where: { id, ...owner }, select: { id: true, assignedToId: true, title: true } });
   if (!task) throw new HttpError(404, "NOT_FOUND", "Task not found");
 
-  // Verify the target assignee exists
-  const targetUser = await prisma.user.findUnique({ where: { id: newAssigneeId }, select: { id: true, name: true } });
+  // Verify the target assignee exists AND is an employee/admin.
+  // Without the role check, a malicious employee could reassign tasks
+  // to a student or to a suspended user.
+  const targetUser = await prisma.user.findUnique({
+    where: { id: newAssigneeId },
+    select: { id: true, name: true, roleName: true, status: true },
+  });
   if (!targetUser) throw new HttpError(400, "BAD_REQUEST", "Target assignee not found");
+  if (targetUser.roleName !== "EMPLOYEE" && targetUser.roleName !== "ADMIN") {
+    throw new HttpError(400, "BAD_REQUEST", "Assignee must be an employee");
+  }
+  if (targetUser.status !== "ACTIVE") {
+    throw new HttpError(400, "BAD_REQUEST", "Cannot reassign to an inactive user");
+  }
 
+  const oldValue = { assignedToId: task.assignedToId };
   await prisma.task.update({ where: { id }, data: { assignedToId: newAssigneeId, updatedAt: new Date() } });
+
+  // Audit log — reassignment is workflow-sensitive (can be abused to
+  // dump work onto a colleague or quietly take over a high-commission case).
+  try {
+    await prisma.auditLog.create({
+      data: {
+        userId: actor.id,
+        action: "task.reassigned",
+        entity: "Task",
+        entityId: id,
+        oldValue: oldValue as unknown as JsonValue,
+        newValue: { assignedToId: newAssigneeId } as unknown as JsonValue,
+        ipAddress: actor.ipAddress,
+        userAgent: actor.userAgent,
+      },
+    });
+  } catch (err) { console.error("[task-reassign] audit failed", err); }
 
   // Notify the new assignee
   if (newAssigneeId !== actor.id) {

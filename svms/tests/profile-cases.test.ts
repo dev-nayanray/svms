@@ -13,6 +13,12 @@ const prismaMock = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/db", () => ({ prisma: prismaMock }));
+vi.mock("@/lib/auth/user-cache", () => ({
+  invalidateUserCache: vi.fn(),
+  getCachedUserEntry: vi.fn(() => null),
+  setCachedUserEntry: vi.fn(),
+  USER_CACHE_TTL_MS: 60000,
+}));
 
 import {
   getProfile,
@@ -450,11 +456,17 @@ describe("listSessions", () => {
 });
 
 describe("revokeAllSessions", () => {
-  it("audits the request and returns 0 (stateless JWT limitation)", async () => {
+  it("bumps tokenVersion + audits the request + returns 1 (session invalidated)", async () => {
+    prismaMock.user.update.mockResolvedValue({});
     prismaMock.auditLog.create.mockResolvedValue({});
     const result = await revokeAllSessions("u1", { id: "u1" });
-    expect(result.revoked).toBe(0);
-    expect(result.note).toContain("stateless");
+    expect(result.revoked).toBe(1);
+    expect(result.note).toContain("invalidated");
+    // Verify tokenVersion was bumped
+    expect(prismaMock.user.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: "u1" },
+      data: expect.objectContaining({ tokenVersion: { increment: 1 } }),
+    }));
     expect(prismaMock.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ action: "security.sessions_revoked" }),
     }));

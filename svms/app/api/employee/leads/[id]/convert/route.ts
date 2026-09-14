@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { hasPermission } from "@/lib/permissions";
 import { convertLeadToStudent } from "@/lib/services/lead-cases";
 
-export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) throw new HttpError(401, "UNAUTHORIZED", "Authentication required");
@@ -21,7 +21,14 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     }
     const scope = { isAdmin: role === "ADMIN", userId: session.user.id, employeeId };
     const { id } = await ctx.params;
-    const result = await convertLeadToStudent(scope, id, { id: session.user.id });
+    // The result includes `tempPassword` — a one-time random credential
+    // generated for the new student account. The converting employee
+    // is responsible for sharing it out-of-band with the student.
+    const result = await convertLeadToStudent(scope, id, {
+      id: session.user.id,
+      ipAddress: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? undefined,
+      userAgent: req.headers.get("user-agent") ?? undefined,
+    });
     return ok(result, { status: 201 });
   } catch (err) {
     return handleApiError(err);
