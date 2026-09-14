@@ -34,8 +34,16 @@ export function LoginForm() {
       setError("Invalid email or password");
       return;
     }
-    // Role-based redirect happens on the home route
-    router.push(params.get("callbackUrl") ?? "/");
+    // If there's a callbackUrl, use it. Otherwise go to the root page
+    // which redirects based on role (/admin, /employee, /student).
+    // router.refresh() forces a re-fetch of the session cookie so the
+    // root page sees the authenticated user.
+    const callbackUrl = params.get("callbackUrl");
+    if (callbackUrl && callbackUrl !== "/") {
+      router.push(callbackUrl);
+    } else {
+      router.push("/");
+    }
     router.refresh();
   };
 

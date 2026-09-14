@@ -47,6 +47,7 @@ export function EuroscopeLogo({
           src="/euroscope-logo-full.png"
           alt="Euroscope"
           fill
+          sizes="auto"
           className="object-contain"
           priority
         />
@@ -63,6 +64,7 @@ export function EuroscopeLogo({
           src="/euroscope-mark.png"
           alt="Euroscope"
           fill
+          sizes="auto"
           className="object-contain"
           priority
         />
