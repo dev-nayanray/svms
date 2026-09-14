@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, FolderKanban, Building2, BookOpen, FileText,
   Stamp, CheckSquare, CalendarClock, MessageSquare, Bell, CreditCard,
-  Receipt, BarChart3, UserRound, Settings, type LucideIcon,
+  Receipt, BarChart3, TrendingUp, UserRound, Settings, type LucideIcon,
 } from "lucide-react";
 import type { PermissionKey } from "@/lib/permissions";
 
@@ -66,6 +66,7 @@ export const EMPLOYEE_NAV_GROUPS: NavGroup[] = [
     label: "Reporting",
     items: [
       { href: "/employee/reports", label: "Reports", icon: BarChart3, permission: "reports.read" },
+      { href: "/employee/performance", label: "Performance", icon: TrendingUp, permission: "reports.read" },
     ],
   },
   {
@@ -98,6 +99,7 @@ export const PAGE_TITLES: Record<string, string> = {
   "/employee/payments": "Payments",
   "/employee/invoices": "Invoices",
   "/employee/reports": "Reports",
+  "/employee/performance": "Performance",
   "/employee/profile": "Profile",
   "/employee/settings": "Settings",
 };
