@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { MarketingNavbar } from "@/components/marketing/navbar";
 import { MarketingFooter } from "@/components/marketing/footer";
+import { MarketingSessionProvider } from "@/components/marketing/session-provider";
 
 export const metadata: Metadata = {
   title: {
@@ -16,17 +17,20 @@ export const metadata: Metadata = {
  * premium navbar + footer. The route group `(marketing)` doesn't affect
  * the URL, so routes like /, /about, /contact stay clean.
  *
+ * The SessionProvider wrapper lets the navbar use useSession() to
+ * show Login (for guests) or Dashboard + Logout (for logged-in users).
+ *
  * This layout is INDEPENDENT from the admin/employee/student layouts —
  * those panels have their own app shells and are not affected.
  */
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <MarketingSessionProvider>
       <MarketingNavbar />
       <main id="main-content" className="flex-1">
         {children}
       </main>
       <MarketingFooter />
-    </>
+    </MarketingSessionProvider>
   );
 }
