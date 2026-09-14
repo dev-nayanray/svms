@@ -51,7 +51,7 @@ const statusOptions = INVOICE_STATUSES.map((s) => ({
  *  - create invoice dialog
  *  - links to printable invoice view
  */
-export function InvoicesAdmin() {
+export function InvoicesAdmin({ basePath = "/admin/invoices" }: { basePath?: string }) {
   const router = useRouter();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -92,7 +92,7 @@ export function InvoicesAdmin() {
       sortable: true,
       render: (i) => (
         <Link
-          href={`/admin/invoices/${i.id}`}
+          href={`${basePath}/${i.id}`}
           className="font-mono text-xs font-medium text-primary hover:underline"
         >
           {i.invoiceNumber}
@@ -181,10 +181,10 @@ export function InvoicesAdmin() {
           { key: "status", header: "Status" },
         ]}
         rowActions={[
-          { label: "View", onClick: (i) => router.push(`/admin/invoices/${i.id}`) },
+          { label: "View", onClick: (i) => router.push(`${basePath}/${i.id}`) },
           {
             label: "Print",
-            onClick: (i) => window.open(`/admin/invoices/${i.id}?print=1`, "_blank"),
+            onClick: (i) => window.open(`${basePath}/${i.id}?print=1`, "_blank"),
           },
           {
             label: "Archive",

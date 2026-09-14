@@ -1,7 +1,7 @@
 import { getSession } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
-import { SidebarShell } from "@/components/shared/sidebar-shell";
-import { EMPLOYEE_NAV } from "@/config/navigation";
+import { AdminShell } from "@/components/shared/admin-shell";
+import { EMPLOYEE_NAV, EMPLOYEE_NAV_GROUPS } from "@/config/navigation";
 
 /**
  * Employee Panel layout — mirrors the admin layout pattern:
@@ -17,13 +17,17 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
     redirect("/403");
   }
   return (
-    <SidebarShell
+    <AdminShell
       items={EMPLOYEE_NAV}
-      title="Euroscope Workspace"
-      role={session.user.role}
+      navGroups={EMPLOYEE_NAV_GROUPS}
+      subtitle="Employee Workspace"
+      homeHref="/employee"
+      notificationsHref="/employee/notifications"
+      settingsHref="/employee/settings"
       userName={session.user.name ?? ""}
+      userEmail={session.user.email ?? ""}
     >
       {children}
-    </SidebarShell>
+    </AdminShell>
   );
 }
