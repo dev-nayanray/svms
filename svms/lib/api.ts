@@ -38,15 +38,20 @@ export function handleApiError(err: unknown) {
   if (err instanceof HttpError) {
     return fail(err.code, err.message, err.status);
   }
-  if (process.env.NODE_ENV !== "production") {
-    console.error("[api]", err);
-  }
-  const message =
-    process.env.NODE_ENV === "production"
-      ? "An unexpected error occurred"
-      : err instanceof Error
-        ? err.message
-        : "Unknown error";
+  // Log the full error server-side (always — not gated on NODE_ENV so
+  // production deployments can still see errors in their logs).
+  console.error("[api]", err);
+  // Decide whether to expose the detailed message to the client.
+  // Gate on an explicit DEBUG_API_ERRORS env var (NOT NODE_ENV) so a
+  // misconfigured staging environment where NODE_ENV is unset doesn't
+  // accidentally leak Prisma internals (table names, column names,
+  // query fragments) to the response body.
+  const exposeDetail = process.env.DEBUG_API_ERRORS === "true";
+  const message = exposeDetail
+    ? err instanceof Error
+      ? err.message
+      : "Unknown error"
+    : "An unexpected error occurred";
   return fail("INTERNAL_ERROR", message, 500);
 }
 

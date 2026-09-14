@@ -297,8 +297,14 @@ export async function convertLeadToStudent(
   const studentCount = await prisma.student.count();
   const studentId = `STD-${year}-${String(studentCount + 1).padStart(6, "0")}`;
 
-  const [user, student] = await prisma.$transaction([
-    prisma.user.create({
+  // Use a single transactional callback so user + student + lead
+  // update are atomic. The previous array-transaction form created the
+  // User and Student in one transaction, then linked them with a
+  // separate `student.update` OUTSIDE the transaction — if that link
+  // update failed, the Student row was orphaned (no userId) and the
+  // Lead was already marked CONVERTED, leaving inconsistent state.
+  const { user, student } = await prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
       data: {
         name: lead.name,
         email,
@@ -306,16 +312,12 @@ export async function convertLeadToStudent(
         passwordHash,
         roleName: "STUDENT",
         status: "ACTIVE",
-        // Force password change on first login — the temp password is
-        // a one-time credential shared out-of-band by the converting
-        // employee. The student must set their own password before
-        // they can do anything else.
         mustChangePassword: true,
       },
-    }),
-    prisma.student.create({
+    });
+    const student = await tx.student.create({
       data: {
-        userId: "", // will be set after transaction — but Prisma doesn't support
+        userId: user.id, // set immediately — no orphan possible
         studentId,
         firstName: lead.name.split(" ")[0] ?? lead.name,
         lastName: lead.name.split(" ").slice(1).join(" ") || "-",
@@ -324,16 +326,13 @@ export async function convertLeadToStudent(
         country: lead.interestedCountry,
         assignedEmployeeId: lead.assignedEmployeeId,
       },
-    }),
-  ]);
-
-  // Link user to student
-  await prisma.student.update({ where: { id: student.id }, data: { userId: user.id } });
-
-  // Mark lead as CONVERTED
-  await prisma.lead.update({
-    where: { id: lead.id },
-    data: { status: "CONVERTED", convertedStudentId: student.id, updatedAt: new Date() },
+    });
+    // Mark lead as CONVERTED inside the same transaction
+    await tx.lead.update({
+      where: { id: lead.id },
+      data: { status: "CONVERTED", convertedStudentId: student.id, updatedAt: new Date() },
+    });
+    return { user, student };
   });
 
   // Audit log — include the fact that a temp password was generated,

@@ -84,7 +84,10 @@ export function ProfileEditForm({ profile }: Props) {
   }
 
   return (
-    <div className="space-y-5">
+    <form
+      className="space-y-5"
+      onSubmit={(e) => { e.preventDefault(); void save(); }}
+    >
       {/* Avatar preview + URL input */}
       <div className="flex items-center gap-4">
         <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full bg-primary/10 text-base font-semibold text-primary">
@@ -202,17 +205,17 @@ export function ProfileEditForm({ profile }: Props) {
 
       {/* Actions */}
       <div className="flex items-center gap-2 pt-2">
-        <Button onClick={save} disabled={saving || !dirty}>
+        <Button type="submit" disabled={saving || !dirty}>
           {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
           Save changes
         </Button>
-        <Button variant="ghost" onClick={reset} disabled={saving || !dirty}>
+        <Button type="button" variant="ghost" onClick={reset} disabled={saving || !dirty}>
           Reset
         </Button>
         {dirty && (
           <Badge tone="warning" className="ml-auto">Unsaved changes</Badge>
         )}
       </div>
-    </div>
+    </form>
   );
 }

@@ -65,18 +65,24 @@ export default async function EmployeeLeadsPage({
         )}
       />
 
-      {/* Filter bar */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      {/* Filter bar — wrapped in a GET form so Enter + Filter button submit */}
+      <form className="mb-4 flex flex-wrap items-center gap-2" method="get" action="/employee/leads" role="search">
         <input type="search" name="search" defaultValue={sp.search} placeholder="Search by name, email, phone…" className="h-9 min-w-[150px] flex-1 rounded-md border border-input bg-background px-3 text-sm" aria-label="Search leads" />
-        <select name="status" defaultValue={sp.status ?? ""} className="h-9 rounded-md border border-input bg-background px-2 text-sm">
+        <select name="status" defaultValue={sp.status ?? ""} className="h-9 rounded-md border border-input bg-background px-2 text-sm" aria-label="Filter by status">
           <option value="">All statuses</option>
           {LEAD_STATUSES.map((s) => <option key={s} value={s}>{titleCase(s)}</option>)}
         </select>
-        <select name="source" defaultValue={sp.source ?? ""} className="h-9 rounded-md border border-input bg-background px-2 text-sm">
+        <select name="source" defaultValue={sp.source ?? ""} className="h-9 rounded-md border border-input bg-background px-2 text-sm" aria-label="Filter by source">
           <option value="">All sources</option>
           {LEAD_SOURCES.map((s) => <option key={s} value={s}>{titleCase(s.replace(/_/g, " "))}</option>)}
         </select>
-      </div>
+        <Button type="submit" variant="outline" size="sm">Filter</Button>
+        {(sp.search || sp.status || sp.source) && (
+          <Link href="/employee/leads">
+            <Button type="button" variant="ghost" size="sm">Clear</Button>
+          </Link>
+        )}
+      </form>
 
       <DataTable
         empty={result.rows.length === 0 ? "No leads match these filters." : undefined}

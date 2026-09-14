@@ -185,11 +185,15 @@ export function NotificationBell({ initialUnreadCount, initialRecent }: Props) {
                       {isUnread && (
                         <button
                           type="button"
-                          onClick={() => markRead(n.id)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            markRead(n.id);
+                          }}
                           aria-label="Mark as read"
-                          className="opacity-0 transition-opacity group-hover:opacity-100"
+                          className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
                         >
-                          <Check className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                          <Check className="h-3.5 w-3.5" />
                         </button>
                       )}
                     </div>

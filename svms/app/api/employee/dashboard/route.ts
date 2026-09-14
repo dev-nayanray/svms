@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { ok, handleApiError } from "@/lib/api";
+import { ok, fail, handleApiError, HttpError } from "@/lib/api";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { hasPermission } from "@/lib/permissions";
@@ -24,13 +24,9 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
-      return ok({ error: "UNAUTHORIZED" }, { status: 401 });
-    }
+    if (!session?.user?.id) throw new HttpError(401, "UNAUTHORIZED", "Authentication required");
     const role = (session.user as { role?: string }).role;
-    if (role !== "EMPLOYEE" && role !== "ADMIN") {
-      return ok({ error: "FORBIDDEN" }, { status: 403 });
-    }
+    if (role !== "EMPLOYEE" && role !== "ADMIN") throw new HttpError(403, "FORBIDDEN", "Employees only");
 
     const sp = req.nextUrl.searchParams;
     const range = resolveDashboardRange({
@@ -46,9 +42,7 @@ export async function GET(req: NextRequest) {
         where: { userId: session.user.id },
         select: { id: true },
       });
-      if (!employee) {
-        return ok({ error: "FORBIDDEN", message: "No employee record linked" }, { status: 403 });
-      }
+      if (!employee) throw new HttpError(403, "FORBIDDEN", "No employee record linked");
       employeeId = employee.id;
     }
 
