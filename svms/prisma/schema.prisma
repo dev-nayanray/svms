@@ -473,16 +473,38 @@ model Invoice {
   student       Student   @relation(fields: [studentId], references: [id])
   applicationId String?   @db.ObjectId
   application   Application? @relation(fields: [applicationId], references: [id])
-  amount        Float
+  subtotal      Float     @default(0)
+  discount      Float     @default(0)
+  tax           Float     @default(0)
+  total         Float     @default(0)
+  paidAmount    Float     @default(0)
+  balance       Float     @default(0)
   currency      String    @default("EUR")
   issueDate     DateTime  @default(now())
   dueDate       DateTime?
-  status        String    @default("ISSUED") // DRAFT | ISSUED | PAID | OVERDUE | CANCELLED
+  status        String    @default("DRAFT") // DRAFT | ISSUED | PARTIAL | PAID | OVERDUE | CANCELLED
+  notes         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  items         InvoiceItem[]
+
   @@index([studentId])
   @@index([status])
+}
+
+model InvoiceItem {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  invoiceId   String   @db.ObjectId
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
+  description String
+  quantity    Int      @default(1)
+  unitPrice   Float
+  total       Float
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([invoiceId])
 }
 
 // ─────────────────────────────────────────────

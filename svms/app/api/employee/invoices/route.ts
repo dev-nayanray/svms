@@ -4,18 +4,21 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { hasPermission } from "@/lib/permissions";
 import { z } from "zod";
-import { listPayments, createPayment } from "@/lib/services/payment-cases";
+import { listInvoices, createInvoice, type InvoiceListFilters } from "@/lib/services/invoice-cases";
 
 const createSchema = z.object({
   studentId: z.string().min(1, "Student is required"),
   applicationId: z.string().optional(),
-  invoiceId: z.string().optional(),
-  amount: z.number().positive("Amount must be positive"),
+  items: z.array(z.object({
+    description: z.string().min(1, "Description required"),
+    quantity: z.number().int().positive(),
+    unitPrice: z.number().nonnegative(),
+  })).min(1, "At least one item required"),
+  discount: z.number().nonnegative().default(0),
+  taxRate: z.number().nonnegative().max(100).default(0),
   currency: z.string().default("EUR"),
-  paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "BKASH", "NAGAD", "CARD", "OTHER"]),
-  transactionReference: z.string().max(200).optional(),
-  paymentDate: z.string().datetime().optional(),
-  status: z.enum(["PENDING", "PAID", "PARTIAL"]).default("PAID"),
+  dueDate: z.string().datetime().optional(),
+  notes: z.string().max(2000).optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -33,15 +36,12 @@ export async function GET(req: NextRequest) {
     }
     const scope = { isAdmin: role === "ADMIN", userId: session.user.id, employeeId };
     const sp = req.nextUrl.searchParams;
-    const result = await listPayments(scope, {
+    const result = await listInvoices(scope, {
       filters: {
         search: sp.get("search") ?? undefined,
         status: sp.get("status") ?? undefined,
-        method: sp.get("method") ?? undefined,
         studentId: sp.get("studentId") ?? undefined,
         applicationId: sp.get("applicationId") ?? undefined,
-        dateFrom: sp.get("dateFrom") ?? undefined,
-        dateTo: sp.get("dateTo") ?? undefined,
       },
       page: Number(sp.get("page") ?? 1),
       pageSize: Number(sp.get("pageSize") ?? 20),
@@ -68,16 +68,15 @@ export async function POST(req: NextRequest) {
     }
     const scope = { isAdmin: role === "ADMIN", userId: session.user.id, employeeId };
     const body = createSchema.parse(await req.json());
-    const result = await createPayment(scope, {
+    const result = await createInvoice(scope, {
       studentId: body.studentId,
       applicationId: body.applicationId,
-      invoiceId: body.invoiceId,
-      amount: body.amount,
+      items: body.items,
+      discount: body.discount,
+      taxRate: body.taxRate,
       currency: body.currency,
-      paymentMethod: body.paymentMethod,
-      transactionReference: body.transactionReference,
-      paymentDate: body.paymentDate ? new Date(body.paymentDate) : undefined,
-      status: body.status,
+      dueDate: body.dueDate ? new Date(body.dueDate) : undefined,
+      notes: body.notes,
     }, {
       id: session.user.id,
       ipAddress: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip"),

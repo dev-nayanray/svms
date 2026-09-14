@@ -665,7 +665,7 @@ function InvoicesTab({ student }: { student: StudentDetail }) {
               <div className="min-w-0">
                 <p className="font-medium font-mono text-sm">{inv.invoiceNumber}</p>
                 <p className="text-xs text-muted-foreground">
-                  {formatMoney(inv.amount, inv.currency)} · Issued {formatDate(inv.issueDate)}{inv.dueDate ? ` · Due ${formatDate(inv.dueDate)}` : ""}
+                  {formatMoney(inv.total, inv.currency)} · Issued {formatDate(inv.issueDate)}{inv.dueDate ? ` · Due ${formatDate(inv.dueDate)}` : ""}
                 </p>
               </div>
               <Badge tone={inv.status === "PAID" ? "success" : inv.status === "OVERDUE" ? "destructive" : "info"}>{titleCase(inv.status)}</Badge>

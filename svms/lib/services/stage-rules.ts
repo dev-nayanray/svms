@@ -32,7 +32,7 @@ export type StageRuleSnapshot = {
   };
   documents: { status: string; name: string }[];
   payments: { status: string; amount: number }[];
-  invoices: { status: string; amount: number; dueDate: Date | null }[];
+  invoices: { status: string; total: number; dueDate: Date | null }[];
   visaApplications: { stage: string }[];
   student: { id: string; firstName: string; lastName: string; userId: string };
 };
@@ -285,7 +285,7 @@ export async function loadStageRuleSnapshot(applicationId: string): Promise<Stag
       student: { select: { id: true, firstName: true, lastName: true, userId: true } },
       documents: { select: { status: true, name: true } },
       payments: { select: { status: true, amount: true } },
-      invoices: { select: { status: true, amount: true, dueDate: true } },
+      invoices: { select: { status: true, total: true, dueDate: true } },
       visaApplications: { select: { stage: true } },
     },
   });

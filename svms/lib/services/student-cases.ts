@@ -337,7 +337,7 @@ export async function getStudentById(
   invoices: {
     id: string;
     invoiceNumber: string;
-    amount: number;
+    total: number;
     currency: string;
     status: string;
     issueDate: Date;
@@ -500,7 +500,7 @@ export async function getStudentById(
         select: {
           id: true,
           invoiceNumber: true,
-          amount: true,
+          total: true,
           currency: true,
           status: true,
           issueDate: true,
@@ -714,7 +714,7 @@ export function buildStudentTimeline(student: StudentDetail): TimelineItem[] {
     items.push({
       kind: "invoice_issued",
       title: `Invoice ${inv.invoiceNumber}`,
-      detail: `${inv.currency} ${inv.amount} · Status: ${inv.status}`,
+      detail: `${inv.currency} ${inv.total} · Status: ${inv.status}`,
       at: inv.issueDate,
     });
   }

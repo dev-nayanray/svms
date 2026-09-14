@@ -3,14 +3,9 @@ import { ok, handleApiError, HttpError } from "@/lib/api";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { hasPermission } from "@/lib/permissions";
-import { z } from "zod";
-import { refundPayment } from "@/lib/services/payment-cases";
+import { issueInvoice } from "@/lib/services/invoice-cases";
 
-const refundSchema = z.object({
-  reason: z.string().max(2000, "Reason too long").optional(),
-});
-
-export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) throw new HttpError(401, "UNAUTHORIZED", "Authentication required");
@@ -26,12 +21,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     }
     const scope = { isAdmin: role === "ADMIN", userId: session.user.id, employeeId };
     const { id } = await ctx.params;
-    const body = refundSchema.parse(await req.json());
-    await refundPayment(scope, id, body.reason, {
-      id: session.user.id,
-      ipAddress: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip"),
-      userAgent: req.headers.get("user-agent"),
-    });
+    await issueInvoice(scope, id, { id: session.user.id });
     return ok({ ok: true });
   } catch (err) {
     return handleApiError(err);

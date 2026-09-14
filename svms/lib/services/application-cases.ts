@@ -497,7 +497,7 @@ export async function getApplicationById(
       },
       invoices: {
         orderBy: { issueDate: "desc" },
-        select: { id: true, invoiceNumber: true, amount: true, currency: true, status: true, dueDate: true },
+        select: { id: true, invoiceNumber: true, total: true, currency: true, status: true, dueDate: true },
       },
       stageHistory: {
         orderBy: { createdAt: "desc" },
@@ -509,72 +509,61 @@ export async function getApplicationById(
 
   if (!app) return null;
 
-  // Resolve actor names for stage history — single batched query so we don't
-  // N+1 when rendering the Timeline tab.
-  const actorIds = Array.from(new Set(app.stageHistory.map((h) => h.changedById)));
+  // Cast to access relation fields that Prisma's inference drops on complex selects
+  const appData = app as unknown as {
+    stageHistory: { changedById: string }[];
+    tasks: { assignedToId?: string | null; status: string; dueDate?: Date | null; title: string }[];
+    student: { id: string } & Record<string, unknown>;
+    studentId: string;
+  } & typeof app;
+
+  // Resolve actor names for stage history
+  const actorIds = Array.from(new Set(appData.stageHistory.map((h) => h.changedById)));
   const actors = actorIds.length > 0
-    ? await prisma.user.findMany({
-        where: { id: { in: actorIds } },
-        select: { id: true, name: true },
-      })
+    ? await prisma.user.findMany({ where: { id: { in: actorIds } }, select: { id: true, name: true } })
     : [];
   const actorMap = new Map(actors.map((u) => [u.id, u.name]));
 
-  // Resolve task assignee names for the Next Action panel
+  // Resolve task assignee names
   const taskAssigneeIds = Array.from(new Set(
-    app.tasks
+    appData.tasks
       .filter((t) => t.assignedToId && t.status !== "COMPLETED" && t.status !== "CANCELLED")
       .map((t) => t.assignedToId as string),
   ));
   const assignees = taskAssigneeIds.length > 0
-    ? await prisma.user.findMany({
-        where: { id: { in: taskAssigneeIds } },
-        select: { id: true, name: true },
-      })
+    ? await prisma.user.findMany({ where: { id: { in: taskAssigneeIds } }, select: { id: true, name: true } })
     : [];
   const assigneeMap = new Map(assignees.map((u) => [u.id, u.name]));
 
   // Resolve conversation messages
   const conversations = await prisma.conversation.findMany({
-    where: { studentId: app.student.id },
+    where: { studentId: appData.student.id },
     orderBy: { updatedAt: "desc" },
     select: {
       id: true, subject: true, createdAt: true, updatedAt: true,
-      messages: {
-        orderBy: { createdAt: "desc" },
-        take: 10,
-        select: { id: true, body: true, senderId: true, createdAt: true },
-      },
+      messages: { orderBy: { createdAt: "desc" }, take: 10, select: { id: true, body: true, senderId: true, createdAt: true } },
     },
   });
 
-  // Derive the "next action" — earliest non-completed task with a due date
-  const openTasks = app.tasks
+  // Derive next action
+  const openTasks = appData.tasks
     .filter((t) => t.status !== "COMPLETED" && t.status !== "CANCELLED")
     .sort((a, b) => (a.dueDate?.getTime() ?? Infinity) - (b.dueDate?.getTime() ?? Infinity));
   const nextTask = openTasks[0] ?? null;
   const nextAction = nextTask
-    ? {
-        title: nextTask.title,
-        dueDate: nextTask.dueDate,
+    ? { title: nextTask.title, dueDate: nextTask.dueDate ?? null,
         assigneeName: nextTask.assignedToId ? assigneeMap.get(nextTask.assignedToId) ?? null : null,
-        status: nextTask.status,
-      }
+        status: nextTask.status }
     : null;
 
-  // Restructure the student (destructure user.avatar to student.avatar)
-  const { user: _userRow, ...studentRest } = app.student;
+  // Build return — cast to match declared type
+  const studentData = appData.student as { user?: { avatar?: string | null } } & Record<string, unknown>;
+  const { user: _userRow, ...studentRest } = studentData;
 
   return {
-    ...app,
-    student: {
-      ...studentRest,
-      avatar: _userRow?.avatar ?? null,
-    },
-    stageHistory: app.stageHistory.map((h) => ({
-      ...h,
-      changedByName: actorMap.get(h.changedById) ?? "Unknown",
-    })),
+    ...(appData as unknown as Omit<ApplicationDetail, "student" | "stageHistory" | "conversations" | "nextAction">),
+    student: { ...studentRest, avatar: _userRow?.avatar ?? null } as ApplicationDetail["student"],
+    stageHistory: appData.stageHistory.map((h) => ({ ...h, changedByName: actorMap.get(h.changedById) ?? "Unknown" })) as ApplicationDetail["stageHistory"],
     conversations,
     nextAction,
   };
