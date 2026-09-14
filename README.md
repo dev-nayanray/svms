@@ -1,0 +1,139 @@
+# SVMS — Student Visa Management System
+
+A production-grade platform for managing the complete student visa consultancy lifecycle:
+**Lead → Counseling → Student → Application → University → Documents → Visa → Decision → Travel**.
+
+Built with Next.js (App Router), TypeScript, MongoDB + Prisma, Auth.js, Tailwind CSS, Recharts.
+
+## Quick Start
+
+```bash
+npm install
+cp .env.example .env        # set DATABASE_URL and AUTH_SECRET
+npx prisma generate
+npx prisma db push          # requires a running MongoDB (local or Atlas)
+npm run seed                # roles, demo users, catalog, demo application
+npm run dev                 # http://localhost:3000
+```
+
+Generate an `AUTH_SECRET`:
+
+```bash
+openssl rand -base64 32
+```
+
+## Demo Accounts (after seeding)
+
+| Role     | Email                 | Password env var              |
+| -------- | --------------------- | ----------------------------- |
+| Admin    | admin@example.com     | `SEED_ADMIN_PASSWORD`         |
+| Employee | employee@example.com  | `SEED_EMPLOYEE_PASSWORD`      |
+| Student  | student@example.com   | `SEED_STUDENT_PASSWORD`       |
+
+Default demo passwords are in `.env.example` — override them in `.env`.
+
+## Scripts
+
+| Command               | Purpose                              |
+| --------------------- | ------------------------------------ |
+| `npm run dev`         | Development server                   |
+| `npm run build`       | Production build                     |
+| `npm run start`       | Serve production build               |
+| `npm run lint`        | ESLint                                |
+| `npm run typecheck`   | TypeScript, no emit                  |
+| `npm run test`        | Vitest (1183 tests across 42 files)  |
+| `npm run seed`        | Seed the database                    |
+| `npm run db:push`     | Push schema to MongoDB               |
+| `npm run db:generate` | Regenerate Prisma client             |
+| `npm run db:studio`   | Prisma Studio                        |
+| `npm run format`      | Prettier                             |
+
+## Documentation
+
+- [DEVELOPMENT.md](./DEVELOPMENT.md) — architecture, workflows, conventions
+- [SECURITY.md](./SECURITY.md) — security model and requirements
+- [STUDENT_PANEL_FINAL_QA.md](./STUDENT_PANEL_FINAL_QA.md) — final QA audit report
+- [STUDENT_SECURITY_AUDIT.md](./STUDENT_SECURITY_AUDIT.md) — student panel security audit
+
+## Admin Panel
+
+The admin panel provides a complete SaaS-style management console: KPI dashboard
+with date filtering, global search, CRUD for leads/students/employees/applications/catalog/intakes/branches/finance/visa, roles & permission matrix, system settings, and audit logs. See [DEVELOPMENT.md](./DEVELOPMENT.md).
+
+## Student Panel (PWA)
+
+`/student` is a mobile-first installable PWA designed to feel like a native
+**student visa mobile application**, not a traditional CRM. The panel covers
+the complete student journey from application tracking to visa approval.
+
+### Modules
+
+The Student Panel consists of 17 modules plus an app shell + PWA infrastructure:
+
+| #  | Module                     | Route                                  |
+| -- | -------------------------- | -------------------------------------- |
+| —  | App Shell + PWA            | `/student` (layout, bottom nav, SW)    |
+| 1  | Dashboard                  | `/student/dashboard`                   |
+| 2  | Profile                    | `/student/profile`                     |
+| 3  | Application                | `/student/application`                 |
+| 4  | Application Timeline       | `/student/application/timeline`        |
+| 5  | Documents                  | `/student/documents`                   |
+| 6  | Universities               | `/student/universities`                |
+| 7  | Courses & Intakes          | `/student/courses`                     |
+| 8  | Visa                       | `/student/visa`                        |
+| 9  | Tasks & Deadlines          | `/student/tasks`                       |
+| 10 | Payments                   | `/student/payments`                    |
+| 11 | Invoices                   | `/student/invoices`                    |
+| 12 | Messages                   | `/student/messages`                    |
+| 13 | Notifications              | `/student/notifications`               |
+| 14 | Appointments               | `/student/appointments`                |
+| 15 | Help & Support             | `/student/support`                     |
+| 16 | Settings                   | `/student/settings`                    |
+
+### PWA Features
+
+- **Installable** on iOS, Android, and desktop (manifest + icons + maskable)
+- **Offline fallback page** (`/offline`) served by the service worker
+- **Static-asset cache-first** + **navigation network-first** strategy
+- **Update strategy**: `skipWaiting` + `clients.claim` (instant updates)
+- **Safe caching**: service worker NEVER caches `/api/*`, `/login`, or non-GET requests
+- **iOS compatibility**: apple-mobile-web-app-capable, status-bar style, apple-touch-icon
+- **Safe-area insets**: respected via `env(safe-area-inset-*)` throughout
+- **PWA shortcuts**: Dashboard, Messages, Documents, Tasks (long-press on Android)
+
+### Mobile UX
+
+- Bottom navigation (4 primary tabs + "More" sheet) — hidden on `md:` breakpoint
+- Sticky header with safe-area top padding
+- Bottom sheets for forms on mobile (right-drawer on desktop)
+- Full-height chat composer with safe-area bottom padding
+- Touch targets ≥ 44×44 enforced via `@media (pointer: coarse)`
+- Reduced-motion respected via `@media (prefers-reduced-motion)`
+- Skip-to-content link on every page
+- Responsive profile form grids (`grid-cols-1 sm:grid-cols-2`)
+
+### Security (Student Panel)
+
+- **AuthN**: NextAuth JWT sessions (8h expiry, 5min DB re-validation)
+- **RBAC**: edge proxy + layout guard + `studentApiGuard()` triple-check
+- **IDOR-safe**: foreign IDs return 404 (never 403) — existence not confirmed
+- **Private document storage**: files under `/private-uploads/`, never `/public/`
+- **MIME allow-list + sha-256 filenames**: defense in depth
+- **Rate limiting**: in-memory token bucket on login, password change, uploads,
+  message sends, downloads, support tickets, counseling requests, registration
+- **Audit logging**: every sensitive action recorded with IP + user agent
+- **Sensitive-field masking**: `passwordHash`, `role`, `permissions`, internal
+  `notes`, `transactionReference` (masked for PENDING/CANCELLED), `reviewNote`
+  (only shown when document is REJECTED)
+
+See [SECURITY.md](./SECURITY.md) for the full security model.
+
+## Roles
+
+- **Admin** — full system access: users, catalog, finance, settings, audit
+- **Employee/Counselor** — assigned students, leads, applications, documents, tasks
+- **Student** — own applications, documents, tasks, invoices, notifications
+
+PWA branding is configured via `NEXT_PUBLIC_APP_NAME`,
+`NEXT_PUBLIC_APP_SHORT_NAME`, `NEXT_PUBLIC_APP_URL` and
+`NEXT_PUBLIC_APP_THEME_COLOR` in `.env`.

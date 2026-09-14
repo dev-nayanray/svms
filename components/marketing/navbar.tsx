@@ -1,0 +1,313 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { ICONS, FaIcon } from "./icons";
+import { cn } from "@/lib/utils";
+import { MarketingButton } from "./ui";
+import { EuroscopeLogo } from "./logo";
+
+/**
+ * Navigation structure — 6 top-level links (reduced from 8 to prevent
+ * overflow on laptop screens). "Study in Europe" has a dropdown with
+ * the most popular destinations.
+ *
+ * "Courses" and "How We Help" are accessible from other pages (footer,
+ * hero CTAs, in-page links) — keeping the navbar clean.
+ */
+const DESTINATIONS = [
+  { href: "/study-in-europe/germany", label: "Germany", flag: "🇩🇪" },
+  { href: "/study-in-europe/france", label: "France", flag: "🇫🇷" },
+  { href: "/study-in-europe/italy", label: "Italy", flag: "🇮🇹" },
+  { href: "/study-in-europe/spain", label: "Spain", flag: "🇪🇸" },
+  { href: "/study-in-europe/netherlands", label: "Netherlands", flag: "🇳🇱" },
+  { href: "/study-in-europe/sweden", label: "Sweden", flag: "🇸🇪" },
+  { href: "/study-in-europe/finland", label: "Finland", flag: "🇫🇮" },
+  { href: "/study-in-europe/ireland", label: "Ireland", flag: "🇮🇪" },
+];
+
+const NAV_LINKS = [
+  { href: "/", label: "Home" },
+  { href: "/study-in-europe", label: "Destinations", hasDropdown: true },
+  { href: "/universities", label: "Universities" },
+  { href: "/features", label: "Services" },
+  { href: "/about", label: "About" },
+  { href: "/contact", label: "Contact" },
+];
+
+function isActive(pathname: string, href: string): boolean {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(href + "/");
+}
+
+export function MarketingNavbar() {
+  const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [destinationsOpen, setDestinationsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileDestinationsOpen, setMobileDestinationsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLLIElement | null>(null);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 4);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Close desktop dropdown on outside click
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDestinationsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
+  // Close everything on Escape
+  useEffect(() => {
+    const onEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+        setDestinationsOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onEscape);
+    return () => document.removeEventListener("keydown", onEscape);
+  }, []);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
+  const closeMobile = () => {
+    setMobileOpen(false);
+    setMobileDestinationsOpen(false);
+  };
+
+  return (
+    <header
+      className={cn(
+        "sticky top-0 z-50 w-full transition-all duration-300",
+        // ALWAYS solid background — prevents invisible text on dark hero
+        scrolled
+          ? "border-b border-border bg-background/95 backdrop-blur-xl shadow-sm"
+          : "border-b border-border bg-background",
+      )}
+    >
+      <nav
+        className="euroscope-container flex h-16 items-center justify-between gap-4 lg:h-18"
+        aria-label="Primary"
+      >
+        {/* Logo */}
+        <Link
+          href="/"
+          className="flex items-center rounded-lg focus-visible:outline-2 focus-visible:outline-ring"
+          aria-label="Euroscope home"
+        >
+          <EuroscopeLogo size="default" variant="mark" showWordmark={true} />
+        </Link>
+
+        {/* Desktop links — show at lg (1024px) */}
+        <ul className="hidden items-center gap-1 lg:flex">
+          {NAV_LINKS.map((link) => {
+            const active = isActive(pathname, link.href);
+            if (link.hasDropdown) {
+              return (
+                <li key={link.href} className="relative" ref={dropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setDestinationsOpen((o) => !o)}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-ring",
+                      active || destinationsOpen ? "text-primary" : "text-foreground/80",
+                    )}
+                    aria-expanded={destinationsOpen}
+                    aria-haspopup="true"
+                  >
+                    {link.label}
+                    <FaIcon
+                      icon={ICONS.chevronDown}
+                      className={cn("h-3 w-3 transition-transform duration-200", destinationsOpen && "rotate-180")}
+                      aria-hidden
+                    />
+                  </button>
+                  {/* Dropdown */}
+                  {destinationsOpen && (
+                    <div className="absolute left-0 top-full pt-2">
+                      <div className="w-72 rounded-2xl border border-border bg-card p-2 shadow-xl shadow-black/5">
+                        <div className="grid grid-cols-2 gap-1">
+                          {DESTINATIONS.map((dest) => (
+                            <Link
+                              key={dest.href}
+                              href={dest.href}
+                              onClick={() => setDestinationsOpen(false)}
+                              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted hover:text-primary"
+                            >
+                              <span className="text-base" aria-hidden>{dest.flag}</span>
+                              {dest.label}
+                            </Link>
+                          ))}
+                        </div>
+                        <div className="mt-2 border-t border-border pt-2">
+                          <Link
+                            href="/study-in-europe"
+                            onClick={() => setDestinationsOpen(false)}
+                            className="flex items-center justify-between rounded-lg bg-primary/5 px-3 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+                          >
+                            <span>All destinations</span>
+                            <FaIcon icon={ICONS.arrowRight} className="h-3.5 w-3.5" aria-hidden />
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </li>
+              );
+            }
+            return (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className={cn(
+                    "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-ring",
+                    active ? "text-primary" : "text-foreground/80",
+                  )}
+                  aria-current={active ? "page" : undefined}
+                >
+                  {link.label}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+
+        {/* Desktop CTAs */}
+        <div className="hidden items-center gap-3 lg:flex">
+          <Link
+            href="/login"
+            className="text-sm font-medium text-foreground/70 transition-colors hover:text-primary"
+          >
+            Login
+          </Link>
+          <MarketingButton href="/contact" size="sm">
+            Book a Consultation
+            <FaIcon icon={ICONS.arrowRight} className="h-3.5 w-3.5" aria-hidden />
+          </MarketingButton>
+        </div>
+
+        {/* Mobile menu toggle */}
+        <button
+          type="button"
+          onClick={() => setMobileOpen((o) => !o)}
+          className="grid h-10 w-10 place-items-center rounded-lg text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring lg:hidden"
+          aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          aria-expanded={mobileOpen}
+        >
+          <FaIcon icon={mobileOpen ? ICONS.xmark : ICONS.bars} className="h-5 w-5" />
+        </button>
+      </nav>
+
+      {/* Mobile menu — full-screen overlay */}
+      {mobileOpen && (
+        <div className="fixed inset-0 top-16 z-40 overflow-y-auto bg-background lg:hidden">
+          <div className="euroscope-container py-6">
+            <ul className="flex flex-col gap-1">
+              {NAV_LINKS.map((link) => {
+                const active = isActive(pathname, link.href);
+                if (link.hasDropdown) {
+                  return (
+                    <li key={link.href}>
+                      <button
+                        type="button"
+                        onClick={() => setMobileDestinationsOpen((o) => !o)}
+                        className={cn(
+                          "flex w-full items-center justify-between rounded-lg px-3 py-3 text-sm font-medium",
+                          active ? "text-primary" : "text-foreground/80 hover:bg-muted",
+                        )}
+                        aria-expanded={mobileDestinationsOpen}
+                      >
+                        <span>{link.label}</span>
+                        <FaIcon
+                          icon={ICONS.chevronDown}
+                          className={cn("h-4 w-4 transition-transform", mobileDestinationsOpen && "rotate-180")}
+                          aria-hidden
+                        />
+                      </button>
+                      {mobileDestinationsOpen && (
+                        <ul className="ml-3 mt-1 space-y-0.5 border-l-2 border-border pl-3">
+                          {DESTINATIONS.map((dest) => (
+                            <li key={dest.href}>
+                              <Link
+                                href={dest.href}
+                                onClick={closeMobile}
+                                className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-foreground/70 hover:bg-muted hover:text-primary"
+                              >
+                                <span aria-hidden>{dest.flag}</span>
+                                {dest.label}
+                              </Link>
+                            </li>
+                          ))}
+                          <li>
+                            <Link
+                              href="/study-in-europe"
+                              onClick={closeMobile}
+                              className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-primary hover:bg-primary/10"
+                            >
+                              All destinations
+                              <FaIcon icon={ICONS.arrowRight} className="h-3.5 w-3.5" aria-hidden />
+                            </Link>
+                          </li>
+                        </ul>
+                      )}
+                    </li>
+                  );
+                }
+                return (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      onClick={closeMobile}
+                      className={cn(
+                        "block rounded-lg px-3 py-3 text-sm font-medium",
+                        active
+                          ? "bg-primary/10 text-primary"
+                          : "text-foreground/80 hover:bg-muted",
+                      )}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="mt-6 flex flex-col gap-2 border-t border-border pt-6">
+              <Link
+                href="/login"
+                onClick={closeMobile}
+                className="rounded-lg border border-border px-3 py-3 text-center text-sm font-medium hover:bg-muted"
+              >
+                Login
+              </Link>
+              <MarketingButton href="/contact" size="default" className="w-full" onClick={closeMobile}>
+                Book a Consultation
+                <FaIcon icon={ICONS.arrowRight} className="h-4 w-4" aria-hidden />
+              </MarketingButton>
+            </div>
+          </div>
+        </div>
+      )}
+    </header>
+  );
+}

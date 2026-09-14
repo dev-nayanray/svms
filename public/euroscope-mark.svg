@@ -1,0 +1,70 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Premium gold gradient -->
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F9E596"/>
+      <stop offset="40%" stop-color="#D4AF37"/>
+      <stop offset="100%" stop-color="#AA7C11"/>
+    </linearGradient>
+    <!-- Subtle inner shadow gradient for depth -->
+    <linearGradient id="goldDark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#D4AF37"/>
+      <stop offset="100%" stop-color="#9A6D0A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ── Left laurel branch ── -->
+  <g fill="url(#gold)">
+    <!-- Branch curve stem -->
+    <path d="M140 380 Q100 300 120 220 Q140 160 180 130" stroke="url(#goldDark)" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <!-- Leaves on left branch (pointing outward) -->
+    <ellipse cx="115" cy="350" rx="14" ry="6" transform="rotate(-50 115 350)"/>
+    <ellipse cx="105" cy="320" rx="15" ry="6.5" transform="rotate(-55 105 320)"/>
+    <ellipse cx="100" cy="285" rx="16" ry="7" transform="rotate(-60 100 285)"/>
+    <ellipse cx="100" cy="250" rx="16" ry="7" transform="rotate(-65 100 250)"/>
+    <ellipse cx="108" cy="215" rx="15" ry="6.5" transform="rotate(-70 108 215)"/>
+    <ellipse cx="125" cy="185" rx="14" ry="6" transform="rotate(-75 125 185)"/>
+    <ellipse cx="150" cy="160" rx="12" ry="5.5" transform="rotate(-80 150 160)"/>
+    <!-- Inner leaves (pointing inward/upward) -->
+    <ellipse cx="145" cy="345" rx="12" ry="5" transform="rotate(30 145 345)"/>
+    <ellipse cx="138" cy="310" rx="13" ry="5.5" transform="rotate(35 138 310)"/>
+    <ellipse cx="135" cy="275" rx="14" ry="6" transform="rotate(40 135 275)"/>
+    <ellipse cx="138" cy="240" rx="13" ry="5.5" transform="rotate(45 138 240)"/>
+    <ellipse cx="148" cy="205" rx="12" ry="5" transform="rotate(50 148 205)"/>
+    <ellipse cx="165" cy="175" rx="11" ry="4.5" transform="rotate(55 165 175)"/>
+  </g>
+
+  <!-- ── Right laurel branch (mirror of left) ── -->
+  <g fill="url(#gold)">
+    <path d="M372 380 Q412 300 392 220 Q372 160 332 130" stroke="url(#goldDark)" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <ellipse cx="397" cy="350" rx="14" ry="6" transform="rotate(50 397 350)"/>
+    <ellipse cx="407" cy="320" rx="15" ry="6.5" transform="rotate(55 407 320)"/>
+    <ellipse cx="412" cy="285" rx="16" ry="7" transform="rotate(60 412 285)"/>
+    <ellipse cx="412" cy="250" rx="16" ry="7" transform="rotate(65 412 250)"/>
+    <ellipse cx="404" cy="215" rx="15" ry="6.5" transform="rotate(70 404 215)"/>
+    <ellipse cx="387" cy="185" rx="14" ry="6" transform="rotate(75 387 185)"/>
+    <ellipse cx="362" cy="160" rx="12" ry="5.5" transform="rotate(80 362 160)"/>
+    <ellipse cx="367" cy="345" rx="12" ry="5" transform="rotate(-30 367 345)"/>
+    <ellipse cx="374" cy="310" rx="13" ry="5.5" transform="rotate(-35 374 310)"/>
+    <ellipse cx="377" cy="275" rx="14" ry="6" transform="rotate(-40 377 275)"/>
+    <ellipse cx="374" cy="240" rx="13" ry="5.5" transform="rotate(-45 374 240)"/>
+    <ellipse cx="364" cy="205" rx="12" ry="5" transform="rotate(-50 364 205)"/>
+    <ellipse cx="347" cy="175" rx="11" ry="4.5" transform="rotate(-55 347 175)"/>
+  </g>
+
+  <!-- ── Central "E" monogram ── -->
+  <text x="256" y="290" font-family="Georgia, 'Times New Roman', serif" font-size="180" font-weight="bold" fill="url(#gold)" text-anchor="middle" dominant-baseline="middle">E</text>
+
+  <!-- ── Decorative ribbon bow at bottom ── -->
+  <g fill="url(#gold)">
+    <!-- Center knot -->
+    <path d="M256 395 Q240 385 230 395 Q240 410 256 400 Q272 410 282 395 Q272 385 256 395Z"/>
+    <!-- Left ribbon tail -->
+    <path d="M230 395 Q200 405 185 425 Q195 420 210 415 Q215 410 225 405Z" opacity="0.9"/>
+    <!-- Right ribbon tail -->
+    <path d="M282 395 Q312 405 327 425 Q317 420 302 415 Q297 410 287 405Z" opacity="0.9"/>
+  </g>
+
+  <!-- ── Small decorative dots at top (where branches meet) ── -->
+  <circle cx="256" cy="120" r="4" fill="url(#gold)"/>
+</svg>
