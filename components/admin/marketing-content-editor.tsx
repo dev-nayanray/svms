@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/toast";
 import { Loader2, Save, Eye, Plus, Trash2, Megaphone, Star, HelpCircle, Layers, Shield, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { MarketingContent, ContentItem } from "@/lib/services/marketing-content";
+import { DEFAULT_MARKETING_CONTENT } from "@/lib/services/marketing-content";
 
 // Available icon keys for the dropdown
 const ICON_OPTIONS = [
@@ -20,25 +21,11 @@ const ICON_OPTIONS = [
   "arrowRight", "sparkles", "locationDot", "compass", "userGraduate", "star",
 ];
 
-const DEFAULT_CONTENT: MarketingContent = {
-  hero: {
-    badge: "European Education Consultancy",
-    headlinePart1: "Study in Europe.",
-    headlinePart2: "Start Your Future.",
-    subtitle: "Euroscope is a European education consultancy that guides students through every step — from choosing the right university to preparing your visa. We don't just give you a portal — we walk with you.",
-    ctaPrimaryText: "Book a Free Consultation", ctaPrimaryHref: "/contact",
-    ctaSecondaryText: "Explore Europe", ctaSecondaryHref: "/study-in-europe",
-    trustLine: "Personalized guidance · End-to-end support · European expertise",
-  },
-  services: [], whyEuroscope: [], howWeHelp: [], problems: [], trust: [],
-  cta: {
-    eyebrow: "Get Started", headlinePart1: "Your European Future", headlinePart2: "Starts Here.",
-    subtitle: "Talk to our counselors and get a personalized plan for your European study journey. No pressure, no obligation — just honest guidance.",
-    ctaPrimaryText: "Book a Free Consultation", ctaPrimaryHref: "/contact",
-    ctaSecondaryText: "Explore Destinations", ctaSecondaryHref: "/study-in-europe",
-  },
-  faq: [],
-};
+// Use the shared DEFAULT_MARKETING_CONTENT from the service layer —
+// single source of truth for the default marketing copy. Previously
+// this was duplicated here, risking drift between the editor's
+// fallback and what the API actually returns.
+const DEFAULT_CONTENT = DEFAULT_MARKETING_CONTENT;
 
 export function MarketingContentEditor() {
   const { toast } = useToast();

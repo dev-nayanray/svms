@@ -62,18 +62,17 @@ export function StudentsAdmin() {
     queryKey: ["/api/countries", "options"],
     queryFn: () => apiFetch<{ data: CountryOption[] }>("/api/countries"),
   });
+  // Fetch stages dynamically from the DB — same pattern as applications-admin.tsx
+  const { data: stagesData } = useQuery({
+    queryKey: ["/api/stages"],
+    queryFn: () => apiFetch<{ data: { key: string; name: string }[] }>("/api/stages"),
+  });
   const employeeOptions = (employees?.data ?? []).map((e) => ({ value: e.id, label: e.user.name }));
   const branchOptions = (branches?.data ?? []).map((b) => ({ value: b.id, label: b.name }));
   const countryOptions = (countries?.data ?? []).map((c) => ({ value: c.name, label: c.name }));
   const stageOptions = useMemo(
-    () =>
-      [
-        "LEAD", "COUNSELING", "PROFILE_ASSESSMENT", "COUNTRY_SELECTION", "UNIVERSITY_SELECTION",
-        "DOCUMENT_COLLECTION", "APPLICATION_SUBMITTED", "CONDITIONAL_OFFER", "UNCONDITIONAL_OFFER",
-        "DEPOSIT_PAYMENT", "CONFIRMATION", "VISA_PREPARATION", "VISA_SUBMITTED", "BIOMETRICS",
-        "INTERVIEW", "VISA_DECISION", "TRAVEL_PREPARATION", "COMPLETED",
-      ].map((s) => ({ value: s, label: s.replace(/_/g, " ") })),
-    []
+    () => (stagesData?.data ?? []).map((s) => ({ value: s.key, label: (s.name || s.key).replace(/_/g, " ") })),
+    [stagesData]
   );
 
   const staticParams = useMemo(() => {

@@ -42,6 +42,18 @@ export function AuditAdmin() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
+  // Fetch entity types from the audit-logs API (returned alongside data)
+  const { data: entityTypes } = useQuery({
+    queryKey: ["/api/audit-logs", "entity-types"],
+    queryFn: async () => {
+      const res = await apiFetch<{
+        entityTypes: { value: string; label: string }[];
+      }>("/api/audit-logs?pageSize=1");
+      return res.entityTypes ?? [];
+    },
+    staleTime: 5 * 60 * 1000, // cache for 5 min — entity types change rarely
+  });
+
   const staticParams = useMemo(() => {
     const p: Record<string, string> = {};
     if (dateFrom) p.dateFrom = dateFrom;
@@ -190,7 +202,7 @@ export function AuditAdmin() {
         searchPlaceholder="Search by action or entity…"
         staticParams={staticParams}
         filters={[
-          { key: "entity", label: "Entity", options: [] }, // populated dynamically below
+          { key: "entity", label: "Entity", options: entityTypes ?? [] },
         ]}
         emptyMessage="No audit entries match your filters."
       />

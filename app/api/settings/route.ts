@@ -35,6 +35,13 @@ export async function GET() {
       settingMap.set(s.key, s.value);
     }
 
+    // Dynamic overrides for read-only system settings so they always
+    // reflect the actual runtime environment — never stale defaults.
+    const pkg = require("../../../package.json");
+    settingMap.set("system_version", pkg.version ?? "unknown");
+    settingMap.set("system_environment", process.env.NODE_ENV ?? "development");
+    settingMap.set("system_database", "MongoDB");
+
     // Group by section, applying defaults + masking secrets
     const sections = SETTING_SECTIONS.map((section) => ({
       key: section.key,

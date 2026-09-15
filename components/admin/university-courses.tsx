@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/shared";
 import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api-client";
+import { COURSE_DEGREE_LEVELS, COURSE_DEGREE_LABELS } from "@/lib/constants/courses";
 import { Plus } from "lucide-react";
 
 type Course = {
@@ -28,13 +29,10 @@ type Course = {
   _count?: { intakes: number; applications: number };
 };
 
-const DEGREE_LEVEL_OPTIONS = [
-  { value: "DIPLOMA", label: "Diploma" },
-  { value: "BACHELOR", label: "Bachelor" },
-  { value: "MASTER", label: "Master" },
-  { value: "PHD", label: "PhD" },
-  { value: "OTHER", label: "Other" },
-];
+const DEGREE_LEVEL_OPTIONS = COURSE_DEGREE_LEVELS.map((level) => ({
+  value: level,
+  label: COURSE_DEGREE_LABELS[level],
+}));
 
 /**
  * University-scoped course manager. Reuses the shared DataTable +
