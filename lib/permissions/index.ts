@@ -44,7 +44,7 @@ export const PERMISSIONS = {
   // Notes
   "notes.internal": ["ADMIN", "EMPLOYEE"],
   // Finance
-  "finance.read": ["ADMIN"],
+  "finance.read": ["ADMIN", "EMPLOYEE"],
   "finance.manage": ["ADMIN"],
   // Reports
   "reports.read": ["ADMIN", "EMPLOYEE"],

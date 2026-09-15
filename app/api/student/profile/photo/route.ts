@@ -3,9 +3,8 @@ import { ok, handleApiError, fail } from "@/lib/api";
 import { studentApiGuard } from "@/lib/student/guard";
 import { studentProfileService } from "@/lib/services/student-profile";
 import { auditLog } from "@/lib/services/audit";
+import { fileStorage } from "@/lib/services/file-storage";
 import { createHash } from "node:crypto";
-import { mkdir, writeFile, unlink, stat } from "node:fs/promises";
-import { dirname, join } from "node:path";
 
 export const dynamic = "force-dynamic";
 
@@ -18,17 +17,13 @@ const EXT_BY_MIME: Record<string, string> = {
 const MAX_SIZE = 5 * 1024 * 1024;
 
 /**
- * Profile photos are stored under /public/uploads/profile-photos/
- * so the browser can access them directly via <img src="/uploads/...">
- * — NO serving endpoint needed.
- *
- * Previously photos were stored with a `private:` prefix in private
- * storage, but there was no endpoint to serve them back to the browser.
- * Profile photos are avatars (publicly visible in the UI), not sensitive
- * documents, so public storage is the correct approach.
+ * Profile photos are persisted in MongoDB (StoredFile) and served via
+ * /api/files/<id>. Serverless hosts have a read-only filesystem, so
+ * the previous write-to-/public approach failed on Vercel. The stored
+ * URL is session-gated but cacheable — each upload gets a fresh id,
+ * so caching can never show a stale photo.
  */
-const UPLOAD_BASE_DIR = join(process.cwd(), "public", "uploads", "profile-photos");
-const UPLOAD_BASE_URL = "/uploads/profile-photos";
+const PHOTO_URL_PREFIX = "/api/files/";
 
 /** POST /api/student/profile/photo — upload self photo (student) */
 export async function POST(req: NextRequest) {
@@ -92,15 +87,19 @@ export async function handlePhotoUpload(
   const bytes = new Uint8Array(await file.arrayBuffer());
   const hash = createHash("sha256").update(bytes).digest("hex").slice(0, 16);
   const ext = EXT_BY_MIME[file.type] ?? ".bin";
-  const studentDir = join(UPLOAD_BASE_DIR, studentId);
   const fileName = `${Date.now()}-${hash}${ext}`;
-  const filePath = join(studentDir, fileName);
 
-  await mkdir(dirname(filePath), { recursive: true });
-  await writeFile(filePath, bytes);
+  const storedFileId = await fileStorage.put({
+    kind: "profile-photo",
+    ownerId: studentId,
+    bytes,
+    fileName,
+    origName: file.name || fileName,
+    mimeType: file.type,
+  });
 
-  // Store the PUBLIC URL — browser can access this directly
-  const fileUrl = `${UPLOAD_BASE_URL}/${studentId}/${fileName}`;
+  // Session-gated URL served by /api/files/[id]
+  const fileUrl = `${PHOTO_URL_PREFIX}${storedFileId}`;
 
   // Get the student + update profile photo
   const student = await studentProfileService.load(studentId);
@@ -126,11 +125,10 @@ export async function handlePhotoUpload(
   return ok(studentProfileService.toView(updated), { status: 201 });
 }
 
-/** Best-effort cleanup of old profile photo from public dir. */
+/** Best-effort cleanup of the previous photo's stored file. */
 function cleanupOldPhoto(previousUrl: string | null | undefined) {
-  if (!previousUrl || !previousUrl.startsWith(UPLOAD_BASE_URL)) return;
-  const relPath = previousUrl.slice(UPLOAD_BASE_URL.length);
-  const oldPath = join(UPLOAD_BASE_DIR, relPath);
-  if (!oldPath.startsWith(UPLOAD_BASE_DIR)) return; // path containment
-  stat(oldPath).then(() => unlink(oldPath).catch(() => {})).catch(() => {});
+  if (!previousUrl || !previousUrl.startsWith(PHOTO_URL_PREFIX)) return;
+  const id = previousUrl.slice(PHOTO_URL_PREFIX.length);
+  if (!/^[a-f0-9]{24}$/i.test(id)) return;
+  fileStorage.remove(id);
 }

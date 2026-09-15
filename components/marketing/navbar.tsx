@@ -3,10 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import { ICONS, FaIcon } from "./icons";
 import { cn } from "@/lib/utils";
 import { MarketingButton } from "./ui";
 import { EuroscopeLogo } from "./logo";
+import { ROLE_HOME } from "@/lib/permissions";
 
 /**
  * Navigation structure — 6 top-level links (reduced from 8 to prevent
@@ -43,11 +45,17 @@ function isActive(pathname: string, href: string): boolean {
 
 export function MarketingNavbar() {
   const pathname = usePathname();
+  const { data: session, status } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [destinationsOpen, setDestinationsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileDestinationsOpen, setMobileDestinationsOpen] = useState(false);
   const dropdownRef = useRef<HTMLLIElement | null>(null);
+
+  const isLoggedIn = status === "authenticated" && session?.user?.role;
+  const dashboardHref = isLoggedIn
+    ? ROLE_HOME[session.user.role as keyof typeof ROLE_HOME] ?? "/login"
+    : "/login";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 4);
@@ -193,14 +201,31 @@ export function MarketingNavbar() {
           })}
         </ul>
 
-        {/* Desktop CTAs */}
+        {/* Desktop CTAs — changes based on auth status */}
         <div className="hidden items-center gap-3 lg:flex">
-          <Link
-            href="/login"
-            className="text-sm font-medium text-foreground/70 transition-colors hover:text-primary"
-          >
-            Login
-          </Link>
+          {isLoggedIn ? (
+            <>
+              <Link
+                href={dashboardHref}
+                className="text-sm font-medium text-foreground/70 transition-colors hover:text-primary"
+              >
+                Dashboard
+              </Link>
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="text-sm font-medium text-foreground/70 transition-colors hover:text-destructive"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className="text-sm font-medium text-foreground/70 transition-colors hover:text-primary"
+            >
+              Login
+            </Link>
+          )}
           <MarketingButton href="/contact" size="sm">
             Book a Consultation
             <FaIcon icon={ICONS.arrowRight} className="h-3.5 w-3.5" aria-hidden />
@@ -293,13 +318,31 @@ export function MarketingNavbar() {
               })}
             </ul>
             <div className="mt-6 flex flex-col gap-2 border-t border-border pt-6">
-              <Link
-                href="/login"
-                onClick={closeMobile}
-                className="rounded-lg border border-border px-3 py-3 text-center text-sm font-medium hover:bg-muted"
-              >
-                Login
-              </Link>
+              {isLoggedIn ? (
+                <>
+                  <Link
+                    href={dashboardHref}
+                    onClick={closeMobile}
+                    className="rounded-lg border border-border px-3 py-3 text-center text-sm font-medium hover:bg-muted"
+                  >
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className="rounded-lg border border-border px-3 py-3 text-center text-sm font-medium text-destructive hover:bg-destructive/10"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={closeMobile}
+                  className="rounded-lg border border-border px-3 py-3 text-center text-sm font-medium hover:bg-muted"
+                >
+                  Login
+                </Link>
+              )}
               <MarketingButton href="/contact" size="default" className="w-full" onClick={closeMobile}>
                 Book a Consultation
                 <FaIcon icon={ICONS.arrowRight} className="h-4 w-4" aria-hidden />

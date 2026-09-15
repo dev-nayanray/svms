@@ -75,7 +75,7 @@ export type StudentDetailData = {
   payInvoices: number;
 };
 
-export function StudentDetailTabs({ data }: { data: StudentDetailData }) {
+export function StudentDetailTabs({ data, basePath = "/admin" }: { data: StudentDetailData; basePath?: string }) {
   const [activeTab, setActiveTab] = useState("overview");
 
   return (
@@ -113,11 +113,11 @@ export function StudentDetailTabs({ data }: { data: StudentDetailData }) {
           ))}
         </div>
         <div className="p-6">
-          {activeTab === "overview" && <OverviewTab data={data} />}
+          {activeTab === "overview" && <OverviewTab data={data} basePath={basePath} />}
           {activeTab === "profile" && <ProfileTab data={data} />}
           {activeTab === "documents" && <DocumentsTab data={data} />}
-          {activeTab === "applications" && <ApplicationsTab data={data} />}
-          {activeTab === "finance" && <FinanceTab data={data} />}
+          {activeTab === "applications" && <ApplicationsTab data={data} basePath={basePath} />}
+          {activeTab === "finance" && <FinanceTab data={data} basePath={basePath} />}
           {activeTab === "tasks" && <TasksTab data={data} />}
           {activeTab === "activity" && <ActivityTab data={data} />}
         </div>
@@ -126,14 +126,14 @@ export function StudentDetailTabs({ data }: { data: StudentDetailData }) {
   );
 }
 
-function OverviewTab({ data }: { data: StudentDetailData }) {
+function OverviewTab({ data, basePath }: { data: StudentDetailData; basePath: string }) {
   const upcomingTasks = data.tasks.filter((t) => t.status === "TODO" || t.status === "IN_PROGRESS").slice(0, 6);
   const currentApp = data.applications[0];
   return (
     <div className="space-y-6">
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <SummaryCard label="Current Application" value={currentApp ? currentApp.applicationNumber : "No application"} sub={currentApp?.country.name} href={currentApp ? `/admin/applications/${currentApp.id}` : undefined} />
+        <SummaryCard label="Current Application" value={currentApp ? currentApp.applicationNumber : "No application"} sub={currentApp?.country.name} href={currentApp ? `${basePath}/applications/${currentApp.id}` : undefined} />
         <SummaryCard label="Current Stage" value={currentApp ? titleCase(currentApp.stageKey) : "—"} />
         <SummaryCard label="Document Completion" value={`${data.docsPercent}%`} sub={`${data.docsApproved}/${data.docsTotal} approved`} />
         <SummaryCard label="Payment Status" value={data.payLabel === "NO_INVOICES" ? "No invoices" : data.payLabel} sub={data.payInvoices > 0 ? `Due ${formatMoney(data.payDue)} of ${formatMoney(data.payTotal)}` : undefined} />
@@ -149,7 +149,11 @@ function OverviewTab({ data }: { data: StudentDetailData }) {
                 {data.employee.user.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()}
               </span>
               <div>
-                <Link href={`/admin/employees/${data.employee.id}`} className="text-sm font-semibold text-primary hover:underline">{data.employee.user.name}</Link>
+                {basePath === "/admin" ? (
+                  <Link href={`/admin/employees/${data.employee.id}`} className="text-sm font-semibold text-primary hover:underline">{data.employee.user.name}</Link>
+                ) : (
+                  <span className="text-sm font-semibold">{data.employee.user.name}</span>
+                )}
                 <p className="text-xs text-muted-foreground">{data.employee.title ?? "Counselor"}</p>
               </div>
             </div>
@@ -278,7 +282,7 @@ function DocumentsTab({ data }: { data: StudentDetailData }) {
   );
 }
 
-function ApplicationsTab({ data }: { data: StudentDetailData }) {
+function ApplicationsTab({ data, basePath }: { data: StudentDetailData; basePath: string }) {
   return (
     <div className="space-y-4">
       {data.applications.length === 0 ? (
@@ -287,7 +291,7 @@ function ApplicationsTab({ data }: { data: StudentDetailData }) {
         data.applications.map((app) => (
           <div key={app.id} className="rounded-xl border border-border bg-card p-5 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
-              <Link href={`/admin/applications/${app.id}`} className="font-mono text-sm font-bold text-primary hover:underline">
+              <Link href={`${basePath}/applications/${app.id}`} className="font-mono text-sm font-bold text-primary hover:underline">
                 {app.applicationNumber}
               </Link>
               <div className="flex gap-2">
@@ -319,7 +323,7 @@ function ApplicationsTab({ data }: { data: StudentDetailData }) {
   );
 }
 
-function FinanceTab({ data }: { data: StudentDetailData }) {
+function FinanceTab({ data, basePath }: { data: StudentDetailData; basePath: string }) {
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
@@ -345,7 +349,7 @@ function FinanceTab({ data }: { data: StudentDetailData }) {
             {data.invoices.map((i) => (
               <tr key={i.id} className="hover:bg-muted/30">
                 <td className="px-4 py-2.5">
-                  <Link href={`/admin/invoices/${i.id}`} className="font-mono text-xs text-primary hover:underline">{i.invoiceNumber}</Link>
+                  <Link href={`${basePath}/invoices/${i.id}`} className="font-mono text-xs text-primary hover:underline">{i.invoiceNumber}</Link>
                 </td>
                 <td className="px-4 py-2.5">{formatMoney(i.total)}</td>
                 <td className="px-4 py-2.5 text-muted-foreground">{formatMoney(i.paidAmount)}</td>

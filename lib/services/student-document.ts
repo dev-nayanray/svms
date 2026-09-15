@@ -12,10 +12,7 @@ import {
   type DocumentCategory,
 } from "@/lib/constants/documents";
 import { createHash } from "node:crypto";
-import { mkdir, writeFile, stat, unlink } from "node:fs/promises";
-import { dirname, join, resolve, sep } from "node:path";
-import { createReadStream } from "node:fs";
-import type { ReadStream } from "node:fs";
+import { fileStorage } from "@/lib/services/file-storage";
 import type { Document as PrismaDocument } from "@prisma/client";
 
 /**
@@ -61,8 +58,11 @@ import type { Document as PrismaDocument } from "@prisma/client";
  *    was and why they replaced it.
  */
 
-/** The directory where private student documents are stored on disk. */
-export const PRIVATE_UPLOAD_DIR = join(process.cwd(), "private-uploads", "student-docs");
+/**
+ * Private storage lives in MongoDB (see lib/services/file-storage.ts):
+ * serverless hosts have a read-only filesystem, so the previous
+ * on-disk storage under /private-uploads failed on Vercel.
+ */
 
 /**
  * The fileUrl stored on the Document row is a *private path* (relative
@@ -74,7 +74,7 @@ export const PRIVATE_UPLOAD_DIR = join(process.cwd(), "private-uploads", "studen
  * with a public URL — defense in depth in case the fileUrl field ever
  * gets used for legacy public documents.
  */
-const PRIVATE_URL_PREFIX = "private:";
+const PRIVATE_URL_PREFIX = "db:";
 
 export type StudentDocumentView = ReturnType<typeof buildStudentSafeView>;
 export type StudentDocumentListItem = ReturnType<typeof buildListItem>;
@@ -235,10 +235,9 @@ export const studentDocumentService = {
   },
 
   /**
-   * Write the uploaded file bytes to private storage under
-   * `<studentId>/<timestamp>-<sha16>.<ext>`. Returns the private
-   * path (prefixed with `private:`) that should be stored on the
-   * Document row's `fileUrl` field — this is NOT a public URL.
+   * Persist the uploaded file bytes to private storage (MongoDB).
+   * Returns the private path (prefixed with `db:`) that should be
+   * stored on the Document row's `fileUrl` field — NOT a public URL.
    */
   async writePrivateFile(
     studentId: string,
@@ -248,38 +247,31 @@ export const studentDocumentService = {
     const hash = createHash("sha256").update(bytes).digest("hex").slice(0, 16);
     const ext = EXT_BY_MIME[mimeType] ?? ".bin";
     const fileName = `${Date.now()}-${hash}${ext}`;
-    const studentDir = join(PRIVATE_UPLOAD_DIR, studentId);
-    const filePath = join(studentDir, fileName);
 
-    await mkdir(dirname(filePath), { recursive: true });
-    await writeFile(filePath, bytes);
+    const storedFileId = await fileStorage.put({
+      kind: "student-doc",
+      ownerId: studentId,
+      bytes,
+      fileName,
+      origName: fileName,
+      mimeType,
+    });
 
-    // The fileUrl stored on the row is the private path, prefixed
-    // so we can distinguish it from any legacy public-URL fileUrl.
-    const fileUrl = `${PRIVATE_URL_PREFIX}${studentId}/${fileName}`;
-    return { fileUrl, fileName, filePath };
+    const fileUrl = `${PRIVATE_URL_PREFIX}${storedFileId}`;
+    // filePath is kept for API compatibility; storage is now DB-backed.
+    return { fileUrl, fileName, filePath: "" };
   },
 
   /**
-   * Translate a stored `fileUrl` (private path) back to a real
-   * filesystem path. Throws 404 NOT_FOUND if the fileUrl is not
-   * a private path (i.e. it's a legacy public URL or malformed).
-   * The caller MUST verify ownership before calling this.
+   * Resolve a stored `fileUrl` (`db:<id>`) to the StoredFile id.
+   * Throws 404 NOT_FOUND for legacy/malformed values.
    */
   resolvePrivatePath(fileUrl: string): string {
-    if (!fileUrl.startsWith(PRIVATE_URL_PREFIX)) {
+    const id = fileStorage.parseDbPath(fileUrl);
+    if (!id) {
       throw new HttpError(404, "NOT_FOUND", "File is not available for download");
     }
-    const relPath = fileUrl.slice(PRIVATE_URL_PREFIX.length);
-    const filePath = join(PRIVATE_UPLOAD_DIR, relPath);
-    // Path containment check — prevent path traversal (H3 fix).
-    // After join, the resolved path must start with UPLOAD_DIR.
-    // This catches any ".." segments that could escape the upload directory.
-    const resolved = resolve(filePath);
-    if (!resolved.startsWith(PRIVATE_UPLOAD_DIR + sep) && resolved !== PRIVATE_UPLOAD_DIR) {
-      throw new HttpError(404, "NOT_FOUND", "File is not available for download");
-    }
-    return resolved;
+    return id;
   },
 
   /**
@@ -437,16 +429,16 @@ export const studentDocumentService = {
 
   /**
    * Resolve a document for secure download. Verifies ownership
-   * server-side, then returns the filesystem path + content metadata
-   * so the route can stream the file. The caller MUST have called
-   * studentApiGuard before this — we don't re-check auth here, only
-   * ownership of the document row.
+   * server-side, then loads the file bytes from storage so the route
+   * can return them. The caller MUST have called studentApiGuard
+   * before this — we don't re-check auth here, only ownership of the
+   * document row.
    *
-   * Returns null when the document doesn't exist or doesn't belong
-   * to the caller. The route 404s in that case.
+   * Returns null when the document doesn't exist, doesn't belong to
+   * the caller, or its stored file is missing. The route 404s then.
    */
   async resolveForDownload(studentId: string, documentId: string, userId?: string): Promise<{
-    filePath: string;
+    bytes: Uint8Array;
     fileName: string;
     mimeType: string;
     fileSize: number;
@@ -466,26 +458,21 @@ export const studentDocumentService = {
 
     // Don't allow downloads of REQUESTED documents (no file uploaded yet).
     // For all other statuses (UPLOADED, UNDER_REVIEW, APPROVED, REJECTED,
-    // EXPIRED), the file exists on disk and the student owns it.
+    // EXPIRED), the file exists in storage and the student owns it.
     if (doc.status === "REQUESTED") {
       throw new HttpError(409, "CONFLICT", "This document has not been uploaded yet");
     }
 
-    let filePath: string;
+    let storedFileId: string;
     try {
-      filePath = this.resolvePrivatePath(doc.fileUrl);
+      storedFileId = this.resolvePrivatePath(doc.fileUrl);
     } catch {
-      // Legacy public-URL fileUrls are not downloadable via this endpoint.
+      // Legacy public-URL/disk fileUrls are not downloadable here.
       return null;
     }
 
-    // Verify the file exists on disk — orphaned DB rows return null
-    // so the route can 404 gracefully instead of crashing mid-stream.
-    try {
-      await stat(filePath);
-    } catch {
-      return null;
-    }
+    const file = await fileStorage.get(storedFileId);
+    if (!file) return null; // orphaned row — stored file is gone
 
     // Audit the download — file downloads are sensitive (the file
     // might contain a passport scan or financial statement) so we
@@ -502,33 +489,23 @@ export const studentDocumentService = {
       .catch(() => {});
 
     return {
-      filePath,
+      bytes: file.bytes,
       fileName: doc.fileName,
       mimeType: doc.mimeType,
-      fileSize: doc.fileSize,
+      fileSize: file.bytes.byteLength,
     };
   },
 
   /**
-   * Create a readable stream for the file. The route uses this to
-   * pipe the file to the response without buffering the whole thing
-   * in memory (important for 10MB PDFs).
-   */
-  createDownloadStream(filePath: string): ReadStream {
-    return createReadStream(filePath);
-  },
-
-  /**
    * Best-effort cleanup of a private file. Called when an upload
-   * fails AFTER the file was written (e.g. DB write fails). Never
-   * throws — orphan files are a janitorial problem, not a
+   * fails AFTER the file was stored (e.g. a later DB write fails).
+   * Never throws — orphan files are a janitorial problem, not a
    * user-visible failure.
    */
   async cleanupPrivateFile(fileUrl: string) {
     try {
-      const filePath = this.resolvePrivatePath(fileUrl);
-      await stat(filePath);
-      await unlink(filePath);
+      const storedFileId = this.resolvePrivatePath(fileUrl);
+      await fileStorage.remove(storedFileId);
     } catch {
       // best-effort
     }

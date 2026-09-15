@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth/session";
 import { HeroSection } from "@/components/marketing/hero";
 import { DestinationSection } from "@/components/marketing/destinations";
 import {
@@ -18,19 +16,15 @@ import { getMarketingContent } from "@/lib/services/marketing-content";
  * All sections read from the DB: hero, services, whyEuroscope, problems,
  * howWeHelp, trust, FAQ, CTA. Universities, courses, and countries are
  * also dynamic from the database.
+ *
+ * IMPORTANT: This page is accessible to EVERYONE — guests, logged-in
+ * students, employees, and admins. We do NOT redirect logged-in users
+ * to their panel here. The navbar shows "Login" for guests and
+ * "Dashboard" + "Logout" for logged-in users, so they can navigate
+ * to their panel when they want. This lets logged-in users share
+ * marketing links with friends/family without being bounced.
  */
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ preview?: string }>;
-}) {
-  const { preview } = await searchParams;
-  const session = await getSession();
-  if (session.user.role && preview !== "1") {
-    const role = session.user.role;
-    redirect(role === "ADMIN" ? "/admin" : role === "EMPLOYEE" ? "/employee" : "/student");
-  }
-
+export default async function HomePage() {
   const content = await getMarketingContent();
 
   return (

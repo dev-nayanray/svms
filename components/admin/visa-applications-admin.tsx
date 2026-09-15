@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { DataTable, type Column } from "@/components/shared/data-table";
 import { PageHeader } from "@/components/shared/page-kit";
@@ -64,6 +64,8 @@ const stageOptions = VISA_STATUSES.map((s) => ({
 export function VisaApplicationsAdmin() {
   const router = useRouter();
   const { toast } = useToast();
+  const pathname = usePathname();
+  const detailBase = pathname.startsWith("/employee") ? "/employee/visa" : "/admin/visa";
   const [stageChangeVisa, setStageChangeVisa] = useState<VisaApp | null>(null);
   const [targetStage, setTargetStage] = useState<VisaStatus>("SUBMITTED");
   const [stageNote, setStageNote] = useState("");
@@ -138,7 +140,7 @@ export function VisaApplicationsAdmin() {
       header: "Application",
       render: (v) => (
         <button
-          onClick={() => router.push(`/admin/visa/${v.id}`)}
+          onClick={() => router.push(`${detailBase}/${v.id}`)}
           className="font-mono text-xs font-medium text-primary hover:underline"
         >
           {v.application.applicationNumber}
@@ -213,7 +215,7 @@ export function VisaApplicationsAdmin() {
         ]}
         emptyMessage="No visa applications yet — visa records are created when an application reaches the visa stage."
         rowActions={[
-          { label: "View", onClick: (v) => router.push(`/admin/visa/${v.id}`) },
+          { label: "View", onClick: (v) => router.push(`${detailBase}/${v.id}`) },
           { label: "Change Stage", onClick: (v) => openStageDialog(v) },
         ]}
       />

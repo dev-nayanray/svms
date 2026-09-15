@@ -45,12 +45,20 @@ export function AdminShell({
   navGroups,
   userName,
   userEmail,
+  subtitle = "Admin Console",
+  homeHref = "/admin",
+  notificationsHref = "/admin/notifications",
+  settingsHref = "/admin/settings",
   children,
 }: {
   items: NavItem[];
   navGroups?: NavGroup[];
   userName: string;
   userEmail: string;
+  subtitle?: string;
+  homeHref?: string;
+  notificationsHref?: string;
+  settingsHref?: string;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -176,8 +184,8 @@ export function AdminShell({
           </span>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="truncate text-sm font-bold tracking-tight">Euroscope</p>
-              <p className="truncate text-[10px] text-muted-foreground">Admin Console</p>
+                <p className="truncate text-sm font-bold tracking-tight">Euroscope</p>
+                <p className="truncate text-[10px] text-muted-foreground">{subtitle}</p>
             </div>
           )}
         </div>
@@ -221,7 +229,7 @@ export function AdminShell({
               </span>
               <div>
                 <p className="text-sm font-bold">Euroscope</p>
-                <p className="text-[10px] text-muted-foreground">Admin Console</p>
+                <p className="text-[10px] text-muted-foreground">{subtitle}</p>
               </div>
             </div>
             {renderNav()}
@@ -307,7 +315,7 @@ export function AdminShell({
 
             {/* Notifications */}
             <Link
-              href="/admin/notifications"
+              href={notificationsHref}
               className="relative grid h-9 w-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               aria-label={`Notifications${notif?.unreadCount ? ` (${notif.unreadCount} unread)` : ""}`}
             >
@@ -339,7 +347,7 @@ export function AdminShell({
                   <p className="truncate text-sm font-medium">{userName}</p>
                   <p className="truncate text-xs text-muted-foreground">{userEmail}</p>
                 </div>
-                <DropdownMenuItem onSelect={() => router.push("/admin/settings")}>
+                <DropdownMenuItem onSelect={() => router.push(settingsHref)}>
                   <Settings className="h-4 w-4" aria-hidden /> Settings
                 </DropdownMenuItem>
                 <DropdownMenuItem
