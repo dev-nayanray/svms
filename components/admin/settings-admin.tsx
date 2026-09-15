@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/overlays";
 import { EmptyState } from "@/components/shared";
 import { apiFetch } from "@/lib/api-client";
 import { useToast } from "@/components/ui/toast";
-import { Save, Lock, ShieldCheck } from "lucide-react";
+import { Save, Lock, ShieldCheck, Mail } from "lucide-react";
 import { SECRET_MASK } from "@/lib/constants/settings";
 
 type SettingItem = {
@@ -53,6 +53,8 @@ export function SettingsAdmin() {
   const [activeSection, setActiveSection] = useState("company");
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [testingEmail, setTestingEmail] = useState(false);
+  const [testEmailAddr, setTestEmailAddr] = useState("");
 
   const { data, isPending } = useQuery({
     queryKey: ["/api/settings"],
@@ -104,6 +106,33 @@ export function SettingsAdmin() {
 
   const updateDraft = (key: string, value: string) => {
     setDrafts((d) => ({ ...d, [key]: value }));
+  };
+
+  const sendTestEmail = async () => {
+    if (!testEmailAddr) {
+      toast({ title: "Enter an email address first", variant: "error" });
+      return;
+    }
+    setTestingEmail(true);
+    try {
+      const res = await apiFetch<{ ok: boolean; message: string }>("/api/admin/test-email", {
+        method: "POST",
+        json: { email: testEmailAddr },
+      });
+      toast({
+        title: res.ok ? "Test email sent!" : "SMTP test failed",
+        description: res.message,
+        variant: res.ok ? "success" : "error",
+      });
+    } catch (err) {
+      toast({
+        title: "Test email failed",
+        description: (err as Error).message,
+        variant: "error",
+      });
+    } finally {
+      setTestingEmail(false);
+    }
   };
 
   return (
@@ -245,6 +274,34 @@ export function SettingsAdmin() {
                   );
                 })}
               </CardContent>
+              {activeSection === "email" && (
+                <CardContent className="border-t pt-4">
+                  <div className="flex flex-wrap items-end gap-2">
+                    <div className="min-w-56 flex-1 space-y-1">
+                      <Label htmlFor="test-email" className="flex items-center gap-1.5">
+                        <Mail className="h-3 w-3" aria-hidden />
+                        Send a test email
+                      </Label>
+                      <Input
+                        id="test-email"
+                        type="email"
+                        value={testEmailAddr}
+                        onChange={(e) => setTestEmailAddr(e.target.value)}
+                        placeholder="recipient@example.com"
+                      />
+                      <p className="text-xs text-muted-foreground">Sends a test email using your configured SMTP settings.</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={testingEmail || !testEmailAddr}
+                      onClick={sendTestEmail}
+                    >
+                      {testingEmail ? "Sending…" : "Send test"}
+                    </Button>
+                  </div>
+                </CardContent>
+              )}
             </Card>
           )}
 

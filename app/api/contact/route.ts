@@ -3,6 +3,7 @@ import { ok, handleApiError, fail } from "@/lib/api";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auditLog } from "@/lib/services/audit";
+import { sendNewLeadNotificationEmail } from "@/lib/services/email";
 
 export const dynamic = "force-dynamic";
 
@@ -19,14 +20,13 @@ const contactSchema = z.object({
 /**
  * POST /api/contact — public contact / consultation request form.
  *
- * Validates the body with Zod, stores the submission as a Lead (so it
- * can be picked up by the admin/employee panel), and audit-logs the
- * submission. The contact form is the primary CRO conversion path on
- * the marketing site.
+ * 1. Validates the body with Zod.
+ * 2. Stores the submission as a Lead (source: WEBSITE, status: NEW).
+ * 3. Creates in-app Notifications for all ADMIN + EMPLOYEE users.
+ * 4. Sends an email notification to admins/employees (if SMTP configured).
+ * 5. Audit-logs the submission.
  *
- * This is a PUBLIC endpoint — no authentication required. Rate limiting
- * would be applied here in a production setup (the in-memory limiter
- * in lib/security/rate-limit.ts can be wired in if abuse becomes an issue).
+ * This is a PUBLIC endpoint — no authentication required.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -41,7 +41,6 @@ export async function POST(req: NextRequest) {
     const { name, email, phone, destination, studyLevel, course, message } = parsed.data;
 
     // Store as a Lead so admin/employee panels can pick it up.
-    // Lead.source = "WEBSITE" so counselors know the origin.
     const lead = await prisma.lead.create({
       data: {
         name,
@@ -58,12 +57,42 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Create in-app notifications for all admin + employee users
+    const staff = await prisma.user.findMany({
+      where: {
+        roleName: { in: ["ADMIN", "EMPLOYEE"] },
+        status: "ACTIVE",
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+
+    if (staff.length > 0) {
+      await prisma.notification.createMany({
+        data: staff.map((s) => ({
+          userId: s.id,
+          type: "NEW_LEAD",
+          title: `New lead: ${name}`,
+          message: `${name} (${email}) submitted a consultation request from the website.${phone ? ` Phone: ${phone}` : ""}`,
+          link: "/admin/leads",
+        })),
+      });
+    }
+
+    // Send email notification to staff (best-effort — won't fail the request)
+    void sendNewLeadNotificationEmail({
+      name,
+      email,
+      phone: phone || null,
+      source: "WEBSITE",
+    });
+
     const { ipAddress, userAgent } = auditLog.fromRequest(req);
     await auditLog.record({
       action: "contact.submitted",
       entity: "Lead",
       entityId: lead.id,
-      newValue: { name, email, destination, studyLevel, course, messageLength: message.length },
+      newValue: { name, email, destination, studyLevel, course, messageLength: message.length, notificationsSent: staff.length },
       ipAddress,
       userAgent,
     });
