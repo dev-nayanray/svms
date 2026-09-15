@@ -24,7 +24,15 @@ export default async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = await getToken({ req, secret: process.env.AUTH_SECRET });
+  // NextAuth v5 may issue the session cookie as "authjs.session-token" or
+  // "__Secure-authjs.session-token" depending on how it detected the scheme.
+  // Behind Vercel's proxy the issuer and this middleware can disagree, so
+  // accept either name — otherwise logged-in users get bounced to /login.
+  const secret = process.env.AUTH_SECRET;
+  const token =
+    (await getToken({ req, secret })) ??
+    (await getToken({ req, secret, cookieName: "__Secure-authjs.session-token" })) ??
+    (await getToken({ req, secret, cookieName: "authjs.session-token" }));
   if (!token) {
     const url = new URL("/login", req.url);
     url.searchParams.set("callbackUrl", pathname);
