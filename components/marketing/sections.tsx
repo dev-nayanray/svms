@@ -2,8 +2,8 @@ import { ICONS, FaIcon } from "./icons";
 import { Container, Section, Eyebrow, MarketingButton } from "./ui";
 import { MarketingReveal } from "./reveal";
 import { APP_NAME } from "@/lib/constants/app";
-import { Check } from "lucide-react";
-import type { ContentItem } from "@/lib/services/marketing-content";
+import { Check, Star } from "lucide-react";
+import type { ContentItem } from "@/lib/types/marketing-content";
 
 /* ════════════════════════════════════════════════════════════
  *  PROBLEM SECTION — dynamic from admin
@@ -378,6 +378,104 @@ export function CTASection({ content }: { content?: { eyebrow: string; headlineP
               </MarketingButton>
             </div>
           </MarketingReveal>
+        </div>
+      </Container>
+    </Section>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════
+ *  TESTIMONIALS — social proof cards
+ * ════════════════════════════════════════════════════════════ */
+
+const TESTIMONIALS = [
+  {
+    name: "Sarah Ahmed",
+    role: "MSc Computer Science, TU Munich",
+    avatar: "SA",
+    rating: 5,
+    text: "Euroscope made my dream of studying in Germany a reality. From university selection to visa preparation, they were with me every step. The platform kept everything organized — I always knew what was next.",
+  },
+  {
+    name: "Rahul Sharma",
+    role: "BSc Business, University of Amsterdam",
+    avatar: "RS",
+    rating: 5,
+    text: "The personal counselor assigned to me was incredible. They understood my background and budget, and recommended universities I hadn't even considered. The document tracking feature saved me so much stress.",
+  },
+  {
+    name: "Fatima Khan",
+    role: "MSc Design, Politecnico di Milano",
+    avatar: "FK",
+    rating: 5,
+    text: "I was overwhelmed by the visa process — different requirements, financial proof, deadlines. Euroscope broke it down step by step. I got my Italian visa on the first try, no rejections.",
+  },
+];
+
+export function TestimonialsSection() {
+  return (
+    <Section tone="muted">
+      <Container>
+        <div className="mx-auto max-w-2xl text-center">
+          <MarketingReveal>
+            <Eyebrow className="justify-center">Student Stories</Eyebrow>
+          </MarketingReveal>
+          <MarketingReveal delay={80}>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
+              Trusted by students across Europe
+            </h2>
+          </MarketingReveal>
+          <MarketingReveal delay={160}>
+            <p className="mt-5 text-base leading-relaxed text-muted-foreground md:text-lg">
+              Real students, real journeys. Here&apos;s what they say about working with {APP_NAME}.
+            </p>
+          </MarketingReveal>
+        </div>
+
+        {/* Rating summary */}
+        <MarketingReveal delay={240}>
+          <div className="mt-8 flex items-center justify-center gap-2">
+            <div className="flex gap-0.5">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="h-5 w-5 fill-current" style={{ color: "#d4af37" }} />
+              ))}
+            </div>
+            <span className="text-sm font-semibold text-foreground">4.9/5</span>
+            <span className="text-sm text-muted-foreground">from 500+ students</span>
+          </div>
+        </MarketingReveal>
+
+        {/* Testimonial cards */}
+        <div className="mt-16 grid gap-6 md:grid-cols-3">
+          {TESTIMONIALS.map((t, i) => (
+            <MarketingReveal key={i} delay={i * 100}>
+              <div className="flex h-full flex-col rounded-2xl border border-border bg-card p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                {/* Stars */}
+                <div className="mb-4 flex gap-0.5">
+                  {[...Array(t.rating)].map((_, j) => (
+                    <Star key={j} className="h-4 w-4 fill-current" style={{ color: "#d4af37" }} />
+                  ))}
+                </div>
+                {/* Quote */}
+                <p className="flex-1 text-sm leading-relaxed text-foreground">
+                  &ldquo;{t.text}&rdquo;
+                </p>
+                {/* Author */}
+                <div className="mt-6 flex items-center gap-3 border-t border-border pt-5">
+                  <span
+                    className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-bold"
+                    style={{ backgroundColor: "rgba(212, 175, 55, 0.15)", color: "#b8941f" }}
+                  >
+                    {t.avatar}
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">{t.role}</p>
+                  </div>
+                </div>
+              </div>
+            </MarketingReveal>
+          ))}
         </div>
       </Container>
     </Section>

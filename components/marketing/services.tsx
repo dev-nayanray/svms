@@ -2,7 +2,7 @@ import { ICONS, FaIcon } from "./icons";
 import { Container, Section, Eyebrow, MarketingButton } from "./ui";
 import { MarketingReveal } from "./reveal";
 import { APP_NAME } from "@/lib/constants/app";
-import type { ContentItem } from "@/lib/services/marketing-content";
+import type { ContentItem } from "@/lib/types/marketing-content";
 
 /* ════════════════════════════════════════════════════════════
  *  SERVICES — dynamic from admin panel
