@@ -82,22 +82,31 @@ export function AdminDashboardView() {
       </div>
 
       {/* ── Quick Actions ── */}
-      <div className="flex flex-wrap gap-2">
-        <Link href="/admin/students" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary-hover hover:-translate-y-0.5">
-          <UserPlus className="h-4 w-4" /> New Student
-        </Link>
-        <Link href="/admin/tasks" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
-          <CheckSquare className="h-4 w-4" /> New Task
-        </Link>
-        <Link href="/admin/invoices" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
-          <CreditCard className="h-4 w-4" /> New Invoice
-        </Link>
-        <Link href="/admin/leads" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
-          <Plus className="h-4 w-4" /> New Lead
-        </Link>
-        <Link href="/admin/applications" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
-          <FileText className="h-4 w-4" /> New Application
-        </Link>
+      <div>
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Quick Actions</h2>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/students" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary-hover hover:-translate-y-0.5">
+            <UserPlus className="h-4 w-4" /> Add Student
+          </Link>
+          <Link href="/admin/leads" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
+            <Plus className="h-4 w-4" /> Add Lead
+          </Link>
+          <Link href="/admin/applications" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
+            <FileText className="h-4 w-4" /> Create Application
+          </Link>
+          <Link href="/admin/documents" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
+            <FileText className="h-4 w-4" /> Review Documents
+          </Link>
+          <Link href="/admin/payments" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
+            <CreditCard className="h-4 w-4" /> Record Payment
+          </Link>
+          <Link href="/admin/invoices" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
+            <CreditCard className="h-4 w-4" /> Create Invoice
+          </Link>
+          <Link href="/admin/tasks" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
+            <CheckSquare className="h-4 w-4" /> Create Task
+          </Link>
+        </div>
       </div>
 
       {/* ── Error state ── */}
