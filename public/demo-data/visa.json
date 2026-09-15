@@ -1,0 +1,612 @@
+{
+  "version": "1.0",
+  "module": "visa",
+  "description": "Demo data for visa — 67 records",
+  "generatedAt": "2026-09-15T22:20:32.665Z",
+  "count": 67,
+  "records": [
+    {
+      "applicationId": "SV-DEMO-000001",
+      "stage": "PROCESSING",
+      "visaType": "Student Visa",
+      "submittedAt": "2026-08-09",
+      "biometricsAt": null,
+      "interviewAt": "2026-09-13",
+      "decisionAt": "2026-09-01"
+    },
+    {
+      "applicationId": "SV-DEMO-000004",
+      "stage": "COMPLETED",
+      "visaType": "Student Visa",
+      "submittedAt": "2026-07-15",
+      "biometricsAt": "2026-08-01",
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000006",
+      "stage": "BIOMETRICS",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": null,
+      "biometricsAt": null,
+      "interviewAt": "2026-08-19",
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000020",
+      "stage": "COMPLETED",
+      "visaType": "Student Visa",
+      "submittedAt": null,
+      "biometricsAt": "2026-08-15",
+      "interviewAt": null,
+      "decisionAt": "2026-09-13"
+    },
+    {
+      "applicationId": "SV-DEMO-000021",
+      "stage": "PROCESSING",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": "2026-07-23",
+      "biometricsAt": null,
+      "interviewAt": "2026-08-18",
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000023",
+      "stage": "REFUSED",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": "2026-07-12",
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000025",
+      "stage": "COMPLETED",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": "2026-07-13",
+      "biometricsAt": "2026-08-06",
+      "interviewAt": "2026-08-26",
+      "decisionAt": "2026-09-03"
+    },
+    {
+      "applicationId": "SV-DEMO-000028",
+      "stage": "INTERVIEW",
+      "visaType": "Student Visa",
+      "submittedAt": "2026-09-07",
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000030",
+      "stage": "SUBMITTED",
+      "visaType": "Student Visa",
+      "submittedAt": null,
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000032",
+      "stage": "SUBMITTED",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": "2026-08-21",
+      "biometricsAt": "2026-08-28",
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000033",
+      "stage": "BIOMETRICS",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": "2026-07-11",
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000034",
+      "stage": "REFUSED",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": "2026-07-01",
+      "biometricsAt": "2026-08-12",
+      "interviewAt": null,
+      "decisionAt": "2026-09-10"
+    },
+    {
+      "applicationId": "SV-DEMO-000035",
+      "stage": "APPROVED",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": null,
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000038",
+      "stage": "APPROVED",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": null,
+      "biometricsAt": "2026-08-28",
+      "interviewAt": "2026-08-19",
+      "decisionAt": "2026-09-14"
+    },
+    {
+      "applicationId": "SV-DEMO-000040",
+      "stage": "PROCESSING",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": null,
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": "2026-09-13"
+    },
+    {
+      "applicationId": "SV-DEMO-000042",
+      "stage": "APPROVED",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": "2026-08-20",
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000045",
+      "stage": "BIOMETRICS",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": "2026-08-24",
+      "biometricsAt": "2026-07-17",
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000046",
+      "stage": "COMPLETED",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": null,
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000047",
+      "stage": "SUBMITTED",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": null,
+      "biometricsAt": null,
+      "interviewAt": "2026-09-12",
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000049",
+      "stage": "COMPLETED",
+      "visaType": "Student Visa",
+      "submittedAt": null,
+      "biometricsAt": "2026-07-29",
+      "interviewAt": "2026-08-19",
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000051",
+      "stage": "PREPARATION",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": null,
+      "biometricsAt": "2026-09-10",
+      "interviewAt": null,
+      "decisionAt": "2026-09-10"
+    },
+    {
+      "applicationId": "SV-DEMO-000052",
+      "stage": "APPROVED",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": "2026-07-14",
+      "biometricsAt": "2026-08-04",
+      "interviewAt": null,
+      "decisionAt": "2026-09-09"
+    },
+    {
+      "applicationId": "SV-DEMO-000059",
+      "stage": "COMPLETED",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": "2026-09-03",
+      "biometricsAt": "2026-08-28",
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000060",
+      "stage": "SUBMITTED",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": null,
+      "biometricsAt": "2026-08-27",
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000061",
+      "stage": "INTERVIEW",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": "2026-08-28",
+      "biometricsAt": null,
+      "interviewAt": "2026-09-10",
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000065",
+      "stage": "PREPARATION",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": "2026-09-06",
+      "biometricsAt": null,
+      "interviewAt": "2026-09-06",
+      "decisionAt": "2026-09-07"
+    },
+    {
+      "applicationId": "SV-DEMO-000066",
+      "stage": "BIOMETRICS",
+      "visaType": "Student Visa",
+      "submittedAt": null,
+      "biometricsAt": null,
+      "interviewAt": "2026-08-27",
+      "decisionAt": "2026-09-05"
+    },
+    {
+      "applicationId": "SV-DEMO-000067",
+      "stage": "PROCESSING",
+      "visaType": "Student Visa",
+      "submittedAt": null,
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000068",
+      "stage": "APPROVED",
+      "visaType": "Student Visa",
+      "submittedAt": "2026-08-04",
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000069",
+      "stage": "REFUSED",
+      "visaType": "Student Visa",
+      "submittedAt": null,
+      "biometricsAt": null,
+      "interviewAt": "2026-08-24",
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000072",
+      "stage": "INTERVIEW",
+      "visaType": "Student Visa",
+      "submittedAt": "2026-08-08",
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": "2026-09-12"
+    },
+    {
+      "applicationId": "SV-DEMO-000073",
+      "stage": "PROCESSING",
+      "visaType": "Student Visa",
+      "submittedAt": null,
+      "biometricsAt": "2026-07-19",
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000075",
+      "stage": "INTERVIEW",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": "2026-09-04",
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": "2026-09-09"
+    },
+    {
+      "applicationId": "SV-DEMO-000077",
+      "stage": "COMPLETED",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": "2026-06-18",
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000079",
+      "stage": "BIOMETRICS",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": null,
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": "2026-09-14"
+    },
+    {
+      "applicationId": "SV-DEMO-000081",
+      "stage": "COMPLETED",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": null,
+      "biometricsAt": "2026-08-29",
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000083",
+      "stage": "SUBMITTED",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": null,
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000089",
+      "stage": "REFUSED",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": "2026-07-08",
+      "biometricsAt": null,
+      "interviewAt": "2026-09-10",
+      "decisionAt": "2026-09-11"
+    },
+    {
+      "applicationId": "SV-DEMO-000091",
+      "stage": "PROCESSING",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": "2026-08-26",
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000092",
+      "stage": "BIOMETRICS",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": null,
+      "biometricsAt": "2026-09-04",
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000094",
+      "stage": "BIOMETRICS",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": null,
+      "biometricsAt": null,
+      "interviewAt": "2026-09-07",
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000097",
+      "stage": "INTERVIEW",
+      "visaType": "Student Visa",
+      "submittedAt": "2026-06-25",
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000098",
+      "stage": "APPROVED",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": "2026-07-13",
+      "biometricsAt": "2026-09-03",
+      "interviewAt": null,
+      "decisionAt": "2026-09-02"
+    },
+    {
+      "applicationId": "SV-DEMO-000102",
+      "stage": "INTERVIEW",
+      "visaType": "Student Visa",
+      "submittedAt": null,
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000103",
+      "stage": "INTERVIEW",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": "2026-07-02",
+      "biometricsAt": "2026-08-13",
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000105",
+      "stage": "BIOMETRICS",
+      "visaType": "Student Visa",
+      "submittedAt": "2026-07-09",
+      "biometricsAt": "2026-07-19",
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000108",
+      "stage": "APPROVED",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": "2026-07-29",
+      "biometricsAt": "2026-07-25",
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000109",
+      "stage": "APPROVED",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": null,
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": "2026-09-12"
+    },
+    {
+      "applicationId": "SV-DEMO-000111",
+      "stage": "COMPLETED",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": null,
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000112",
+      "stage": "PROCESSING",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": "2026-06-19",
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000114",
+      "stage": "PREPARATION",
+      "visaType": "Student Visa",
+      "submittedAt": "2026-07-25",
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000115",
+      "stage": "SUBMITTED",
+      "visaType": "Student Visa",
+      "submittedAt": null,
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000117",
+      "stage": "APPROVED",
+      "visaType": "Student Visa",
+      "submittedAt": "2026-07-10",
+      "biometricsAt": "2026-09-05",
+      "interviewAt": "2026-08-31",
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000123",
+      "stage": "PREPARATION",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": "2026-07-18",
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000124",
+      "stage": "INTERVIEW",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": "2026-07-10",
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000125",
+      "stage": "SUBMITTED",
+      "visaType": "Student Visa",
+      "submittedAt": "2026-07-14",
+      "biometricsAt": "2026-09-09",
+      "interviewAt": null,
+      "decisionAt": "2026-09-03"
+    },
+    {
+      "applicationId": "SV-DEMO-000129",
+      "stage": "PREPARATION",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": null,
+      "biometricsAt": "2026-08-22",
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000132",
+      "stage": "COMPLETED",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": "2026-08-13",
+      "biometricsAt": null,
+      "interviewAt": "2026-08-21",
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000133",
+      "stage": "PROCESSING",
+      "visaType": "Tier 4 Student Visa",
+      "submittedAt": null,
+      "biometricsAt": "2026-08-05",
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000134",
+      "stage": "COMPLETED",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": "2026-06-24",
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": "2026-09-06"
+    },
+    {
+      "applicationId": "SV-DEMO-000138",
+      "stage": "REFUSED",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": "2026-07-20",
+      "biometricsAt": null,
+      "interviewAt": "2026-08-30",
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000139",
+      "stage": "PREPARATION",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": null,
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000140",
+      "stage": "INTERVIEW",
+      "visaType": "Student Visa",
+      "submittedAt": null,
+      "biometricsAt": "2026-07-17",
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000143",
+      "stage": "REFUSED",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": null,
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": "2026-09-13"
+    },
+    {
+      "applicationId": "SV-DEMO-000144",
+      "stage": "SUBMITTED",
+      "visaType": "Student Visa",
+      "submittedAt": "2026-07-27",
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000146",
+      "stage": "SUBMITTED",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": "2026-08-27",
+      "biometricsAt": "2026-08-13",
+      "interviewAt": null,
+      "decisionAt": null
+    },
+    {
+      "applicationId": "SV-DEMO-000147",
+      "stage": "REFUSED",
+      "visaType": "Short-term Study Visa",
+      "submittedAt": null,
+      "biometricsAt": null,
+      "interviewAt": null,
+      "decisionAt": "2026-09-06"
+    }
+  ]
+}

@@ -1,0 +1,2949 @@
+{
+  "version": "1.0",
+  "module": "invoices",
+  "description": "Demo data for invoices — 147 records",
+  "generatedAt": "2026-09-15T22:20:32.664Z",
+  "count": 147,
+  "records": [
+    {
+      "invoiceNumber": "INV-DEMO-000001",
+      "studentId": "STD-DEMO-00001",
+      "applicationId": "SV-DEMO-000001",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 0,
+      "total": 5000,
+      "paidAmount": 2500,
+      "dueAmount": 2500,
+      "status": "PARTIAL",
+      "issueDate": "2026-06-06",
+      "dueDate": "2026-10-02"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000002",
+      "studentId": "STD-DEMO-00002",
+      "applicationId": "SV-DEMO-000002",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 0,
+      "total": 25000,
+      "paidAmount": 0,
+      "dueAmount": 25000,
+      "status": "ISSUED",
+      "issueDate": "2026-08-16",
+      "dueDate": "2026-10-06"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000003",
+      "studentId": "STD-DEMO-00003",
+      "applicationId": "SV-DEMO-000003",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 2000,
+      "total": 23000,
+      "paidAmount": 11500,
+      "dueAmount": 11500,
+      "status": "PARTIAL",
+      "issueDate": "2026-07-27",
+      "dueDate": "2026-10-01"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000004",
+      "studentId": "STD-DEMO-00003",
+      "applicationId": "SV-DEMO-000004",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 0,
+      "dueAmount": 50000,
+      "status": "ISSUED",
+      "issueDate": "2026-07-10",
+      "dueDate": "2026-10-01"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000005",
+      "studentId": "STD-DEMO-00004",
+      "applicationId": "SV-DEMO-000005",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 15000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-06-21",
+      "dueDate": "2026-09-28"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000006",
+      "studentId": "STD-DEMO-00005",
+      "applicationId": "SV-DEMO-000006",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 0,
+      "total": 5000,
+      "paidAmount": 0,
+      "dueAmount": 5000,
+      "status": "ISSUED",
+      "issueDate": "2026-09-03",
+      "dueDate": "2026-10-12"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000007",
+      "studentId": "STD-DEMO-00006",
+      "applicationId": "SV-DEMO-000007",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 0,
+      "dueAmount": 50000,
+      "status": "ISSUED",
+      "issueDate": "2026-04-03",
+      "dueDate": "2026-10-15"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000008",
+      "studentId": "STD-DEMO-00007",
+      "applicationId": "SV-DEMO-000008",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 2000,
+      "total": 13000,
+      "paidAmount": 0,
+      "dueAmount": 13000,
+      "status": "DRAFT",
+      "issueDate": "2026-06-12",
+      "dueDate": "2026-10-06"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000009",
+      "studentId": "STD-DEMO-00008",
+      "applicationId": "SV-DEMO-000009",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 0,
+      "total": 5000,
+      "paidAmount": 0,
+      "dueAmount": 5000,
+      "status": "DRAFT",
+      "issueDate": "2026-05-09",
+      "dueDate": "2026-10-09"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000010",
+      "studentId": "STD-DEMO-00009",
+      "applicationId": "SV-DEMO-000010",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 0,
+      "total": 10000,
+      "paidAmount": 0,
+      "dueAmount": 10000,
+      "status": "DRAFT",
+      "issueDate": "2026-08-27",
+      "dueDate": "2026-10-05"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000011",
+      "studentId": "STD-DEMO-00009",
+      "applicationId": "SV-DEMO-000011",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 500,
+      "total": 24500,
+      "paidAmount": 0,
+      "dueAmount": 24500,
+      "status": "OVERDUE",
+      "issueDate": "2026-04-15",
+      "dueDate": "2026-10-08"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000012",
+      "studentId": "STD-DEMO-00010",
+      "applicationId": "SV-DEMO-000012",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 500,
+      "total": 4500,
+      "paidAmount": 4500,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-07-24",
+      "dueDate": "2026-09-28"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000013",
+      "studentId": "STD-DEMO-00010",
+      "applicationId": "SV-DEMO-000013",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 50000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-08-10",
+      "dueDate": "2026-09-29"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000014",
+      "studentId": "STD-DEMO-00011",
+      "applicationId": "SV-DEMO-000014",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 100000
+        }
+      ],
+      "subtotal": 100000,
+      "discount": 1000,
+      "total": 99000,
+      "paidAmount": 49500,
+      "dueAmount": 49500,
+      "status": "PARTIAL",
+      "issueDate": "2026-04-26",
+      "dueDate": "2026-10-15"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000015",
+      "studentId": "STD-DEMO-00011",
+      "applicationId": "SV-DEMO-000015",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 0,
+      "total": 25000,
+      "paidAmount": 25000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-06-18",
+      "dueDate": "2026-10-02"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000016",
+      "studentId": "STD-DEMO-00012",
+      "applicationId": "SV-DEMO-000016",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 0,
+      "dueAmount": 15000,
+      "status": "DRAFT",
+      "issueDate": "2026-07-13",
+      "dueDate": "2026-09-28"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000017",
+      "studentId": "STD-DEMO-00013",
+      "applicationId": "SV-DEMO-000017",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 15000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-08-24",
+      "dueDate": "2026-09-23"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000018",
+      "studentId": "STD-DEMO-00013",
+      "applicationId": "SV-DEMO-000018",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 100000
+        }
+      ],
+      "subtotal": 100000,
+      "discount": 0,
+      "total": 100000,
+      "paidAmount": 100000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-07-22",
+      "dueDate": "2026-09-22"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000019",
+      "studentId": "STD-DEMO-00014",
+      "applicationId": "SV-DEMO-000019",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 0,
+      "total": 5000,
+      "paidAmount": 2500,
+      "dueAmount": 2500,
+      "status": "PARTIAL",
+      "issueDate": "2026-07-20",
+      "dueDate": "2026-09-26"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000020",
+      "studentId": "STD-DEMO-00014",
+      "applicationId": "SV-DEMO-000020",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 100000
+        }
+      ],
+      "subtotal": 100000,
+      "discount": 0,
+      "total": 100000,
+      "paidAmount": 100000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-03-20",
+      "dueDate": "2026-10-01"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000021",
+      "studentId": "STD-DEMO-00015",
+      "applicationId": "SV-DEMO-000021",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 15000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-05-18",
+      "dueDate": "2026-10-02"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000022",
+      "studentId": "STD-DEMO-00015",
+      "applicationId": "SV-DEMO-000022",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 0,
+      "total": 10000,
+      "paidAmount": 10000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-09-08",
+      "dueDate": "2026-10-04"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000023",
+      "studentId": "STD-DEMO-00016",
+      "applicationId": "SV-DEMO-000023",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 500,
+      "total": 9500,
+      "paidAmount": 9500,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-07-28",
+      "dueDate": "2026-10-03"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000024",
+      "studentId": "STD-DEMO-00017",
+      "applicationId": "SV-DEMO-000024",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 0,
+      "dueAmount": 50000,
+      "status": "ISSUED",
+      "issueDate": "2026-07-21",
+      "dueDate": "2026-09-24"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000025",
+      "studentId": "STD-DEMO-00017",
+      "applicationId": "SV-DEMO-000025",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 500,
+      "total": 14500,
+      "paidAmount": 0,
+      "dueAmount": 14500,
+      "status": "OVERDUE",
+      "issueDate": "2026-07-23",
+      "dueDate": "2026-10-15"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000026",
+      "studentId": "STD-DEMO-00018",
+      "applicationId": "SV-DEMO-000026",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 0,
+      "dueAmount": 50000,
+      "status": "DRAFT",
+      "issueDate": "2026-06-06",
+      "dueDate": "2026-10-05"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000027",
+      "studentId": "STD-DEMO-00018",
+      "applicationId": "SV-DEMO-000027",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 100000
+        }
+      ],
+      "subtotal": 100000,
+      "discount": 2000,
+      "total": 98000,
+      "paidAmount": 98000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-06-21",
+      "dueDate": "2026-10-03"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000028",
+      "studentId": "STD-DEMO-00019",
+      "applicationId": "SV-DEMO-000028",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 0,
+      "total": 10000,
+      "paidAmount": 0,
+      "dueAmount": 10000,
+      "status": "ISSUED",
+      "issueDate": "2026-04-07",
+      "dueDate": "2026-09-26"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000029",
+      "studentId": "STD-DEMO-00019",
+      "applicationId": "SV-DEMO-000029",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 0,
+      "total": 10000,
+      "paidAmount": 0,
+      "dueAmount": 10000,
+      "status": "OVERDUE",
+      "issueDate": "2026-07-10",
+      "dueDate": "2026-09-26"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000030",
+      "studentId": "STD-DEMO-00020",
+      "applicationId": "SV-DEMO-000030",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 0,
+      "total": 5000,
+      "paidAmount": 5000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-08-22",
+      "dueDate": "2026-10-09"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000031",
+      "studentId": "STD-DEMO-00021",
+      "applicationId": "SV-DEMO-000031",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 0,
+      "dueAmount": 15000,
+      "status": "ISSUED",
+      "issueDate": "2026-06-28",
+      "dueDate": "2026-09-27"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000032",
+      "studentId": "STD-DEMO-00021",
+      "applicationId": "SV-DEMO-000032",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 1000,
+      "total": 14000,
+      "paidAmount": 14000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-06-21",
+      "dueDate": "2026-10-01"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000033",
+      "studentId": "STD-DEMO-00022",
+      "applicationId": "SV-DEMO-000033",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 100000
+        }
+      ],
+      "subtotal": 100000,
+      "discount": 0,
+      "total": 100000,
+      "paidAmount": 50000,
+      "dueAmount": 50000,
+      "status": "PARTIAL",
+      "issueDate": "2026-07-11",
+      "dueDate": "2026-09-28"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000034",
+      "studentId": "STD-DEMO-00022",
+      "applicationId": "SV-DEMO-000034",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 0,
+      "dueAmount": 15000,
+      "status": "DRAFT",
+      "issueDate": "2026-06-26",
+      "dueDate": "2026-10-04"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000035",
+      "studentId": "STD-DEMO-00023",
+      "applicationId": "SV-DEMO-000035",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 0,
+      "total": 5000,
+      "paidAmount": 0,
+      "dueAmount": 5000,
+      "status": "ISSUED",
+      "issueDate": "2026-04-25",
+      "dueDate": "2026-09-26"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000036",
+      "studentId": "STD-DEMO-00023",
+      "applicationId": "SV-DEMO-000036",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 0,
+      "total": 5000,
+      "paidAmount": 0,
+      "dueAmount": 5000,
+      "status": "ISSUED",
+      "issueDate": "2026-08-13",
+      "dueDate": "2026-09-22"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000037",
+      "studentId": "STD-DEMO-00024",
+      "applicationId": "SV-DEMO-000037",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 100000
+        }
+      ],
+      "subtotal": 100000,
+      "discount": 0,
+      "total": 100000,
+      "paidAmount": 0,
+      "dueAmount": 100000,
+      "status": "OVERDUE",
+      "issueDate": "2026-08-21",
+      "dueDate": "2026-10-12"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000038",
+      "studentId": "STD-DEMO-00025",
+      "applicationId": "SV-DEMO-000038",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 0,
+      "dueAmount": 50000,
+      "status": "OVERDUE",
+      "issueDate": "2026-04-23",
+      "dueDate": "2026-10-05"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000039",
+      "studentId": "STD-DEMO-00025",
+      "applicationId": "SV-DEMO-000039",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 1000,
+      "total": 14000,
+      "paidAmount": 14000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-04-04",
+      "dueDate": "2026-09-23"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000040",
+      "studentId": "STD-DEMO-00026",
+      "applicationId": "SV-DEMO-000040",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 0,
+      "total": 5000,
+      "paidAmount": 5000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-08-30",
+      "dueDate": "2026-10-13"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000041",
+      "studentId": "STD-DEMO-00026",
+      "applicationId": "SV-DEMO-000041",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 0,
+      "total": 25000,
+      "paidAmount": 0,
+      "dueAmount": 25000,
+      "status": "ISSUED",
+      "issueDate": "2026-08-29",
+      "dueDate": "2026-09-30"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000042",
+      "studentId": "STD-DEMO-00027",
+      "applicationId": "SV-DEMO-000042",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 1000,
+      "total": 14000,
+      "paidAmount": 0,
+      "dueAmount": 14000,
+      "status": "ISSUED",
+      "issueDate": "2026-08-25",
+      "dueDate": "2026-09-23"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000043",
+      "studentId": "STD-DEMO-00027",
+      "applicationId": "SV-DEMO-000043",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 500,
+      "total": 9500,
+      "paidAmount": 9500,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-07-16",
+      "dueDate": "2026-10-10"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000044",
+      "studentId": "STD-DEMO-00028",
+      "applicationId": "SV-DEMO-000044",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 500,
+      "total": 9500,
+      "paidAmount": 0,
+      "dueAmount": 9500,
+      "status": "ISSUED",
+      "issueDate": "2026-07-03",
+      "dueDate": "2026-10-11"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000045",
+      "studentId": "STD-DEMO-00029",
+      "applicationId": "SV-DEMO-000045",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 0,
+      "dueAmount": 50000,
+      "status": "ISSUED",
+      "issueDate": "2026-05-13",
+      "dueDate": "2026-10-15"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000046",
+      "studentId": "STD-DEMO-00030",
+      "applicationId": "SV-DEMO-000046",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 15000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-04-14",
+      "dueDate": "2026-10-07"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000047",
+      "studentId": "STD-DEMO-00030",
+      "applicationId": "SV-DEMO-000047",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 0,
+      "dueAmount": 15000,
+      "status": "DRAFT",
+      "issueDate": "2026-09-08",
+      "dueDate": "2026-10-15"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000048",
+      "studentId": "STD-DEMO-00031",
+      "applicationId": "SV-DEMO-000048",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 0,
+      "dueAmount": 50000,
+      "status": "OVERDUE",
+      "issueDate": "2026-04-03",
+      "dueDate": "2026-09-26"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000049",
+      "studentId": "STD-DEMO-00032",
+      "applicationId": "SV-DEMO-000049",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 0,
+      "total": 10000,
+      "paidAmount": 10000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-03-24",
+      "dueDate": "2026-09-24"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000050",
+      "studentId": "STD-DEMO-00033",
+      "applicationId": "SV-DEMO-000050",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 0,
+      "total": 5000,
+      "paidAmount": 5000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-03-24",
+      "dueDate": "2026-09-26"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000051",
+      "studentId": "STD-DEMO-00034",
+      "applicationId": "SV-DEMO-000051",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 15000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-04-12",
+      "dueDate": "2026-10-02"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000052",
+      "studentId": "STD-DEMO-00035",
+      "applicationId": "SV-DEMO-000052",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 0,
+      "total": 25000,
+      "paidAmount": 0,
+      "dueAmount": 25000,
+      "status": "DRAFT",
+      "issueDate": "2026-03-19",
+      "dueDate": "2026-09-24"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000053",
+      "studentId": "STD-DEMO-00036",
+      "applicationId": "SV-DEMO-000053",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 100000
+        }
+      ],
+      "subtotal": 100000,
+      "discount": 0,
+      "total": 100000,
+      "paidAmount": 100000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-08-19",
+      "dueDate": "2026-10-07"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000054",
+      "studentId": "STD-DEMO-00037",
+      "applicationId": "SV-DEMO-000054",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 50000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-09-06",
+      "dueDate": "2026-09-30"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000055",
+      "studentId": "STD-DEMO-00038",
+      "applicationId": "SV-DEMO-000055",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 0,
+      "dueAmount": 15000,
+      "status": "ISSUED",
+      "issueDate": "2026-08-19",
+      "dueDate": "2026-09-22"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000056",
+      "studentId": "STD-DEMO-00039",
+      "applicationId": "SV-DEMO-000056",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 100000
+        }
+      ],
+      "subtotal": 100000,
+      "discount": 0,
+      "total": 100000,
+      "paidAmount": 100000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-08-11",
+      "dueDate": "2026-10-08"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000057",
+      "studentId": "STD-DEMO-00039",
+      "applicationId": "SV-DEMO-000057",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 0,
+      "total": 25000,
+      "paidAmount": 12500,
+      "dueAmount": 12500,
+      "status": "PARTIAL",
+      "issueDate": "2026-06-02",
+      "dueDate": "2026-10-08"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000058",
+      "studentId": "STD-DEMO-00040",
+      "applicationId": "SV-DEMO-000058",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 500,
+      "total": 14500,
+      "paidAmount": 14500,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-07-25",
+      "dueDate": "2026-10-12"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000059",
+      "studentId": "STD-DEMO-00041",
+      "applicationId": "SV-DEMO-000059",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 0,
+      "total": 10000,
+      "paidAmount": 10000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-07-25",
+      "dueDate": "2026-09-24"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000060",
+      "studentId": "STD-DEMO-00042",
+      "applicationId": "SV-DEMO-000060",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 0,
+      "total": 25000,
+      "paidAmount": 25000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-08-12",
+      "dueDate": "2026-09-28"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000061",
+      "studentId": "STD-DEMO-00042",
+      "applicationId": "SV-DEMO-000061",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 1000,
+      "total": 24000,
+      "paidAmount": 0,
+      "dueAmount": 24000,
+      "status": "OVERDUE",
+      "issueDate": "2026-07-12",
+      "dueDate": "2026-10-15"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000062",
+      "studentId": "STD-DEMO-00043",
+      "applicationId": "SV-DEMO-000062",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 0,
+      "total": 10000,
+      "paidAmount": 0,
+      "dueAmount": 10000,
+      "status": "ISSUED",
+      "issueDate": "2026-03-24",
+      "dueDate": "2026-09-22"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000063",
+      "studentId": "STD-DEMO-00044",
+      "applicationId": "SV-DEMO-000063",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 15000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-09-04",
+      "dueDate": "2026-10-12"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000064",
+      "studentId": "STD-DEMO-00045",
+      "applicationId": "SV-DEMO-000064",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 100000
+        }
+      ],
+      "subtotal": 100000,
+      "discount": 0,
+      "total": 100000,
+      "paidAmount": 0,
+      "dueAmount": 100000,
+      "status": "ISSUED",
+      "issueDate": "2026-06-14",
+      "dueDate": "2026-09-28"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000065",
+      "studentId": "STD-DEMO-00045",
+      "applicationId": "SV-DEMO-000065",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 0,
+      "dueAmount": 15000,
+      "status": "ISSUED",
+      "issueDate": "2026-06-07",
+      "dueDate": "2026-10-02"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000066",
+      "studentId": "STD-DEMO-00046",
+      "applicationId": "SV-DEMO-000066",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 0,
+      "total": 10000,
+      "paidAmount": 0,
+      "dueAmount": 10000,
+      "status": "OVERDUE",
+      "issueDate": "2026-08-03",
+      "dueDate": "2026-10-12"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000067",
+      "studentId": "STD-DEMO-00047",
+      "applicationId": "SV-DEMO-000067",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 50000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-07-06",
+      "dueDate": "2026-10-04"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000068",
+      "studentId": "STD-DEMO-00048",
+      "applicationId": "SV-DEMO-000068",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 0,
+      "total": 5000,
+      "paidAmount": 0,
+      "dueAmount": 5000,
+      "status": "ISSUED",
+      "issueDate": "2026-06-18",
+      "dueDate": "2026-10-01"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000069",
+      "studentId": "STD-DEMO-00048",
+      "applicationId": "SV-DEMO-000069",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 15000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-03-28",
+      "dueDate": "2026-10-06"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000070",
+      "studentId": "STD-DEMO-00049",
+      "applicationId": "SV-DEMO-000070",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 100000
+        }
+      ],
+      "subtotal": 100000,
+      "discount": 0,
+      "total": 100000,
+      "paidAmount": 100000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-09-06",
+      "dueDate": "2026-09-29"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000071",
+      "studentId": "STD-DEMO-00049",
+      "applicationId": "SV-DEMO-000071",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 0,
+      "total": 5000,
+      "paidAmount": 5000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-06-02",
+      "dueDate": "2026-10-11"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000072",
+      "studentId": "STD-DEMO-00050",
+      "applicationId": "SV-DEMO-000072",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 0,
+      "dueAmount": 15000,
+      "status": "DRAFT",
+      "issueDate": "2026-06-13",
+      "dueDate": "2026-09-22"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000073",
+      "studentId": "STD-DEMO-00051",
+      "applicationId": "SV-DEMO-000073",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 2000,
+      "total": 48000,
+      "paidAmount": 48000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-09-04",
+      "dueDate": "2026-10-12"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000074",
+      "studentId": "STD-DEMO-00052",
+      "applicationId": "SV-DEMO-000074",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 7500,
+      "dueAmount": 7500,
+      "status": "PARTIAL",
+      "issueDate": "2026-05-03",
+      "dueDate": "2026-10-05"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000075",
+      "studentId": "STD-DEMO-00053",
+      "applicationId": "SV-DEMO-000075",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 0,
+      "dueAmount": 50000,
+      "status": "ISSUED",
+      "issueDate": "2026-04-24",
+      "dueDate": "2026-10-09"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000076",
+      "studentId": "STD-DEMO-00053",
+      "applicationId": "SV-DEMO-000076",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 15000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-07-01",
+      "dueDate": "2026-10-14"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000077",
+      "studentId": "STD-DEMO-00054",
+      "applicationId": "SV-DEMO-000077",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 1000,
+      "total": 14000,
+      "paidAmount": 14000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-07-27",
+      "dueDate": "2026-10-05"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000078",
+      "studentId": "STD-DEMO-00054",
+      "applicationId": "SV-DEMO-000078",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 0,
+      "dueAmount": 50000,
+      "status": "ISSUED",
+      "issueDate": "2026-07-02",
+      "dueDate": "2026-09-22"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000079",
+      "studentId": "STD-DEMO-00055",
+      "applicationId": "SV-DEMO-000079",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 1000,
+      "total": 14000,
+      "paidAmount": 14000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-04-08",
+      "dueDate": "2026-09-26"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000080",
+      "studentId": "STD-DEMO-00056",
+      "applicationId": "SV-DEMO-000080",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 0,
+      "total": 5000,
+      "paidAmount": 5000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-04-06",
+      "dueDate": "2026-09-24"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000081",
+      "studentId": "STD-DEMO-00056",
+      "applicationId": "SV-DEMO-000081",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 0,
+      "total": 10000,
+      "paidAmount": 10000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-08-22",
+      "dueDate": "2026-10-09"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000082",
+      "studentId": "STD-DEMO-00057",
+      "applicationId": "SV-DEMO-000082",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 0,
+      "dueAmount": 50000,
+      "status": "OVERDUE",
+      "issueDate": "2026-08-14",
+      "dueDate": "2026-10-08"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000083",
+      "studentId": "STD-DEMO-00057",
+      "applicationId": "SV-DEMO-000083",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 0,
+      "total": 10000,
+      "paidAmount": 10000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-07-13",
+      "dueDate": "2026-09-24"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000084",
+      "studentId": "STD-DEMO-00058",
+      "applicationId": "SV-DEMO-000084",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 0,
+      "dueAmount": 50000,
+      "status": "OVERDUE",
+      "issueDate": "2026-08-07",
+      "dueDate": "2026-10-14"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000085",
+      "studentId": "STD-DEMO-00058",
+      "applicationId": "SV-DEMO-000085",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 15000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-07-30",
+      "dueDate": "2026-10-10"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000086",
+      "studentId": "STD-DEMO-00059",
+      "applicationId": "SV-DEMO-000086",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 500,
+      "total": 49500,
+      "paidAmount": 49500,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-07-22",
+      "dueDate": "2026-09-22"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000087",
+      "studentId": "STD-DEMO-00059",
+      "applicationId": "SV-DEMO-000087",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 0,
+      "total": 5000,
+      "paidAmount": 5000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-04-30",
+      "dueDate": "2026-09-25"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000088",
+      "studentId": "STD-DEMO-00060",
+      "applicationId": "SV-DEMO-000088",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 1000,
+      "total": 49000,
+      "paidAmount": 49000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-05-14",
+      "dueDate": "2026-10-13"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000089",
+      "studentId": "STD-DEMO-00061",
+      "applicationId": "SV-DEMO-000089",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 0,
+      "dueAmount": 15000,
+      "status": "DRAFT",
+      "issueDate": "2026-04-23",
+      "dueDate": "2026-10-05"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000090",
+      "studentId": "STD-DEMO-00061",
+      "applicationId": "SV-DEMO-000090",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 0,
+      "total": 10000,
+      "paidAmount": 10000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-04-02",
+      "dueDate": "2026-10-08"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000091",
+      "studentId": "STD-DEMO-00062",
+      "applicationId": "SV-DEMO-000091",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 15000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-07-04",
+      "dueDate": "2026-10-14"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000092",
+      "studentId": "STD-DEMO-00062",
+      "applicationId": "SV-DEMO-000092",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 0,
+      "total": 25000,
+      "paidAmount": 25000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-05-13",
+      "dueDate": "2026-10-03"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000093",
+      "studentId": "STD-DEMO-00063",
+      "applicationId": "SV-DEMO-000093",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 0,
+      "dueAmount": 50000,
+      "status": "OVERDUE",
+      "issueDate": "2026-07-25",
+      "dueDate": "2026-10-10"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000094",
+      "studentId": "STD-DEMO-00064",
+      "applicationId": "SV-DEMO-000094",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 0,
+      "total": 5000,
+      "paidAmount": 0,
+      "dueAmount": 5000,
+      "status": "OVERDUE",
+      "issueDate": "2026-05-13",
+      "dueDate": "2026-10-06"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000095",
+      "studentId": "STD-DEMO-00065",
+      "applicationId": "SV-DEMO-000095",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 100000
+        }
+      ],
+      "subtotal": 100000,
+      "discount": 0,
+      "total": 100000,
+      "paidAmount": 0,
+      "dueAmount": 100000,
+      "status": "OVERDUE",
+      "issueDate": "2026-06-27",
+      "dueDate": "2026-09-29"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000096",
+      "studentId": "STD-DEMO-00065",
+      "applicationId": "SV-DEMO-000096",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 0,
+      "total": 10000,
+      "paidAmount": 5000,
+      "dueAmount": 5000,
+      "status": "PARTIAL",
+      "issueDate": "2026-04-01",
+      "dueDate": "2026-10-11"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000097",
+      "studentId": "STD-DEMO-00066",
+      "applicationId": "SV-DEMO-000097",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 0,
+      "total": 25000,
+      "paidAmount": 0,
+      "dueAmount": 25000,
+      "status": "DRAFT",
+      "issueDate": "2026-07-02",
+      "dueDate": "2026-10-11"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000098",
+      "studentId": "STD-DEMO-00067",
+      "applicationId": "SV-DEMO-000098",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 500,
+      "total": 4500,
+      "paidAmount": 0,
+      "dueAmount": 4500,
+      "status": "OVERDUE",
+      "issueDate": "2026-03-19",
+      "dueDate": "2026-09-30"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000099",
+      "studentId": "STD-DEMO-00067",
+      "applicationId": "SV-DEMO-000099",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 15000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-05-24",
+      "dueDate": "2026-10-04"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000100",
+      "studentId": "STD-DEMO-00068",
+      "applicationId": "SV-DEMO-000100",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 100000
+        }
+      ],
+      "subtotal": 100000,
+      "discount": 0,
+      "total": 100000,
+      "paidAmount": 0,
+      "dueAmount": 100000,
+      "status": "OVERDUE",
+      "issueDate": "2026-05-07",
+      "dueDate": "2026-10-08"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000101",
+      "studentId": "STD-DEMO-00069",
+      "applicationId": "SV-DEMO-000101",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 0,
+      "total": 25000,
+      "paidAmount": 0,
+      "dueAmount": 25000,
+      "status": "OVERDUE",
+      "issueDate": "2026-07-27",
+      "dueDate": "2026-09-25"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000102",
+      "studentId": "STD-DEMO-00070",
+      "applicationId": "SV-DEMO-000102",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 25000,
+      "dueAmount": 25000,
+      "status": "PARTIAL",
+      "issueDate": "2026-04-12",
+      "dueDate": "2026-09-25"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000103",
+      "studentId": "STD-DEMO-00071",
+      "applicationId": "SV-DEMO-000103",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 15000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-04-16",
+      "dueDate": "2026-10-02"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000104",
+      "studentId": "STD-DEMO-00072",
+      "applicationId": "SV-DEMO-000104",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 0,
+      "total": 5000,
+      "paidAmount": 5000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-08-30",
+      "dueDate": "2026-09-23"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000105",
+      "studentId": "STD-DEMO-00073",
+      "applicationId": "SV-DEMO-000105",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 100000
+        }
+      ],
+      "subtotal": 100000,
+      "discount": 0,
+      "total": 100000,
+      "paidAmount": 100000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-05-02",
+      "dueDate": "2026-10-12"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000106",
+      "studentId": "STD-DEMO-00074",
+      "applicationId": "SV-DEMO-000106",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 0,
+      "total": 5000,
+      "paidAmount": 5000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-06-17",
+      "dueDate": "2026-09-30"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000107",
+      "studentId": "STD-DEMO-00075",
+      "applicationId": "SV-DEMO-000107",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 7500,
+      "dueAmount": 7500,
+      "status": "PARTIAL",
+      "issueDate": "2026-08-22",
+      "dueDate": "2026-10-09"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000108",
+      "studentId": "STD-DEMO-00075",
+      "applicationId": "SV-DEMO-000108",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 0,
+      "total": 5000,
+      "paidAmount": 5000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-05-17",
+      "dueDate": "2026-10-13"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000109",
+      "studentId": "STD-DEMO-00076",
+      "applicationId": "SV-DEMO-000109",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 500,
+      "total": 24500,
+      "paidAmount": 0,
+      "dueAmount": 24500,
+      "status": "DRAFT",
+      "issueDate": "2026-07-14",
+      "dueDate": "2026-09-22"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000110",
+      "studentId": "STD-DEMO-00077",
+      "applicationId": "SV-DEMO-000110",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 0,
+      "dueAmount": 15000,
+      "status": "ISSUED",
+      "issueDate": "2026-05-11",
+      "dueDate": "2026-10-05"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000111",
+      "studentId": "STD-DEMO-00077",
+      "applicationId": "SV-DEMO-000111",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 15000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-04-08",
+      "dueDate": "2026-09-28"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000112",
+      "studentId": "STD-DEMO-00078",
+      "applicationId": "SV-DEMO-000112",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 0,
+      "total": 10000,
+      "paidAmount": 10000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-08-05",
+      "dueDate": "2026-09-25"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000113",
+      "studentId": "STD-DEMO-00079",
+      "applicationId": "SV-DEMO-000113",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 500,
+      "total": 49500,
+      "paidAmount": 49500,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-07-27",
+      "dueDate": "2026-09-24"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000114",
+      "studentId": "STD-DEMO-00080",
+      "applicationId": "SV-DEMO-000114",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 0,
+      "total": 25000,
+      "paidAmount": 25000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-07-06",
+      "dueDate": "2026-09-26"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000115",
+      "studentId": "STD-DEMO-00081",
+      "applicationId": "SV-DEMO-000115",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 1000,
+      "total": 24000,
+      "paidAmount": 24000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-06-03",
+      "dueDate": "2026-09-23"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000116",
+      "studentId": "STD-DEMO-00081",
+      "applicationId": "SV-DEMO-000116",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 500,
+      "total": 24500,
+      "paidAmount": 12250,
+      "dueAmount": 12250,
+      "status": "PARTIAL",
+      "issueDate": "2026-06-10",
+      "dueDate": "2026-09-29"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000117",
+      "studentId": "STD-DEMO-00082",
+      "applicationId": "SV-DEMO-000117",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 50000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-06-24",
+      "dueDate": "2026-09-22"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000118",
+      "studentId": "STD-DEMO-00082",
+      "applicationId": "SV-DEMO-000118",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 15000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-07-18",
+      "dueDate": "2026-10-12"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000119",
+      "studentId": "STD-DEMO-00083",
+      "applicationId": "SV-DEMO-000119",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 2000,
+      "total": 13000,
+      "paidAmount": 13000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-05-10",
+      "dueDate": "2026-09-29"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000120",
+      "studentId": "STD-DEMO-00084",
+      "applicationId": "SV-DEMO-000120",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 0,
+      "total": 25000,
+      "paidAmount": 12500,
+      "dueAmount": 12500,
+      "status": "PARTIAL",
+      "issueDate": "2026-07-04",
+      "dueDate": "2026-09-29"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000121",
+      "studentId": "STD-DEMO-00084",
+      "applicationId": "SV-DEMO-000121",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 100000
+        }
+      ],
+      "subtotal": 100000,
+      "discount": 0,
+      "total": 100000,
+      "paidAmount": 50000,
+      "dueAmount": 50000,
+      "status": "PARTIAL",
+      "issueDate": "2026-07-02",
+      "dueDate": "2026-09-27"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000122",
+      "studentId": "STD-DEMO-00085",
+      "applicationId": "SV-DEMO-000122",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 0,
+      "dueAmount": 15000,
+      "status": "ISSUED",
+      "issueDate": "2026-03-25",
+      "dueDate": "2026-10-11"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000123",
+      "studentId": "STD-DEMO-00085",
+      "applicationId": "SV-DEMO-000123",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 50000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-06-03",
+      "dueDate": "2026-10-13"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000124",
+      "studentId": "STD-DEMO-00086",
+      "applicationId": "SV-DEMO-000124",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 0,
+      "total": 25000,
+      "paidAmount": 0,
+      "dueAmount": 25000,
+      "status": "OVERDUE",
+      "issueDate": "2026-05-31",
+      "dueDate": "2026-10-02"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000125",
+      "studentId": "STD-DEMO-00087",
+      "applicationId": "SV-DEMO-000125",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 0,
+      "dueAmount": 15000,
+      "status": "OVERDUE",
+      "issueDate": "2026-07-12",
+      "dueDate": "2026-10-02"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000126",
+      "studentId": "STD-DEMO-00087",
+      "applicationId": "SV-DEMO-000126",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 100000
+        }
+      ],
+      "subtotal": 100000,
+      "discount": 0,
+      "total": 100000,
+      "paidAmount": 100000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-06-15",
+      "dueDate": "2026-10-11"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000127",
+      "studentId": "STD-DEMO-00088",
+      "applicationId": "SV-DEMO-000127",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 50000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-06-13",
+      "dueDate": "2026-09-27"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000128",
+      "studentId": "STD-DEMO-00088",
+      "applicationId": "SV-DEMO-000128",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 0,
+      "dueAmount": 50000,
+      "status": "DRAFT",
+      "issueDate": "2026-04-05",
+      "dueDate": "2026-10-12"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000129",
+      "studentId": "STD-DEMO-00089",
+      "applicationId": "SV-DEMO-000129",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 50000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-08-03",
+      "dueDate": "2026-09-28"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000130",
+      "studentId": "STD-DEMO-00089",
+      "applicationId": "SV-DEMO-000130",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 1000,
+      "total": 4000,
+      "paidAmount": 2000,
+      "dueAmount": 2000,
+      "status": "PARTIAL",
+      "issueDate": "2026-07-31",
+      "dueDate": "2026-10-08"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000131",
+      "studentId": "STD-DEMO-00090",
+      "applicationId": "SV-DEMO-000131",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 50000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-04-03",
+      "dueDate": "2026-10-03"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000132",
+      "studentId": "STD-DEMO-00091",
+      "applicationId": "SV-DEMO-000132",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 2000,
+      "total": 8000,
+      "paidAmount": 8000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-04-22",
+      "dueDate": "2026-09-26"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000133",
+      "studentId": "STD-DEMO-00091",
+      "applicationId": "SV-DEMO-000133",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 0,
+      "dueAmount": 15000,
+      "status": "ISSUED",
+      "issueDate": "2026-08-18",
+      "dueDate": "2026-09-28"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000134",
+      "studentId": "STD-DEMO-00092",
+      "applicationId": "SV-DEMO-000134",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 0,
+      "total": 10000,
+      "paidAmount": 0,
+      "dueAmount": 10000,
+      "status": "OVERDUE",
+      "issueDate": "2026-08-30",
+      "dueDate": "2026-10-11"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000135",
+      "studentId": "STD-DEMO-00092",
+      "applicationId": "SV-DEMO-000135",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 0,
+      "total": 10000,
+      "paidAmount": 10000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-08-26",
+      "dueDate": "2026-10-05"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000136",
+      "studentId": "STD-DEMO-00093",
+      "applicationId": "SV-DEMO-000136",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 15000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-08-14",
+      "dueDate": "2026-10-12"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000137",
+      "studentId": "STD-DEMO-00093",
+      "applicationId": "SV-DEMO-000137",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 0,
+      "total": 25000,
+      "paidAmount": 0,
+      "dueAmount": 25000,
+      "status": "OVERDUE",
+      "issueDate": "2026-04-03",
+      "dueDate": "2026-10-13"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000138",
+      "studentId": "STD-DEMO-00094",
+      "applicationId": "SV-DEMO-000138",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 1000,
+      "total": 24000,
+      "paidAmount": 24000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-06-28",
+      "dueDate": "2026-09-22"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000139",
+      "studentId": "STD-DEMO-00095",
+      "applicationId": "SV-DEMO-000139",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 100000
+        }
+      ],
+      "subtotal": 100000,
+      "discount": 500,
+      "total": 99500,
+      "paidAmount": 99500,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-04-09",
+      "dueDate": "2026-09-27"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000140",
+      "studentId": "STD-DEMO-00095",
+      "applicationId": "SV-DEMO-000140",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 15000
+        }
+      ],
+      "subtotal": 15000,
+      "discount": 0,
+      "total": 15000,
+      "paidAmount": 0,
+      "dueAmount": 15000,
+      "status": "ISSUED",
+      "issueDate": "2026-05-11",
+      "dueDate": "2026-09-27"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000141",
+      "studentId": "STD-DEMO-00096",
+      "applicationId": "SV-DEMO-000141",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 50000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-04-24",
+      "dueDate": "2026-10-05"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000142",
+      "studentId": "STD-DEMO-00097",
+      "applicationId": "SV-DEMO-000142",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 0,
+      "total": 25000,
+      "paidAmount": 25000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-07-24",
+      "dueDate": "2026-09-22"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000143",
+      "studentId": "STD-DEMO-00097",
+      "applicationId": "SV-DEMO-000143",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 10000
+        }
+      ],
+      "subtotal": 10000,
+      "discount": 0,
+      "total": 10000,
+      "paidAmount": 0,
+      "dueAmount": 10000,
+      "status": "DRAFT",
+      "issueDate": "2026-08-04",
+      "dueDate": "2026-09-22"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000144",
+      "studentId": "STD-DEMO-00098",
+      "applicationId": "SV-DEMO-000144",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "discount": 0,
+      "total": 50000,
+      "paidAmount": 0,
+      "dueAmount": 50000,
+      "status": "DRAFT",
+      "issueDate": "2026-04-15",
+      "dueDate": "2026-10-07"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000145",
+      "studentId": "STD-DEMO-00099",
+      "applicationId": "SV-DEMO-000145",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 5000
+        }
+      ],
+      "subtotal": 5000,
+      "discount": 0,
+      "total": 5000,
+      "paidAmount": 5000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-08-20",
+      "dueDate": "2026-09-26"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000146",
+      "studentId": "STD-DEMO-00100",
+      "applicationId": "SV-DEMO-000146",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 25000
+        }
+      ],
+      "subtotal": 25000,
+      "discount": 0,
+      "total": 25000,
+      "paidAmount": 25000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-05-18",
+      "dueDate": "2026-09-24"
+    },
+    {
+      "invoiceNumber": "INV-DEMO-000147",
+      "studentId": "STD-DEMO-00100",
+      "applicationId": "SV-DEMO-000147",
+      "items": [
+        {
+          "description": "Consultancy fee",
+          "quantity": 1,
+          "unitPrice": 100000
+        }
+      ],
+      "subtotal": 100000,
+      "discount": 0,
+      "total": 100000,
+      "paidAmount": 100000,
+      "dueAmount": 0,
+      "status": "PAID",
+      "issueDate": "2026-04-29",
+      "dueDate": "2026-10-06"
+    }
+  ]
+}
