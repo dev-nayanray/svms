@@ -4,7 +4,7 @@ import { studentEventBus, type StudentEvent } from "@/lib/realtime/event-bus";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 0;
+export const maxDuration = 300;
 
 /**
  * GET /api/student/events — Server-Sent Events (SSE) endpoint.
