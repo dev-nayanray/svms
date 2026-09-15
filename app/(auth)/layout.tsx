@@ -2,15 +2,18 @@ import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui";
 import {
-  GraduationCap, MapPin, FileCheck, Plane, Users, ShieldCheck,
-  ArrowRight, Star,
+  GraduationCap, FileCheck, Plane, Users, ShieldCheck,
+  ArrowRight, Star, MapPin,
 } from "lucide-react";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       {/* ── Left panel — branding + content (hidden on mobile) ── */}
-      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-gradient-to-br from-brand-900 via-brand-800 to-brand-950 p-10 text-white xl:flex">
+      <div
+        className="relative hidden w-1/2 flex-col justify-between overflow-hidden p-10 text-white xl:flex"
+        style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)" }}
+      >
         {/* Decorative pattern */}
         <div
           className="absolute inset-0 opacity-5"
@@ -20,13 +23,15 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           aria-hidden
         />
 
-        {/* Glowing orb effect */}
+        {/* Glowing orb effects */}
         <div
-          className="absolute -right-20 top-1/4 h-72 w-72 rounded-full bg-brand-500/20 blur-3xl"
+          className="absolute -right-20 top-1/4 h-72 w-72 rounded-full opacity-20 blur-3xl"
+          style={{ backgroundColor: "#1e293b" }}
           aria-hidden
         />
         <div
-          className="absolute -left-10 bottom-1/4 h-48 w-48 rounded-full bg-accent-500/10 blur-3xl"
+          className="absolute -left-10 bottom-1/4 h-48 w-48 rounded-full opacity-10 blur-3xl"
+          style={{ backgroundColor: "#d4af37" }}
           aria-hidden
         />
 
@@ -43,7 +48,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             />
           </span>
           <span className="flex flex-col leading-tight">
-            <span className="font-display text-xl font-bold tracking-tight">Euroscope</span>
+            <span className="text-xl font-bold tracking-tight">Euroscope</span>
             <span className="text-xs text-white/60">Your journey to studying in Europe</span>
           </span>
         </Link>
@@ -52,9 +57,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="relative space-y-8">
           {/* Headline */}
           <div className="space-y-4">
-            <h2 className="font-display text-3xl font-bold leading-tight">
+            <h2 className="text-3xl font-bold leading-tight">
               Study in Europe.<br />
-              <span className="text-accent-300">Start Your Future.</span>
+              <span style={{ color: "#d4af37" }}>Start Your Future.</span>
             </h2>
             <p className="max-w-md text-sm leading-relaxed text-white/70">
               Euroscope guides students through every step — from choosing the right university
@@ -65,15 +70,15 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           {/* Stats row */}
           <div className="flex gap-8">
             <div>
-              <p className="font-display text-2xl font-bold">8+</p>
+              <p className="text-2xl font-bold">8+</p>
               <p className="text-xs text-white/50">European countries</p>
             </div>
             <div className="border-l border-white/10 pl-8">
-              <p className="font-display text-2xl font-bold">500+</p>
+              <p className="text-2xl font-bold">500+</p>
               <p className="text-xs text-white/50">Universities</p>
             </div>
             <div className="border-l border-white/10 pl-8">
-              <p className="font-display text-2xl font-bold">1000+</p>
+              <p className="text-2xl font-bold">1000+</p>
               <p className="text-xs text-white/50">Students guided</p>
             </div>
           </div>
@@ -92,7 +97,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                   <div className="flex items-center gap-2.5">
                     <span className="font-mono text-xs text-white/30">{item.step}</span>
                     <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/10">
-                      <item.icon className="h-4 w-4 text-accent-300" />
+                      <item.icon className="h-4 w-4" style={{ color: "#d4af37" }} />
                     </span>
                   </div>
                   <span className="text-sm text-white/80">{item.text}</span>
@@ -104,15 +109,15 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           {/* Trust badges */}
           <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-white/60">
             <span className="flex items-center gap-1.5">
-              <ShieldCheck className="h-3.5 w-3.5 text-success" />
-              Secure & private
+              <ShieldCheck className="h-3.5 w-3.5" style={{ color: "#22c55e" }} />
+              Secure &amp; private
             </span>
             <span className="flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 text-info" />
+              <MapPin className="h-3.5 w-3.5" style={{ color: "#3b82f6" }} />
               Germany · France · Italy · Spain · Netherlands
             </span>
             <span className="flex items-center gap-1.5">
-              <Star className="h-3.5 w-3.5 text-accent-300" />
+              <Star className="h-3.5 w-3.5" style={{ color: "#d4af37" }} />
               Trusted by 1000+ students
             </span>
           </div>
@@ -124,7 +129,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur">
             <div className="mb-2 flex gap-0.5">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} className="h-3.5 w-3.5 fill-accent-300 text-accent-300" />
+                <Star key={i} className="h-3.5 w-3.5 fill-current" style={{ color: "#d4af37" }} />
               ))}
             </div>
             <p className="text-sm italic leading-relaxed text-white/80">
@@ -132,7 +137,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               selection to visa preparation, they were with me every step.&rdquo;
             </p>
             <div className="mt-3 flex items-center gap-2">
-              <span className="grid h-7 w-7 place-items-center rounded-full bg-accent-500/20 text-xs font-semibold text-accent-300">
+              <span
+                className="grid h-7 w-7 place-items-center rounded-full text-xs font-semibold"
+                style={{ backgroundColor: "rgba(212, 175, 55, 0.2)", color: "#d4af37" }}
+              >
                 SA
               </span>
               <div>
@@ -166,7 +174,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                 priority
               />
             </span>
-            <span className="font-display text-xl font-bold tracking-tight">Euroscope</span>
+            <span className="text-xl font-bold tracking-tight">Euroscope</span>
           </Link>
           <Card>
             <CardContent className="p-6 sm:p-8">{children}</CardContent>
