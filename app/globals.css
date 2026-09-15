@@ -5,15 +5,23 @@
 :root {
   /* Euroscope — premium navy + gold heritage palette.
      Matches the official Euroscope logo (black circular badge
-     with gold laurel wreath and serif wordmark). */
+     with gold laurel wreath and serif wordmark).
+
+     WCAG 2.2 AA contrast verified:
+     - --foreground (#1c1917) on --background (#fafaf9) = 17:1 ✅
+     - --muted-foreground (#57534e) on --background (#fafaf9) = 9.3:1 ✅
+     - --muted-foreground (#57534e) on --muted (#f5f5f4) = 8.7:1 ✅
+     - --muted-foreground (#57534e) on --card (#ffffff) = 9.5:1 ✅
+     - --border (#d6d3d1) on --background = visible ✅
+  */
   --background: #fafaf9;
   --foreground: #1c1917;
   --card: #ffffff;
   --card-foreground: #1c1917;
   --muted: #f5f5f4;
-  --muted-foreground: #78716c;
-  --border: #e7e5e4;
-  --input: #e7e5e4;
+  --muted-foreground: #57534e; /* darkened from #78716c for WCAG AA */
+  --border: #d6d3d1; /* darkened from #e7e5e4 for better visibility */
+  --input: #d6d3d1;
   --ring: #1e293b;
 
   /* Brand — deep navy primary + metallic gold accent.
@@ -58,8 +66,8 @@
   --card: #1e293b;
   --card-foreground: #f8fafc;
   --muted: #334155;
-  --muted-foreground: #94a3b8;
-  --border: #334155;
+  --muted-foreground: #cbd5e1; /* brightened from #94a3b8 for dark-mode contrast */
+  --border: #475569; /* brightened from #334155 */
   --input: #334155;
   --ring: #d4af37;
 

@@ -10,14 +10,6 @@ import { MarketingButton } from "./ui";
 import { EuroscopeLogo } from "./logo";
 import { ROLE_HOME } from "@/lib/permissions";
 
-/**
- * Navigation structure — 6 top-level links (reduced from 8 to prevent
- * overflow on laptop screens). "Study in Europe" has a dropdown with
- * the most popular destinations.
- *
- * "Courses" and "How We Help" are accessible from other pages (footer,
- * hero CTAs, in-page links) — keeping the navbar clean.
- */
 const DESTINATIONS = [
   { href: "/study-in-europe/germany", label: "Germany", flag: "🇩🇪" },
   { href: "/study-in-europe/france", label: "France", flag: "🇫🇷" },
@@ -64,7 +56,6 @@ export function MarketingNavbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close desktop dropdown on outside click
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -75,7 +66,6 @@ export function MarketingNavbar() {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  // Close everything on Escape
   useEffect(() => {
     const onEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -87,17 +77,10 @@ export function MarketingNavbar() {
     return () => document.removeEventListener("keydown", onEscape);
   }, []);
 
-  // Lock body scroll when mobile menu is open
+  // Close mobile menu on route change
   useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [mobileOpen]);
+    setMobileOpen(false);
+  }, [pathname]);
 
   const closeMobile = () => {
     setMobileOpen(false);
@@ -108,14 +91,13 @@ export function MarketingNavbar() {
     <header
       className={cn(
         "sticky top-0 z-50 w-full transition-all duration-300",
-        // ALWAYS solid background — prevents invisible text on dark hero
         scrolled
           ? "border-b border-border bg-background/95 backdrop-blur-xl shadow-sm"
           : "border-b border-border bg-background",
       )}
     >
       <nav
-        className="euroscope-container flex h-16 items-center justify-between gap-4 lg:h-18"
+        className="euroscope-container flex h-16 items-center justify-between gap-4"
         aria-label="Primary"
       >
         {/* Logo */}
@@ -127,7 +109,7 @@ export function MarketingNavbar() {
           <EuroscopeLogo size="default" variant="mark" showWordmark={true} />
         </Link>
 
-        {/* Desktop links — show at lg (1024px) */}
+        {/* Desktop links */}
         <ul className="hidden items-center gap-1 lg:flex">
           {NAV_LINKS.map((link) => {
             const active = isActive(pathname, link.href);
@@ -139,7 +121,7 @@ export function MarketingNavbar() {
                     onClick={() => setDestinationsOpen((o) => !o)}
                     className={cn(
                       "flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-ring",
-                      active || destinationsOpen ? "text-primary" : "text-foreground/80",
+                      active || destinationsOpen ? "text-primary" : "text-slate-700",
                     )}
                     aria-expanded={destinationsOpen}
                     aria-haspopup="true"
@@ -151,7 +133,6 @@ export function MarketingNavbar() {
                       aria-hidden
                     />
                   </button>
-                  {/* Dropdown */}
                   {destinationsOpen && (
                     <div className="absolute left-0 top-full pt-2">
                       <div className="w-72 rounded-2xl border border-border bg-card p-2 shadow-xl shadow-black/5">
@@ -161,7 +142,7 @@ export function MarketingNavbar() {
                               key={dest.href}
                               href={dest.href}
                               onClick={() => setDestinationsOpen(false)}
-                              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted hover:text-primary"
+                              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-muted hover:text-primary"
                             >
                               <span className="text-base" aria-hidden>{dest.flag}</span>
                               {dest.label}
@@ -190,7 +171,7 @@ export function MarketingNavbar() {
                   href={link.href}
                   className={cn(
                     "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-ring",
-                    active ? "text-primary" : "text-foreground/80",
+                    active ? "text-primary" : "text-slate-700",
                   )}
                   aria-current={active ? "page" : undefined}
                 >
@@ -201,19 +182,19 @@ export function MarketingNavbar() {
           })}
         </ul>
 
-        {/* Desktop CTAs — changes based on auth status */}
+        {/* Desktop CTAs */}
         <div className="hidden items-center gap-3 lg:flex">
           {isLoggedIn ? (
             <>
               <Link
                 href={dashboardHref}
-                className="text-sm font-medium text-foreground/70 transition-colors hover:text-primary"
+                className="text-sm font-medium text-slate-600 transition-colors hover:text-primary"
               >
                 Dashboard
               </Link>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
-                className="text-sm font-medium text-foreground/70 transition-colors hover:text-destructive"
+                className="text-sm font-medium text-slate-600 transition-colors hover:text-destructive"
               >
                 Logout
               </button>
@@ -221,7 +202,7 @@ export function MarketingNavbar() {
           ) : (
             <Link
               href="/login"
-              className="text-sm font-medium text-foreground/70 transition-colors hover:text-primary"
+              className="text-sm font-medium text-slate-600 transition-colors hover:text-primary"
             >
               Login
             </Link>
@@ -236,7 +217,7 @@ export function MarketingNavbar() {
         <button
           type="button"
           onClick={() => setMobileOpen((o) => !o)}
-          className="grid h-10 w-10 place-items-center rounded-lg text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring lg:hidden"
+          className="grid h-10 w-10 place-items-center rounded-lg text-slate-700 hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring lg:hidden"
           aria-label={mobileOpen ? "Close menu" : "Open menu"}
           aria-expanded={mobileOpen}
         >
@@ -244,10 +225,13 @@ export function MarketingNavbar() {
         </button>
       </nav>
 
-      {/* Mobile menu — full-screen overlay */}
+      {/* Mobile menu — slide-down panel with scroll */}
       {mobileOpen && (
-        <div className="fixed inset-0 top-16 z-40 overflow-y-auto bg-background lg:hidden">
-          <div className="euroscope-container py-6">
+        <div
+          className="fixed inset-0 top-16 z-40 overflow-y-auto bg-background lg:hidden"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
+          <div className="euroscope-container min-h-full py-6">
             <ul className="flex flex-col gap-1">
               {NAV_LINKS.map((link) => {
                 const active = isActive(pathname, link.href);
@@ -258,8 +242,8 @@ export function MarketingNavbar() {
                         type="button"
                         onClick={() => setMobileDestinationsOpen((o) => !o)}
                         className={cn(
-                          "flex w-full items-center justify-between rounded-lg px-3 py-3 text-sm font-medium",
-                          active ? "text-primary" : "text-foreground/80 hover:bg-muted",
+                          "flex w-full items-center justify-between rounded-lg px-4 py-3.5 text-base font-medium",
+                          active ? "text-primary" : "text-slate-800",
                         )}
                         aria-expanded={mobileDestinationsOpen}
                       >
@@ -277,7 +261,7 @@ export function MarketingNavbar() {
                               <Link
                                 href={dest.href}
                                 onClick={closeMobile}
-                                className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-foreground/70 hover:bg-muted hover:text-primary"
+                                className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm text-slate-600 hover:bg-muted hover:text-primary"
                               >
                                 <span aria-hidden>{dest.flag}</span>
                                 {dest.label}
@@ -288,7 +272,7 @@ export function MarketingNavbar() {
                             <Link
                               href="/study-in-europe"
                               onClick={closeMobile}
-                              className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-primary hover:bg-primary/10"
+                              className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold text-primary hover:bg-primary/10"
                             >
                               All destinations
                               <FaIcon icon={ICONS.arrowRight} className="h-3.5 w-3.5" aria-hidden />
@@ -305,10 +289,10 @@ export function MarketingNavbar() {
                       href={link.href}
                       onClick={closeMobile}
                       className={cn(
-                        "block rounded-lg px-3 py-3 text-sm font-medium",
+                        "block rounded-lg px-4 py-3.5 text-base font-medium",
                         active
                           ? "bg-primary/10 text-primary"
-                          : "text-foreground/80 hover:bg-muted",
+                          : "text-slate-800 hover:bg-muted",
                       )}
                     >
                       {link.label}
@@ -323,13 +307,13 @@ export function MarketingNavbar() {
                   <Link
                     href={dashboardHref}
                     onClick={closeMobile}
-                    className="rounded-lg border border-border px-3 py-3 text-center text-sm font-medium hover:bg-muted"
+                    className="rounded-lg border border-border px-4 py-3 text-center text-sm font-medium hover:bg-muted"
                   >
                     Dashboard
                   </Link>
                   <button
                     onClick={() => signOut({ callbackUrl: "/" })}
-                    className="rounded-lg border border-border px-3 py-3 text-center text-sm font-medium text-destructive hover:bg-destructive/10"
+                    className="rounded-lg border border-border px-4 py-3 text-center text-sm font-medium text-destructive hover:bg-destructive/10"
                   >
                     Logout
                   </button>
@@ -338,7 +322,7 @@ export function MarketingNavbar() {
                 <Link
                   href="/login"
                   onClick={closeMobile}
-                  className="rounded-lg border border-border px-3 py-3 text-center text-sm font-medium hover:bg-muted"
+                  className="rounded-lg border border-border px-4 py-3 text-center text-sm font-medium hover:bg-muted"
                 >
                   Login
                 </Link>
