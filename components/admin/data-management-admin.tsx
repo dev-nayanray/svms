@@ -100,7 +100,7 @@ export function DataManagementAdmin() {
       const downloadUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = downloadUrl;
-      a.download = `${moduleKey}-export-${Date.now()}.${format === "json" ? "json" : "csv"}`;
+      a.download = `${moduleKey}-export-${new Date().toISOString().slice(0, 10)}.${format === "json" ? "json" : "csv"}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

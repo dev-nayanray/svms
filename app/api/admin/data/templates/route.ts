@@ -16,8 +16,8 @@ export async function GET(req: NextRequest) {
     const g = await guard();
     if (g.error) return g.error;
 
-    const module = req.nextUrl.searchParams.get("module") ?? "students";
-    const template = generateTemplate(module);
+    const moduleName = req.nextUrl.searchParams.get("module") ?? "students";
+    const template = generateTemplate(moduleName);
     return ok(template);
   } catch (err) {
     return handleApiError(err);
