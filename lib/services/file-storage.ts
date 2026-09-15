@@ -39,6 +39,7 @@ export const fileStorage = {
         mimeType: input.mimeType,
         size: input.bytes.byteLength,
         data: Buffer.from(input.bytes),
+        deletedAt: null, // ensure the soft-delete key is set (MongoDB schemaless quirk)
       },
       select: { id: true },
     });
