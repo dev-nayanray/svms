@@ -8,8 +8,8 @@ import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { Loader2, Save, Eye, Plus, Trash2, Megaphone, Star, HelpCircle, Layers, Shield, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { MarketingContent, ContentItem } from "@/lib/services/marketing-content";
-import { DEFAULT_MARKETING_CONTENT } from "@/lib/services/marketing-content";
+import type { MarketingContent, ContentItem } from "@/lib/types/marketing-content";
+import { DEFAULT_MARKETING_CONTENT } from "@/lib/types/marketing-content";
 
 // Available icon keys for the dropdown
 const ICON_OPTIONS = [

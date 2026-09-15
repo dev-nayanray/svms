@@ -3,6 +3,8 @@ import { Inter, Sora } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/shared/providers";
 import { APP_NAME, APP_THEME_COLOR, APP_TAGLINE, APP_DESCRIPTION, APP_URL } from "@/lib/constants/app";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -147,6 +149,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
         <a href="#main-content" className="skip-to-content">Skip to content</a>
         <Providers>{children}</Providers>
+        <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
