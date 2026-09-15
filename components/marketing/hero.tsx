@@ -115,11 +115,11 @@ export function HeroSection({ content }: { content: MarketingContent }) {
           </div>
 
           {/* ── Right: visual collage (5 cols) ── */}
-          <MarketingReveal delay={400}>
-            <div className="lg:col-span-5">
+          <div className="lg:col-span-5">
+            <MarketingReveal delay={400}>
               <HeroCollage />
-            </div>
-          </MarketingReveal>
+            </MarketingReveal>
+          </div>
         </div>
       </Container>
     </section>
