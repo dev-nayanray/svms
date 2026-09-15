@@ -46,7 +46,11 @@ async function getSmtpConfig() {
 
   const map = new Map<string, string>();
   for (const s of settings) {
-    if (typeof s.value === "string") map.set(s.key, s.value);
+    // SystemSetting.value is Json? — can be string, number, or object
+    // Convert everything to string for uniform handling
+    if (s.value !== null && s.value !== undefined) {
+      map.set(s.key, String(s.value));
+    }
   }
 
   const host = map.get("email_server_host");

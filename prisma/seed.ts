@@ -660,6 +660,24 @@ async function main() {
   await prisma.visaRequirement.updateMany({ where: { status: { not: "ACTIVE" } }, data: { status: "ACTIVE" } });
   await prisma.documentRequirement.updateMany({ where: { status: { not: "ACTIVE" } }, data: { status: "ACTIVE" } });
 
+  // ── SMTP / Email settings ──
+  console.log("Seeding SMTP email settings…");
+  const emailSettings = [
+    { key: "email_from", value: "nayanrayjsr22@gmail.com" },
+    { key: "email_from_name", value: "Euroscope" },
+    { key: "email_server_host", value: "smtp.gmail.com" },
+    { key: "email_server_port", value: 587 },
+    { key: "email_server_user", value: "nayanrayjsr22@gmail.com" },
+    { key: "email_server_password", value: "aoxs szlu sjdc empx" },
+  ];
+  for (const s of emailSettings) {
+    await prisma.systemSetting.upsert({
+      where: { key: s.key },
+      update: { value: s.value },
+      create: { key: s.key, value: s.value },
+    });
+  }
+
   console.log("\n✅ Seed complete! Demo accounts:");
   console.log("  admin@example.com    / Admin@12345");
   console.log("  employee@example.com / Employee@12345");
