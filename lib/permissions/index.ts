@@ -57,6 +57,27 @@ export const PERMISSIONS = {
   "dashboard.read": ["ADMIN"],
   "search.read": ["ADMIN", "EMPLOYEE"],
   "intakes.manage": ["ADMIN"],
+  // System Administration module — admin-only, granular by operation.
+  // Read access is split from write access so we can grant a "viewer"
+  // role in the future without letting viewers mutate production state.
+  "system.read": ["ADMIN"],
+  "system.manage": ["ADMIN"],
+  "system.health.read": ["ADMIN"],
+  "system.logs.read": ["ADMIN"],
+  "system.config.read": ["ADMIN"],
+  "system.config.manage": ["ADMIN"],
+  "backup.read": ["ADMIN"],
+  "backup.create": ["ADMIN"],
+  "backup.restore": ["ADMIN"],
+  "backup.delete": ["ADMIN"],
+  "security.read": ["ADMIN"],
+  "security.manage": ["ADMIN"],
+  "seo.read": ["ADMIN"],
+  "seo.manage": ["ADMIN"],
+  "analytics.read": ["ADMIN"],
+  "analytics.manage": ["ADMIN"],
+  "maintenance.read": ["ADMIN"],
+  "maintenance.manage": ["ADMIN"],
 } as const satisfies Record<string, readonly string[]>;
 
 export type PermissionKey = keyof typeof PERMISSIONS;

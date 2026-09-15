@@ -1275,7 +1275,7 @@ class LazyResult {
                 ;
             }
         } catch (err) {
-            /* c8 ignore next 3 */ // eslint-disable-next-line no-console
+            /* c8 ignore next 3 */  
             if (console && console.error) console.error(err);
         }
         return error;
@@ -3166,13 +3166,13 @@ function postcss(...plugins) {
 postcss.plugin = function plugin(name, initializer) {
     let warningPrinted = false;
     function creator(...args) {
-        // eslint-disable-next-line no-console
+         
         if (console && console.warn && !warningPrinted) {
             warningPrinted = true;
-            // eslint-disable-next-line no-console
+             
             console.warn(name + ': postcss.plugin was deprecated. Migration guide:\n' + 'https://evilmartians.com/chronicles/postcss-8-plugin-migration');
             if (process.env.LANG && process.env.LANG.startsWith('zh')) {
-                /* c8 ignore next 7 */ // eslint-disable-next-line no-console
+                /* c8 ignore next 7 */  
                 console.warn(name + ': 里面 postcss.plugin 被弃用. 迁移指南:\n' + 'https://www.w3ctech.com/topic/2226');
             }
         }
@@ -4379,7 +4379,7 @@ module.exports = function tokenizer(input, options = {}) {
 "[project]/svms/node_modules/postcss/lib/warn-once.js [postcss] (ecmascript)", ((__turbopack_context__, module, exports) => {
 "use strict";
 
-/* eslint-disable no-console */ let printed = {};
+  let printed = {};
 module.exports = function warnOnce(message) {
     if (printed[message]) return;
     printed[message] = true;

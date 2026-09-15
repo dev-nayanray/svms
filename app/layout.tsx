@@ -5,6 +5,8 @@ import { Providers } from "@/components/shared/providers";
 import { APP_NAME, APP_THEME_COLOR, APP_TAGLINE, APP_DESCRIPTION, APP_URL } from "@/lib/constants/app";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
+import { AnalyticsProviders } from "@/components/analytics/providers";
+import { getAnalyticsConfig } from "@/lib/system/config";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -109,6 +111,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     ],
   });
 
+  // Load analytics config from the database (cached in-memory per process).
+  // Failed loads fall back to disabled — analytics is non-essential.
+  let analyticsConfig = null;
+  try {
+    analyticsConfig = await getAnalyticsConfig();
+  } catch {
+    // ignore — fall back to no providers
+  }
+
   return (
     <html
       lang="en"
@@ -151,6 +162,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Providers>{children}</Providers>
         <SpeedInsights />
         <Analytics />
+        {analyticsConfig && (
+          <>
+            {/* Server-rendered config script — must run before client providers */}
+            <script
+              type="application/javascript"
+              dangerouslySetInnerHTML={{
+                __html: `window.__SVMS_ANALYTICS__ = ${JSON.stringify(analyticsConfig)};`,
+              }}
+            />
+            <AnalyticsProviders />
+          </>
+        )}
       </body>
     </html>
   );

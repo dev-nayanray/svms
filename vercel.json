@@ -1,0 +1,24 @@
+{
+  "crons": [
+    {
+      "path": "/api/admin/system/backups/cron?job=daily-backup",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/admin/system/backups/cron?job=weekly-backup",
+      "schedule": "0 3 * * 1"
+    },
+    {
+      "path": "/api/admin/system/backups/cron?job=monthly-backup",
+      "schedule": "0 4 1 * *"
+    },
+    {
+      "path": "/api/admin/system/jobs/cron?job=cleanup-deleted-backups",
+      "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/admin/system/health/cron?job=health-check",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}

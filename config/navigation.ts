@@ -70,6 +70,21 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
       { href: "/admin/audit", label: "Audit Logs", icon: "ScrollText" },
     ],
   },
+  {
+    label: "System Administration",
+    items: [
+      { href: "/admin/system", label: "Overview", icon: "LayoutDashboard" },
+      { href: "/admin/system/backups", label: "Backup & Restore", icon: "DatabaseBackup" },
+      { href: "/admin/system/security", label: "Security Center", icon: "ShieldCheck" },
+      { href: "/admin/system/seo", label: "SEO", icon: "Search" },
+      { href: "/admin/system/analytics", label: "Analytics & Pixels", icon: "BarChart3" },
+      { href: "/admin/system/health", label: "System Health", icon: "Activity" },
+      { href: "/admin/system/configuration", label: "Configuration", icon: "Settings" },
+      { href: "/admin/system/logs", label: "Logs", icon: "FileText" },
+      { href: "/admin/system/maintenance", label: "Maintenance", icon: "Wrench" },
+      { href: "/admin/system/audit", label: "Audit Logs", icon: "ScrollText" },
+    ],
+  },
 ];
 
 // Flatten for backwards compatibility

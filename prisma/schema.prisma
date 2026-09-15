@@ -838,7 +838,7 @@ model SiteSetting {
 
 model StoredFile {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  kind      String // student-doc | profile-photo | brand
+  kind      String // student-doc | profile-photo | brand | system-backup
   ownerId   String?  @db.ObjectId // studentId / userId of the uploader
   fileName  String // stored (hashed) file name
   origName  String? // original client file name (for downloads)
@@ -849,4 +849,161 @@ model StoredFile {
   deletedAt DateTime?
 
   @@index([kind, ownerId])
+  // System backups are filtered by kind + createdAt for retention sweeps.
+  @@index([kind, createdAt])
+}
+
+// ─────────────────────────────────────────────
+// System Administration — Backups, Health, Maintenance
+//
+// These models back the Admin → System Administration module.
+// They reuse AuditLog (for all sensitive ops), Notification (for
+// admin alerts), and SystemSetting (for config) — no duplicates.
+// ─────────────────────────────────────────────
+
+model BackupRecord {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  // Display ID (short, human-readable) — e.g. "BK-2026-001"
+  reference      String    @unique
+  // FULL | SELECTIVE | CONFIG
+  type           String
+  // For SELECTIVE: list of collection keys (e.g. ["users","students"]).
+  // For FULL: ["*"]. For CONFIG: ["settings","site"].
+  scope          String[]
+  // QUEUED | RUNNING | COMPLETED | FAILED | VERIFYING | VERIFIED | RESTORED
+  status         String    @default("QUEUED")
+  // Storage provider: local | s3 | r2 | vercel-blob
+  storageProvider String
+  // For local storage: the StoredFile id containing the backup archive.
+  // For external storage: the object key (S3/R2) or Blob URL.
+  storageKey     String?
+  // Encryption: AES-256-GCM (always on for production backups)
+  encrypted      Boolean   @default(true)
+  // SHA-256 hash of the original (pre-encryption) archive bytes.
+  checksum       String?
+  // File size in bytes (post-encryption).
+  sizeBytes      Int?
+  // Number of documents included (set after extraction).
+  documentCount  Int?
+  // Trigger: manual | scheduled | pre-restore-safety
+  trigger        String    @default("manual")
+  // For scheduled backups: the schedule id that produced this backup.
+  scheduleId     String?   @db.ObjectId
+
+  createdById    String?   @db.ObjectId
+  startedAt      DateTime?
+  completedAt    DateTime?
+  durationMs     Int?
+  // Verification result (set during VERIFYING / VERIFIED).
+  verifiedAt     DateTime?
+  verificationStatus String? // PASSED | FAILED | SKIPPED
+  verificationNotes String?  // JSON string with per-check details
+  // For restore: was this backup ever restored, and when?
+  restoredAt     DateTime?
+  restoredById   String?   @db.ObjectId
+  // Soft-delete: when an admin deletes a backup, it is marked deleted.
+  // The actual file is purged asynchronously by a cleanup job.
+  deletedAt      DateTime?
+  deletedById    String?   @db.ObjectId
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([status])
+  @@index([type])
+  @@index([scheduleId])
+  @@index([createdAt])
+  @@index([storageProvider])
+}
+
+model BackupSchedule {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  // DAILY | WEEKLY | MONTHLY
+  frequency      String
+  // Hour-of-day (0-23) in the server timezone. For daily/weekly/monthly.
+  hour           Int       @default(2)
+  // Day-of-week (0=Sun .. 6=Sat) for WEEKLY. Ignored otherwise.
+  dayOfWeek      Int?
+  // Day-of-month (1-28) for MONTHLY. Ignored otherwise. Capped at 28 to
+  // avoid February roll-over issues.
+  dayOfMonth     Int?
+  // FULL | SELECTIVE | CONFIG
+  type           String    @default("FULL")
+  scope          String[]  @default(["*"])
+  retention      Int       @default(7) // keep last N backups of this schedule
+  enabled        Boolean   @default(true)
+  // Last run — updated by the cron job after each invocation.
+  lastRunAt      DateTime?
+  lastRunStatus  String?   // COMPLETED | FAILED
+  lastError      String?
+  createdById    String?   @db.ObjectId
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([enabled])
+  @@index([frequency])
+}
+
+model SystemHealthCheck {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  // Component: database | storage | email | auth | cron | api | cache |
+  // rateLimit | analytics | backup
+  component      String
+  // healthy | warning | critical | not_configured
+  status         String
+  // Latency in ms (for components that have a measurable response time).
+  latencyMs      Int?
+  message        String?
+  // Optional details (e.g. error stack, version info). Never store secrets.
+  details        Json?
+  checkedAt      DateTime  @default(now())
+
+  @@index([component, checkedAt])
+  @@index([status])
+}
+
+model SecurityEvent {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  // Type: failed_login | suspicious_request | permission_denied |
+  // rate_limit_hit | session_revoked | config_change | secret_exposure |
+  // backup_failed | restore_attempt
+  type           String
+  severity       String    @default("MEDIUM") // LOW | MEDIUM | HIGH | CRITICAL
+  // Description of the event (no secrets, no PII beyond what's necessary).
+  description    String
+  // Optional: the user (if known) associated with the event.
+  userId         String?   @db.ObjectId
+  ipAddress      String?
+  userAgent      String?
+  // Optional: the resource involved (e.g. an endpoint path).
+  resource       String?
+  // Resolved status: OPEN | ACKNOWLEDGED | RESOLVED
+  resolved       String    @default("OPEN")
+  resolvedById   String?   @db.ObjectId
+  resolvedAt     DateTime?
+  metadata       Json?
+  createdAt      DateTime  @default(now())
+
+  @@index([type])
+  @@index([severity])
+  @@index([resolved])
+  @@index([createdAt])
+}
+
+model MaintenanceWindow {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  // Active maintenance — only one row with endedAt=null at a time.
+  enabled        Boolean   @default(true)
+  message        String
+  startedAt      DateTime  @default(now())
+  expectedEndAt  DateTime?
+  endedAt        DateTime?
+  // Allow admin override — admins can still access /admin during maintenance.
+  allowAdminAccess Boolean  @default(true)
+  createdById    String?   @db.ObjectId
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([enabled])
+  @@index([startedAt])
 }

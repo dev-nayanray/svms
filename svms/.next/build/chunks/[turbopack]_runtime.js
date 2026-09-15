@@ -699,7 +699,7 @@ externalRequire.resolve = (id, options)=>{
     return require.resolve(id, options);
 };
 contextPrototype.x = externalRequire;
-/* eslint-disable @typescript-eslint/no-unused-vars */ const path = require('path');
+  const path = require('path');
 const relativePathToRuntimeRoot = path.relative(RUNTIME_PUBLIC_PATH, '.');
 // Compute the relative path to the `distDir`.
 const relativePathToDistRoot = path.join(relativePathToRuntimeRoot, RELATIVE_ROOT_PATH);
@@ -730,7 +730,7 @@ Context.prototype.P = resolveAbsolutePath;
     return require('url').pathToFileURL(resolveAbsolutePath(modulePath)).href;
 }
 Context.prototype.F = resolveFileUrl;
-/* eslint-disable @typescript-eslint/no-unused-vars */ /// <reference path="../../shared/runtime/runtime-utils.ts" />
+  /// <reference path="../../shared/runtime/runtime-utils.ts" />
 /// <reference path="../../shared-node/base-externals-utils.ts" />
 /// <reference path="../../shared-node/node-externals-utils.ts" />
 /// <reference path="./nodejs-globals.d.ts" />
@@ -845,7 +845,7 @@ const regexJsUrl = /\.js(?:\?[^#]*)?(?:#.*)?$/;
  */ function isJs(chunkUrlOrPath) {
     return regexJsUrl.test(chunkUrlOrPath);
 }
-/* eslint-disable @typescript-eslint/no-unused-vars */ /// <reference path="./runtime-base.ts" />
+  /// <reference path="./runtime-base.ts" />
 /**
  * Production Node.js runtime.
  * Uses ModuleWithDirection and simple module instantiation without HMR support.

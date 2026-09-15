@@ -35,6 +35,9 @@ export const AUDIT_ENTITY_TYPES = [
   "Intake",
   "CounselingRequest",
   "SystemSetting",
+  "BackupRecord",
+  "MaintenanceWindow",
+  "SecurityEvent",
 ] as const;
 
 export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];
@@ -61,6 +64,9 @@ export const AUDIT_ENTITY_LABELS: Record<string, string> = {
   Intake: "Intakes",
   CounselingRequest: "Counseling Requests",
   SystemSetting: "System Settings",
+  BackupRecord: "Backups",
+  MaintenanceWindow: "Maintenance Windows",
+  SecurityEvent: "Security Events",
 };
 
 /**

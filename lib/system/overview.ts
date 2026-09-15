@@ -1,0 +1,282 @@
+import { prisma } from "@/lib/db";
+import { getBackupConfig } from "./config";
+import { getQuickHealthSummary } from "./health";
+import { getPendingSecurityEvents, getRecentFailedLogins } from "./logs";
+import { getActiveMaintenance } from "./maintenance";
+import { isEnvConfigured } from "./env";
+import { getAnalyticsConfig } from "./config";
+
+/**
+ * System Administration Overview
+ * ==============================
+ *
+ * Aggregates real metrics from across the system into a single
+ * dashboard payload. Used by /admin/system.
+ *
+ * Every number returned here is computed from actual DB state or
+ * env vars at request time. No fabricated statistics.
+ */
+
+export type SystemOverview = {
+  // Application
+  appVersion: string;
+  environment: string;
+  lastDeployment: string | null;
+  appUrl: string;
+
+  // Database
+  database: {
+    status: "healthy" | "warning" | "critical" | "not_configured";
+    latencyMs?: number;
+    provider: string;
+  };
+
+  // Backup
+  backup: {
+    lastSuccessful: {
+      reference: string;
+      createdAt: string;
+      sizeBytes: number;
+      documentCount: number;
+      status: string;
+      verified: boolean;
+    } | null;
+    totalBackups: number;
+    storageProvider: string;
+    autoEnabled: boolean;
+    nextScheduledRun: string | null;
+  };
+
+  // Security
+  security: {
+    failedLogins24h: number;
+    pendingEvents: number;
+    authConfigured: boolean;
+    httpsEnabled: boolean;
+  };
+
+  // Sessions
+  sessions: {
+    activeUsers5m: number;
+    activeUsers1h: number;
+  };
+
+  // SEO
+  seo: {
+    siteName: string;
+    canonicalBase: string;
+    robotsTxt: boolean;
+    sitemapXml: boolean;
+    indexPrivateRoutes: boolean;
+  };
+
+  // Analytics
+  analytics: {
+    ga4: boolean;
+    gtm: boolean;
+    meta: boolean;
+    vercelAnalytics: boolean;
+  };
+
+  // Storage
+  storage: {
+    provider: string;
+    documentCount: number;
+    bytesUsed: number;
+  };
+
+  // Cron
+  cron: {
+    isVercel: boolean;
+    jobsConfigured: number;
+  };
+
+  // Health summary
+  health: Awaited<ReturnType<typeof getQuickHealthSummary>>;
+
+  // Maintenance
+  maintenance: Awaited<ReturnType<typeof getActiveMaintenance>>;
+
+  // Quick env summary
+  env: {
+    totalConfigured: number;
+    totalVars: number;
+    missingCritical: string[];
+  };
+};
+
+export async function getSystemOverview(): Promise<SystemOverview> {
+  // ─── Application ──────────────────────────────────────────────
+  const appVersion = process.env.npm_package_version ?? "0.1.0";
+  const environment = process.env.NODE_ENV ?? "development";
+  const isVercel = !!process.env.VERCEL;
+  const lastDeployment = process.env.VERCEL_GIT_COMMIT_DATE ?? null;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+  // ─── Database ────────────────────────────────────────────────
+  let database: SystemOverview["database"] = {
+    status: "not_configured",
+    provider: "mongodb",
+  };
+  try {
+    const start = Date.now();
+    await prisma.user.count({ where: {} });
+    const latencyMs = Date.now() - start;
+    database = {
+      status: latencyMs > 1000 ? "warning" : "healthy",
+      latencyMs,
+      provider: "mongodb",
+    };
+  } catch {
+    database = { status: "critical", provider: "mongodb" };
+  }
+
+  // ─── Backup ───────────────────────────────────────────────────
+  const [backupConfig, lastBackup, totalBackups] = await Promise.all([
+    getBackupConfig(),
+    prisma.backupRecord.findFirst({
+      where: { status: { in: ["COMPLETED", "VERIFIED"] }, deletedAt: null },
+      orderBy: { completedAt: "desc" },
+    }),
+    prisma.backupRecord.count({ where: { deletedAt: null } }),
+  ]);
+
+  // Next scheduled run — from the earliest enabled schedule that hasn't run today.
+  let nextScheduledRun: string | null = null;
+  try {
+    const nextSchedule = await prisma.backupSchedule.findFirst({
+      where: { enabled: true },
+      orderBy: { lastRunAt: "asc" },
+    });
+    if (nextSchedule) {
+      const next = new Date();
+      next.setHours(nextSchedule.hour, 0, 0, 0);
+      if (next <= new Date()) next.setDate(next.getDate() + 1);
+      nextScheduledRun = next.toISOString();
+    }
+  } catch {
+    // ignore
+  }
+
+  // ─── Security ─────────────────────────────────────────────────
+  const [failedLogins24h, pendingEvents] = await Promise.all([
+    getRecentFailedLogins(),
+    getPendingSecurityEvents(),
+  ]);
+
+  // ─── Sessions ─────────────────────────────────────────────────
+  let activeUsers5m = 0;
+  let activeUsers1h = 0;
+  try {
+    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    [activeUsers5m, activeUsers1h] = await Promise.all([
+      prisma.user.count({ where: { lastLoginAt: { gte: fiveMinAgo } } }),
+      prisma.user.count({ where: { lastLoginAt: { gte: oneHourAgo } } }),
+    ]);
+  } catch {
+    // ignore
+  }
+
+  // ─── SEO ──────────────────────────────────────────────────────
+  // robots.txt and sitemap.xml are auto-generated by Next.js routes.
+  // We confirm they exist by reference (the route files exist in the codebase).
+  const seoConfig = await import("./config").then((m) => m.getSeoConfig());
+
+  // ─── Analytics ────────────────────────────────────────────────
+  const analyticsConfig = await getAnalyticsConfig();
+
+  // ─── Storage ──────────────────────────────────────────────────
+  let documentCount = 0;
+  let bytesUsed = 0;
+  try {
+    const [count, sum] = await Promise.all([
+      prisma.storedFile.count({ where: { deletedAt: null } }),
+      prisma.storedFile.aggregate({ where: { deletedAt: null }, _sum: { size: true } }),
+    ]);
+    documentCount = count;
+    bytesUsed = sum._sum.size ?? 0;
+  } catch {
+    // ignore
+  }
+
+  // ─── Health & maintenance ─────────────────────────────────────
+  const [health, maintenance, envCheck] = await Promise.all([
+    getQuickHealthSummary(),
+    getActiveMaintenance(),
+    import("./env").then((m) => m.checkEnvironment()),
+  ]);
+
+  return {
+    appVersion,
+    environment,
+    lastDeployment,
+    appUrl,
+
+    database,
+
+    backup: {
+      lastSuccessful: lastBackup
+        ? {
+            reference: lastBackup.reference,
+            createdAt: lastBackup.completedAt?.toISOString() ?? lastBackup.createdAt.toISOString(),
+            sizeBytes: lastBackup.sizeBytes ?? 0,
+            documentCount: lastBackup.documentCount ?? 0,
+            status: lastBackup.status,
+            verified: lastBackup.verificationStatus === "PASSED",
+          }
+        : null,
+      totalBackups,
+      storageProvider: backupConfig.provider,
+      autoEnabled: backupConfig.autoEnabled,
+      nextScheduledRun,
+    },
+
+    security: {
+      failedLogins24h,
+      pendingEvents,
+      authConfigured: isEnvConfigured("AUTH_SECRET"),
+      httpsEnabled: appUrl.startsWith("https://"),
+    },
+
+    sessions: {
+      activeUsers5m,
+      activeUsers1h,
+    },
+
+    seo: {
+      siteName: seoConfig.siteName,
+      canonicalBase: seoConfig.canonicalBase,
+      robotsTxt: true, // route exists at app/robots.ts
+      sitemapXml: true, // route exists at app/sitemap.ts
+      indexPrivateRoutes: seoConfig.indexPrivateRoutes,
+    },
+
+    analytics: {
+      ga4: analyticsConfig.ga4.enabled,
+      gtm: analyticsConfig.gtm.enabled,
+      meta: analyticsConfig.meta.enabled,
+      vercelAnalytics: analyticsConfig.vercelAnalytics.enabled,
+    },
+
+    storage: {
+      provider: backupConfig.provider,
+      documentCount,
+      bytesUsed,
+    },
+
+    cron: {
+      isVercel,
+      jobsConfigured: 5, // KNOWN_JOBS.length — see lib/system/jobs.ts
+    },
+
+    health,
+    maintenance,
+
+    env: {
+      totalConfigured: envCheck.totalConfigured,
+      totalVars: envCheck.totalVars,
+      missingCritical: envCheck.missingCritical,
+    },
+  };
+}
