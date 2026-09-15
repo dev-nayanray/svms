@@ -824,3 +824,27 @@ model SiteSetting {
   updatedAt       DateTime @updatedAt
   updatedById     String?  @db.ObjectId
 }
+
+// ─────────────────────────────────────────────
+// Stored Files (uploads persisted in MongoDB)
+//
+// Serverless hosts (Vercel) have a read-only filesystem, so uploads
+// are stored as bytes in Atlas and served through /api/files/[id].
+// Documents stay private behind their authenticated download route;
+// profile photos / brand assets are served with a session check.
+// ─────────────────────────────────────────────
+
+model StoredFile {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  kind      String // student-doc | profile-photo | brand
+  ownerId   String?  @db.ObjectId // studentId / userId of the uploader
+  fileName  String // stored (hashed) file name
+  origName  String? // original client file name (for downloads)
+  mimeType  String
+  size      Int
+  data      Bytes
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+
+  @@index([kind, ownerId])
+}

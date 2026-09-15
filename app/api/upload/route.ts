@@ -1,8 +1,7 @@
 import { NextRequest } from "next/server";
 import { ok, handleApiError, fail } from "@/lib/api";
 import { guard } from "@/lib/auth/guards";
-import { mkdir, writeFile } from "node:fs/promises";
-import { join, dirname } from "node:path";
+import { fileStorage } from "@/lib/services/file-storage";
 import { createHash } from "node:crypto";
 import { rateLimit, RATE_LIMIT_PRESETS } from "@/lib/security/rate-limit";
 
@@ -22,11 +21,13 @@ const EXT_BY_MIME: Record<string, string> = {
  * POST /api/upload
  *
  * General file upload for admin branding assets (logos, etc.).
- * Saves to /public/uploads/brand/ and returns the public URL.
+ * Files are persisted in MongoDB and served via /api/files/<id> —
+ * serverless hosts have a read-only filesystem, so writing to
+ * /public at runtime never worked in production.
  *
  * Form data:
  *  - file (required, File) — the image file
- *  - folder (optional, string) — subfolder under /public/uploads/
+ *  - folder (optional, string) — recorded as the storage kind suffix
  *
  * Returns { url: string, fileName: string }
  *
@@ -76,13 +77,17 @@ export async function POST(req: NextRequest) {
     const hash = createHash("sha256").update(bytes).digest("hex").slice(0, 16);
     const ext = EXT_BY_MIME[file.type] ?? ".bin";
     const fileName = `${Date.now()}-${hash}${ext}`;
-    const uploadDir = join(process.cwd(), "public", "uploads", safeFolder);
-    const filePath = join(uploadDir, fileName);
 
-    await mkdir(dirname(filePath), { recursive: true });
-    await writeFile(filePath, bytes);
+    const storedFileId = await fileStorage.put({
+      kind: `brand-${safeFolder}`,
+      ownerId: g.user.id,
+      bytes,
+      fileName,
+      origName: file.name || fileName,
+      mimeType: file.type,
+    });
 
-    const publicUrl = `/uploads/${safeFolder}/${fileName}`;
+    const publicUrl = `/api/files/${storedFileId}`;
 
     return ok({ url: publicUrl, fileName }, { status: 201 });
   } catch (err) {
