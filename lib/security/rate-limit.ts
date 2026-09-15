@@ -153,6 +153,12 @@ export const RATE_LIMIT_PRESETS = {
   counselingRequest: { capacity: 10, refillRate: 1 / 30 }, // 10 reqs, +1/30s
   /** Account registration — protect against account-creation flood. */
   register: { capacity: 5, refillRate: 1 / 60 }, // 5 signups, +1/min
+  /** Global search — protect against expensive query abuse. */
+  search: { capacity: 30, refillRate: 1 }, // 30 searches, +1/s
+  /** Data export — protect against large export DoS. */
+  export: { capacity: 10, refillRate: 1 / 10 }, // 10 exports, +1/10s
+  /** General file upload (branding, etc.) — protect against storage DoS. */
+  generalUpload: { capacity: 20, refillRate: 1 / 3 }, // 20 uploads, +1/3s
 } as const satisfies Record<string, RateLimitConfig>;
 
 /**

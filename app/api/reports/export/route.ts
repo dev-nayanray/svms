@@ -7,6 +7,7 @@ import {
   rowsToCsv,
 } from "@/lib/constants/reports";
 import { formatDate } from "@/lib/utils";
+import { rateLimit, RATE_LIMIT_PRESETS } from "@/lib/security/rate-limit";
 
 /**
  * CSV export endpoint for reports. Returns a `text/csv` response with
@@ -17,9 +18,14 @@ import { formatDate } from "@/lib/utils";
  *
  * The export format is Excel-ready: UTF-8 BOM, RFC 4180 compliant
  * escaping, CRLF line endings, and a header row.
+ *
+ * Rate-limited to prevent export DoS (10 exports per IP, +1/10s).
  */
 export async function GET(req: NextRequest) {
   try {
+    const limited = rateLimit(req, RATE_LIMIT_PRESETS.export, "export");
+    if (limited) return limited as Response;
+
     const g = await guard("reports.read");
     if (g.error) return g.error;
 

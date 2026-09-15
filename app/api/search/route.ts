@@ -2,12 +2,16 @@ import { NextRequest } from "next/server";
 import { ok, handleApiError } from "@/lib/api";
 import { guard } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
+import { rateLimit, RATE_LIMIT_PRESETS } from "@/lib/security/rate-limit";
 
 const LIMIT = 8;
 
 /** Global search across the core entities (permission-scoped, admin/staff only). */
 export async function GET(req: NextRequest) {
   try {
+    const limited = rateLimit(req, RATE_LIMIT_PRESETS.search, "search");
+    if (limited) return limited as Response;
+
     const g = await guard("search.read");
     if (g.error) return g.error;
     const q = (req.nextUrl.searchParams.get("q") ?? "").trim();
