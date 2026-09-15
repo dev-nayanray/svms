@@ -25,6 +25,7 @@ import {
   Image,
   TrendingUp,
   UserCircle,
+  Database,
   type LucideIcon,
 } from "lucide-react";
 
@@ -59,6 +60,7 @@ export const NAV_ICONS = {
   Image,
   TrendingUp,
   UserCircle,
+  Database,
 } satisfies Record<string, LucideIcon>;
 
 export type NavIconName = keyof typeof NAV_ICONS;

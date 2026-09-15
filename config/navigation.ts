@@ -64,6 +64,7 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
   {
     label: "System Administration",
     items: [
+      { href: "/admin/data-management", label: "Data Management", icon: "Database" },
       { href: "/admin/branding", label: "Branding & Logo", icon: "Image" },
       { href: "/admin/marketing", label: "Marketing Site", icon: "Megaphone" },
       { href: "/admin/settings", label: "System Settings", icon: "Settings" },
