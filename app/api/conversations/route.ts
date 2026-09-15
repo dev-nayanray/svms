@@ -124,12 +124,14 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Create the message
+    // Create the message — persist visibility so INTERNAL notes
+    // are never exposed to students via the student-facing API
     const message = await prisma.message.create({
       data: {
         conversationId: conversation.id,
         senderId: user.id,
         body: body.body,
+        visibility: body.visibility,
         attachmentUrl: body.attachmentUrl,
       },
     });

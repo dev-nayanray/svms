@@ -43,6 +43,7 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
             id: true,
             senderId: true,
             body: true,
+            visibility: true,
             attachmentUrl: true,
             readAt: true,
             createdAt: true,
@@ -66,13 +67,15 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
       }
     }
 
-    // For students: filter out internal notes (visibility check)
-    // The Message model doesn't have a visibility field yet — messages
-    // are stored with the senderId. Messages sent by the student are
-    // always visible. Messages sent by staff are visible to the student.
-    // Internal notes are a future enhancement (the Message model would
-    // need a visibility field). For now, all messages in a conversation
-    // are student-visible.
+    // For students: filter out INTERNAL notes — they should never
+    // see staff-only internal notes. The visibility field was added
+    // to the Message model; INTERNAL messages are excluded from
+    // the student's view.
+    if (user.role === "STUDENT") {
+      conversation.messages = conversation.messages.filter(
+        (m) => (m as { visibility?: string }).visibility !== "INTERNAL"
+      );
+    }
 
     // Mark unread messages from the other party as read
     const otherPartyId = user.role === "STUDENT"
