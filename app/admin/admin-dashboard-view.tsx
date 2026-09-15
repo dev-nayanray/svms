@@ -111,6 +111,38 @@ export function AdminDashboardView() {
         </div>
       )}
 
+      {/* ── Action Required — consolidated attention banner ── */}
+      {k && (w?.overdueTasks || 0) > 0 || (k?.pendingDocuments || 0) > 0 || (k?.outstandingPayments || 0) > 0 ? (
+        <div className="rounded-xl border border-amber-200/60 bg-amber-50/50 p-4 dark:bg-amber-950/10">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-amber-700 dark:text-amber-400">
+            <AlertCircle className="h-4 w-4" /> Action Required
+          </h2>
+          <div className="mt-3 flex flex-wrap gap-3">
+            {(w?.overdueTasks ?? 0) > 0 && (
+              <Link href="/admin/tasks" className="group inline-flex items-center gap-2 rounded-lg border border-amber-300/50 bg-white px-3 py-2 text-sm font-medium shadow-sm transition-all hover:border-amber-400 hover:shadow dark:bg-card">
+                <span className="grid h-6 w-6 place-items-center rounded-md bg-red-500/15 text-xs font-bold text-red-600">{w?.overdueTasks}</span>
+                Overdue tasks
+                <span className="text-amber-500 transition-transform group-hover:translate-x-0.5">→</span>
+              </Link>
+            )}
+            {(k?.pendingDocuments ?? 0) > 0 && (
+              <Link href="/admin/documents" className="group inline-flex items-center gap-2 rounded-lg border border-amber-300/50 bg-white px-3 py-2 text-sm font-medium shadow-sm transition-all hover:border-amber-400 hover:shadow dark:bg-card">
+                <span className="grid h-6 w-6 place-items-center rounded-md bg-amber-500/15 text-xs font-bold text-amber-600">{k?.pendingDocuments}</span>
+                Documents need review
+                <span className="text-amber-500 transition-transform group-hover:translate-x-0.5">→</span>
+              </Link>
+            )}
+            {(k?.outstandingPayments ?? 0) > 0 && (
+              <Link href="/admin/invoices" className="group inline-flex items-center gap-2 rounded-lg border border-amber-300/50 bg-white px-3 py-2 text-sm font-medium shadow-sm transition-all hover:border-amber-400 hover:shadow dark:bg-card">
+                <span className="grid h-6 w-6 place-items-center rounded-md bg-blue-500/15 text-xs font-bold text-blue-600">{formatMoney(k?.outstandingPayments ?? 0)}</span>
+                Outstanding payments
+                <span className="text-amber-500 transition-transform group-hover:translate-x-0.5">→</span>
+              </Link>
+            )}
+          </div>
+        </div>
+      ) : null}
+
       {/* ── KPI Cards — clickable, navigate to filtered list ── */}
       <KpiGrid
         isPending={loading}
