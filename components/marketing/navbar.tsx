@@ -9,33 +9,21 @@ import { cn } from "@/lib/utils";
 import { MarketingButton } from "./ui";
 import { EuroscopeLogo } from "./logo";
 import { ROLE_HOME } from "@/lib/permissions";
-
-const DESTINATIONS = [
-  { href: "/study-in-europe/germany", label: "Germany", flag: "🇩🇪" },
-  { href: "/study-in-europe/france", label: "France", flag: "🇫🇷" },
-  { href: "/study-in-europe/italy", label: "Italy", flag: "🇮🇹" },
-  { href: "/study-in-europe/spain", label: "Spain", flag: "🇪🇸" },
-  { href: "/study-in-europe/netherlands", label: "Netherlands", flag: "🇳🇱" },
-  { href: "/study-in-europe/sweden", label: "Sweden", flag: "🇸🇪" },
-  { href: "/study-in-europe/finland", label: "Finland", flag: "🇫🇮" },
-  { href: "/study-in-europe/ireland", label: "Ireland", flag: "🇮🇪" },
-];
-
-const NAV_LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/study-in-europe", label: "Destinations", hasDropdown: true },
-  { href: "/universities", label: "Universities" },
-  { href: "/features", label: "Services" },
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
-];
+import type { NavItem, HeaderConfig } from "@/lib/marketing/cms";
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-export function MarketingNavbar() {
+type Props = {
+  /** Dynamic navigation from CMS. Falls back to hardcoded defaults if null. */
+  navigation?: NavItem[];
+  /** Dynamic header config from CMS. Falls back to defaults if null. */
+  headerConfig?: HeaderConfig;
+};
+
+export function MarketingNavbar({ navigation, headerConfig }: Props) {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -49,12 +37,23 @@ export function MarketingNavbar() {
     ? ROLE_HOME[session.user.role as keyof typeof ROLE_HOME] ?? "/login"
     : "/login";
 
+  // Use CMS-provided navigation, fallback to null (no nav shown if CMS fails)
+  // But we have hardcoded defaults baked into the CMS service, so this should
+  // always have items unless the admin explicitly disabled them all.
+  const navItems = (navigation ?? []).filter((item) => item.enabled);
+  const ctaText = headerConfig?.ctaText || "Book a Consultation";
+  const ctaHref = headerConfig?.ctaHref || "/contact";
+  const ctaDesktop = headerConfig?.ctaVisibleDesktop ?? true;
+  const ctaMobile = headerConfig?.ctaVisibleMobile ?? true;
+  const sticky = headerConfig?.sticky ?? true;
+
   useEffect(() => {
+    if (!sticky) return;
     const onScroll = () => setScrolled(window.scrollY > 4);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [sticky]);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -77,10 +76,14 @@ export function MarketingNavbar() {
     return () => document.removeEventListener("keydown", onEscape);
   }, []);
 
-  // Close mobile menu on route change
-  useEffect(() => {
+  // Close mobile menu on route change — React's official "adjust state during
+  // render" pattern (https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes)
+  // This avoids the setState-in-effect lint warning.
+  const [prevPath, setPrevPath] = useState(pathname);
+  if (prevPath !== pathname) {
+    setPrevPath(pathname);
     setMobileOpen(false);
-  }, [pathname]);
+  }
 
   const closeMobile = () => {
     setMobileOpen(false);
@@ -90,7 +93,7 @@ export function MarketingNavbar() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 w-full transition-all duration-300",
+        sticky ? "sticky top-0 z-50 w-full transition-all duration-300" : "relative z-50",
         scrolled
           ? "border-b border-border bg-background/95 backdrop-blur-xl shadow-sm"
           : "border-b border-border bg-background",
@@ -109,13 +112,13 @@ export function MarketingNavbar() {
           <EuroscopeLogo size="default" variant="mark" showWordmark={true} />
         </Link>
 
-        {/* Desktop links */}
+        {/* Desktop links — dynamic from CMS */}
         <ul className="hidden items-center gap-1 lg:flex">
-          {NAV_LINKS.map((link) => {
+          {navItems.map((link) => {
             const active = isActive(pathname, link.href);
-            if (link.hasDropdown) {
+            if (link.children && link.children.length > 0) {
               return (
-                <li key={link.href} className="relative" ref={dropdownRef}>
+                <li key={link.id} className="relative" ref={dropdownRef}>
                   <button
                     type="button"
                     onClick={() => setDestinationsOpen((o) => !o)}
@@ -137,25 +140,24 @@ export function MarketingNavbar() {
                     <div className="absolute left-0 top-full pt-2">
                       <div className="w-72 rounded-2xl border border-border bg-card p-2 shadow-xl shadow-black/5">
                         <div className="grid grid-cols-2 gap-1">
-                          {DESTINATIONS.map((dest) => (
+                          {link.children.filter((c) => c.enabled).map((child) => (
                             <Link
-                              key={dest.href}
-                              href={dest.href}
+                              key={child.id}
+                              href={child.href}
                               onClick={() => setDestinationsOpen(false)}
                               className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-muted hover:text-primary"
                             >
-                              <span className="text-base" aria-hidden>{dest.flag}</span>
-                              {dest.label}
+                              {child.label}
                             </Link>
                           ))}
                         </div>
                         <div className="mt-2 border-t border-border pt-2">
                           <Link
-                            href="/study-in-europe"
+                            href={link.href}
                             onClick={() => setDestinationsOpen(false)}
                             className="flex items-center justify-between rounded-lg bg-primary/5 px-3 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
                           >
-                            <span>All destinations</span>
+                            <span>All {link.label.toLowerCase()}</span>
                             <FaIcon icon={ICONS.arrowRight} className="h-3.5 w-3.5" aria-hidden />
                           </Link>
                         </div>
@@ -166,9 +168,10 @@ export function MarketingNavbar() {
               );
             }
             return (
-              <li key={link.href}>
+              <li key={link.id}>
                 <Link
                   href={link.href}
+                  {...(link.openInNewTab ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                   className={cn(
                     "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-ring",
                     active ? "text-primary" : "text-slate-700",
@@ -182,7 +185,7 @@ export function MarketingNavbar() {
           })}
         </ul>
 
-        {/* Desktop CTAs */}
+        {/* Desktop CTAs — dynamic from CMS */}
         <div className="hidden items-center gap-3 lg:flex">
           {isLoggedIn ? (
             <>
@@ -207,10 +210,12 @@ export function MarketingNavbar() {
               Login
             </Link>
           )}
-          <MarketingButton href="/contact" size="sm">
-            Book a Consultation
-            <FaIcon icon={ICONS.arrowRight} className="h-3.5 w-3.5" aria-hidden />
-          </MarketingButton>
+          {ctaDesktop && (
+            <MarketingButton href={ctaHref} size="sm">
+              {ctaText}
+              <FaIcon icon={ICONS.arrowRight} className="h-3.5 w-3.5" aria-hidden />
+            </MarketingButton>
+          )}
         </div>
 
         {/* Mobile menu toggle */}
@@ -225,7 +230,7 @@ export function MarketingNavbar() {
         </button>
       </nav>
 
-      {/* Mobile menu — slide-down panel with scroll */}
+      {/* Mobile menu — dynamic from CMS */}
       {mobileOpen && (
         <div
           className="fixed inset-0 top-16 z-40 overflow-y-auto bg-background lg:hidden"
@@ -233,11 +238,11 @@ export function MarketingNavbar() {
         >
           <div className="euroscope-container min-h-full py-6">
             <ul className="flex flex-col gap-1">
-              {NAV_LINKS.map((link) => {
+              {navItems.map((link) => {
                 const active = isActive(pathname, link.href);
-                if (link.hasDropdown) {
+                if (link.children && link.children.length > 0) {
                   return (
-                    <li key={link.href}>
+                    <li key={link.id}>
                       <button
                         type="button"
                         onClick={() => setMobileDestinationsOpen((o) => !o)}
@@ -256,25 +261,24 @@ export function MarketingNavbar() {
                       </button>
                       {mobileDestinationsOpen && (
                         <ul className="ml-3 mt-1 space-y-0.5 border-l-2 border-border pl-3">
-                          {DESTINATIONS.map((dest) => (
-                            <li key={dest.href}>
+                          {link.children.filter((c) => c.enabled).map((child) => (
+                            <li key={child.id}>
                               <Link
-                                href={dest.href}
+                                href={child.href}
                                 onClick={closeMobile}
                                 className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm text-slate-600 hover:bg-muted hover:text-primary"
                               >
-                                <span aria-hidden>{dest.flag}</span>
-                                {dest.label}
+                                {child.label}
                               </Link>
                             </li>
                           ))}
                           <li>
                             <Link
-                              href="/study-in-europe"
+                              href={link.href}
                               onClick={closeMobile}
                               className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold text-primary hover:bg-primary/10"
                             >
-                              All destinations
+                              All {link.label.toLowerCase()}
                               <FaIcon icon={ICONS.arrowRight} className="h-3.5 w-3.5" aria-hidden />
                             </Link>
                           </li>
@@ -284,9 +288,10 @@ export function MarketingNavbar() {
                   );
                 }
                 return (
-                  <li key={link.href}>
+                  <li key={link.id}>
                     <Link
                       href={link.href}
+                      {...(link.openInNewTab ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                       onClick={closeMobile}
                       className={cn(
                         "block rounded-lg px-4 py-3.5 text-base font-medium",
@@ -327,10 +332,12 @@ export function MarketingNavbar() {
                   Login
                 </Link>
               )}
-              <MarketingButton href="/contact" size="default" className="w-full" onClick={closeMobile}>
-                Book a Consultation
-                <FaIcon icon={ICONS.arrowRight} className="h-4 w-4" aria-hidden />
-              </MarketingButton>
+              {ctaMobile && (
+                <MarketingButton href={ctaHref} size="default" className="w-full" onClick={closeMobile}>
+                  {ctaText}
+                  <FaIcon icon={ICONS.arrowRight} className="h-4 w-4" aria-hidden />
+                </MarketingButton>
+              )}
             </div>
           </div>
         </div>

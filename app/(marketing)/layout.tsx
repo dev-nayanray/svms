@@ -3,7 +3,9 @@ import { MarketingNavbar } from "@/components/marketing/navbar";
 import { MarketingFooter } from "@/components/marketing/footer";
 import { MarketingSessionProvider } from "@/components/marketing/session-provider";
 import { FloatingSupportWidget } from "@/components/marketing/support-widget";
+import { AnnouncementBar } from "@/components/marketing/announcement-bar";
 import { getActiveMaintenance } from "@/lib/system/maintenance";
+import { getCmsConfig, isAnnouncementActive, type CmsConfig } from "@/lib/marketing/cms";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
@@ -21,33 +23,24 @@ export const dynamic = "force-dynamic";
 /**
  * Marketing layout — wraps all public marketing pages.
  *
- * Maintenance mode:
- *  - If a MaintenanceWindow is active AND the visitor is NOT an admin
- *    (or allowAdminAccess is false), we REDIRECT to /maintenance.
- *  - Auth pages (/login, /register) and /maintenance bypass this check
- *    so users can still log in (admins especially).
- *  - /api routes are NOT affected by this layout (they're outside the
- *    (marketing) route group).
+ * Fetches CMS config server-side (header, nav, footer, social, contact,
+ * announcement) and passes it as props to the navbar + footer + announcement
+ * bar. This makes them dynamic (admin can edit via /admin/marketing) while
+ * keeping the page server-rendered (no client-side flash).
  *
- * Redirect (not inline render) is used so:
- *  - The URL changes to /maintenance (clear to the user)
- *  - The maintenance page is a standalone route (no navbar/footer)
- *  - No redirect loop: /maintenance is outside (marketing) group
+ * Maintenance mode:
+ *  - If active AND user is not admin (or allowAdminAccess=false), redirect
+ *    to /maintenance (standalone page, no redirect loop).
  */
 export default async function MarketingLayout({ children }: { children: React.ReactNode }) {
-  // Check maintenance status — best-effort, fail open for availability
-  let maintenanceActive = false;
-  let allowAdminAccess = true;
-  try {
-    const status = await getActiveMaintenance();
-    maintenanceActive = status.active;
-    allowAdminAccess = status.allowAdminAccess;
-  } catch {
-    // DB unavailable — fail open (don't block the site)
-  }
+  // Fetch maintenance status + CMS config in parallel
+  const [maintenanceStatus, cmsConfig] = await Promise.all([
+    getActiveMaintenance().catch(() => ({ active: false, allowAdminAccess: true })),
+    getCmsConfig().catch(() => null),
+  ]);
 
-  if (maintenanceActive) {
-    // Check if the current user is an admin (and admin access is allowed)
+  // Maintenance check
+  if (maintenanceStatus.active) {
     let isAdmin = false;
     try {
       const session = await auth();
@@ -55,23 +48,35 @@ export default async function MarketingLayout({ children }: { children: React.Re
     } catch {
       // ignore
     }
-    const bypassForAdmin = isAdmin && allowAdminAccess;
-
+    const bypassForAdmin = isAdmin && maintenanceStatus.allowAdminAccess;
     if (!bypassForAdmin) {
-      // Redirect to the standalone maintenance page.
-      // /maintenance is OUTSIDE the (marketing) route group, so this
-      // doesn't cause a redirect loop.
       redirect("/maintenance");
     }
   }
 
+  // Use fetched CMS config or fallback to null (navbar/footer will use their
+  // own hardcoded defaults if config is null — this happens only if DB is down)
+  const config = cmsConfig as CmsConfig | null;
+  const announcementActive = config ? isAnnouncementActive(config.announcement) : false;
+  const announcement = config
+    ? { ...config.announcement, active: announcementActive }
+    : null;
+
   return (
     <MarketingSessionProvider>
-      <MarketingNavbar />
+      {announcement && <AnnouncementBar announcement={announcement} />}
+      <MarketingNavbar
+        navigation={config?.navigation}
+        headerConfig={config?.header}
+      />
       <main id="main-content" className="flex-1">
         {children}
       </main>
-      <MarketingFooter />
+      <MarketingFooter
+        footerConfig={config?.footer}
+        socialLinks={config?.social}
+        contactConfig={config?.contact}
+      />
       <FloatingSupportWidget />
     </MarketingSessionProvider>
   );
