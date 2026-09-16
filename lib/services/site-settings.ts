@@ -117,19 +117,26 @@ export async function getAllSettings(): Promise<SettingValue[]> {
 
 /**
  * Get a single setting value. Returns the DB value if it exists,
- * otherwise the hardcoded default.
+ * otherwise the hardcoded default. Catches DB errors and returns
+ * the default — the site must never crash because settings are
+ * unavailable.
  */
 export async function getSetting(key: string): Promise<string> {
-  const row = await prisma.siteSetting.findUnique({ where: { key } });
-  if (row?.value) return row.value;
+  try {
+    const row = await prisma.siteSetting.findUnique({ where: { key } });
+    if (row?.value) return row.value;
+  } catch {
+    // DB unavailable — fall through to default
+  }
   return DEFAULTS_MAP.get(key)?.default ?? "";
 }
 
 /**
- * Get multiple settings at once (single DB round-trip).
+ * Get multiple settings at once (single DB round-trip). Catches DB
+ * errors and returns defaults.
  */
 export async function getSettings(keys: string[]): Promise<Record<string, string>> {
-  const rows = await prisma.siteSetting.findMany({ where: { key: { in: keys } } });
+  const rows = await prisma.siteSetting.findMany({ where: { key: { in: keys } } }).catch(() => []);
   const rowMap = new Map(rows.map((r) => [r.key, r.value]));
   const result: Record<string, string> = {};
   for (const key of keys) {
@@ -141,6 +148,7 @@ export async function getSettings(keys: string[]): Promise<Record<string, string
 /**
  * Get all brand-related settings in a single call. Used by the
  * marketing layout to pass brand info to the navbar + footer.
+ * Catches DB errors and returns defaults.
  */
 export async function getBrandSettings() {
   const settings = await getSettings([

@@ -995,6 +995,16 @@ model MaintenanceWindow {
   // Active maintenance — only one row with endedAt=null at a time.
   enabled        Boolean   @default(true)
   message        String
+  // Extended maintenance page fields (Section 5 of the spec).
+  title          String    @default("We'll be back soon")
+  showContactButton Boolean @default(true)
+  contactButtonText String  @default("Contact Support")
+  contactButtonUrl   String  @default("/contact")
+  showSocialLinks    Boolean @default(true)
+  // Optional scheduled start/end — if both set, maintenance auto-activates
+  // during the window. If only enabled=true is set, it's immediate.
+  scheduledStartAt DateTime?
+  scheduledEndAt   DateTime?
   startedAt      DateTime  @default(now())
   expectedEndAt  DateTime?
   endedAt        DateTime?

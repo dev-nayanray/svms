@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { ok, handleApiError } from "@/lib/api";
 import { guard } from "@/lib/auth/guards";
 import { getMarketingContent, saveMarketingContent, type MarketingContent } from "@/lib/services/marketing-content";
+import { revalidateMarketingPages } from "@/lib/system/revalidate";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,7 @@ export async function PUT(req: NextRequest) {
 
     const body = (await req.json()) as MarketingContent;
     await saveMarketingContent(body);
+    revalidateMarketingPages();
     return ok({ saved: true });
   } catch (err) {
     return handleApiError(err);
