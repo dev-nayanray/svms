@@ -114,18 +114,25 @@ export function AdminShell({
         title={collapsed ? item.label : undefined}
         onClick={() => setMobileOpen(false)}
         className={cn(
-          "group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors",
+          "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-200",
           collapsed && "justify-center",
           active
-            ? "bg-primary/10 text-primary"
-            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            ? "bg-primary/8 text-primary"
+            : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
         )}
       >
+        {/* Active indicator bar — left edge */}
+        {active && (
+          <span
+            aria-hidden
+            className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-primary transition-opacity"
+          />
+        )}
         <NavIcon
           name={item.icon}
           className={cn(
             "h-4 w-4 shrink-0 transition-colors",
-            active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+            active ? "text-primary" : "text-muted-foreground/70 group-hover:text-foreground",
           )}
         />
         {!collapsed && <span className="truncate">{item.label}</span>}
@@ -162,8 +169,8 @@ export function AdminShell({
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-border bg-card transition-all md:flex",
-          collapsed ? "w-16" : "w-56",
+          "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-border bg-card transition-all duration-300 md:flex",
+          collapsed ? "w-16" : "w-60",
         )}
       >
         {/* Logo */}
@@ -180,12 +187,13 @@ export function AdminShell({
               fill
               sizes="32px"
               className="object-contain"
+              priority
             />
           </span>
           {!collapsed && (
             <div className="min-w-0">
                 <p className="truncate text-sm font-bold tracking-tight">Euroscope</p>
-                <p className="truncate text-[10px] text-muted-foreground">{subtitle}</p>
+                <p className="truncate text-[10px] font-medium text-muted-foreground/70">{subtitle}</p>
             </div>
           )}
         </div>
@@ -239,7 +247,7 @@ export function AdminShell({
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Header */}
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur-md">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-xl">
           {/* Mobile menu */}
           <Button
             variant="ghost"
@@ -262,8 +270,8 @@ export function AdminShell({
                 {i > 0 && <span className="text-muted-foreground/40">/</span>}
                 <span
                   className={cn(
-                    "capitalize",
-                    i === crumbs.length - 1 && "font-medium text-foreground",
+                    "capitalize transition-colors",
+                    i === crumbs.length - 1 && "font-semibold text-foreground",
                   )}
                 >
                   {decodeURIComponent(c).replace(/-/g, " ")}
@@ -272,7 +280,7 @@ export function AdminShell({
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-1">
+          <div className="ml-auto flex items-center gap-2">
             {/* Global search trigger */}
             <button
               onClick={() => setSearchOpen(true)}
@@ -368,7 +376,7 @@ export function AdminShell({
 
         {/* Main content */}
         <main className="flex-1 p-4 md:p-6">
-          <div className="mx-auto w-full max-w-[1400px] space-y-6">{children}</div>
+          <div className="mx-auto w-full max-w-[1600px] space-y-6">{children}</div>
         </main>
       </div>
 
