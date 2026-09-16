@@ -93,38 +93,39 @@ export const ADMIN_NAV: NavItem[] = ADMIN_NAV_GROUPS.flatMap((g) => g.items);
 
 export const EMPLOYEE_NAV_GROUPS: NavGroup[] = [
   {
-    label: "Main",
+    label: "Overview",
     items: [{ href: "/employee", label: "Dashboard", icon: "LayoutDashboard" }],
   },
   {
-    label: "Sales & Admissions",
+    label: "My Work",
     items: [
-      { href: "/employee/leads", label: "Leads", icon: "Target" },
       { href: "/employee/students", label: "My Students", icon: "Users" },
-      { href: "/employee/applications", label: "My Applications", icon: "FolderKanban" },
-      { href: "/employee/documents", label: "Documents", icon: "FileText" },
-    ],
-  },
-  {
-    label: "Academic",
-    items: [
-      { href: "/employee/universities", label: "Universities", icon: "Building2" },
-      { href: "/employee/courses", label: "Courses", icon: "BookOpen" },
-      { href: "/employee/intakes", label: "Intakes", icon: "CalendarClock" },
-    ],
-  },
-  {
-    label: "Visa",
-    items: [{ href: "/employee/visa", label: "Visa", icon: "Stamp" }],
-  },
-  {
-    label: "Operations",
-    items: [
+      { href: "/employee/applications", label: "Applications", icon: "FolderKanban" },
       { href: "/employee/tasks", label: "Tasks", icon: "CheckSquare" },
       { href: "/employee/appointments", label: "Appointments", icon: "CalendarClock" },
+    ],
+  },
+  {
+    label: "Student Processing",
+    items: [
+      { href: "/employee/documents", label: "Documents", icon: "FileText" },
+      { href: "/employee/visa", label: "Visa Management", icon: "Stamp" },
+      { href: "/employee/universities", label: "Universities", icon: "Building2" },
+      { href: "/employee/courses", label: "Courses", icon: "BookOpen" },
+    ],
+  },
+  {
+    label: "CRM",
+    items: [
+      { href: "/employee/leads", label: "Leads", icon: "Target" },
+    ],
+  },
+  {
+    label: "Communication",
+    items: [
       { href: "/employee/messages", label: "Messages", icon: "MessageSquare" },
       { href: "/employee/notifications", label: "Notifications", icon: "Bell" },
-      { href: "/employee/support", label: "Support", icon: "LifeBuoy" },
+      { href: "/employee/support", label: "Support Tickets", icon: "LifeBuoy" },
     ],
   },
   {
@@ -138,14 +139,6 @@ export const EMPLOYEE_NAV_GROUPS: NavGroup[] = [
     label: "Insights",
     items: [
       { href: "/employee/reports", label: "Reports", icon: "BarChart3" },
-      { href: "/employee/performance", label: "Performance", icon: "TrendingUp" },
-    ],
-  },
-  {
-    label: "Account",
-    items: [
-      { href: "/employee/profile", label: "Profile", icon: "UserCircle" },
-      { href: "/employee/settings", label: "Settings", icon: "Settings" },
     ],
   },
 ];
