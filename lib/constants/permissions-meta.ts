@@ -109,6 +109,31 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     icon: "Settings",
     permissions: ["settings.manage", "audit.read", "audit_logs.read", "roles.read", "dashboard.read", "search.read"],
   },
+  {
+    key: "system-ops",
+    label: "System Operations",
+    icon: "DatabaseBackup",
+    permissions: [
+      "system.read",
+      "system.manage",
+      "system.health.read",
+      "system.logs.read",
+      "system.config.read",
+      "system.config.manage",
+      "backup.read",
+      "backup.create",
+      "backup.restore",
+      "backup.delete",
+      "security.read",
+      "security.manage",
+      "seo.read",
+      "seo.manage",
+      "analytics.read",
+      "analytics.manage",
+      "maintenance.read",
+      "maintenance.manage",
+    ],
+  },
 ];
 
 /** Human-readable description for each permission key. */
@@ -154,6 +179,25 @@ export const PERMISSION_DESCRIPTIONS: Record<string, string> = {
   "roles.read": "View roles and the permission matrix",
   "dashboard.read": "View the admin dashboard",
   "search.read": "Use the global search",
+  // ── System Operations ──
+  "system.read": "View the System Operations overview dashboard",
+  "system.manage": "Manage system-level operations (full access)",
+  "system.health.read": "View the system health check report",
+  "system.logs.read": "View operational + security event logs",
+  "system.config.read": "View the configuration center (env + DB settings)",
+  "system.config.manage": "Update non-secret system configuration",
+  "backup.read": "View backup history + download backups",
+  "backup.create": "Create new database backups (manual + scheduled)",
+  "backup.restore": "Restore backups (high-risk, requires confirmation)",
+  "backup.delete": "Delete backup archives (refuses the only valid backup)",
+  "security.read": "View the Security Center audit report",
+  "security.manage": "Resolve security events + change security config",
+  "seo.read": "View SEO configuration + technical audit",
+  "seo.manage": "Update SEO settings (site name, meta, canonical, etc.)",
+  "analytics.read": "View analytics provider configuration",
+  "analytics.manage": "Update GA4 / GTM / Meta Pixel configuration",
+  "maintenance.read": "View maintenance mode status",
+  "maintenance.manage": "Enable / disable maintenance mode",
 };
 
 /** Role labels + descriptions for the role list. */

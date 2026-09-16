@@ -1,19 +1,29 @@
+import { prisma } from "@/lib/db";
+import { isEnvConfigured as isProcessEnvConfigured } from "./env-process";
+
 /**
- * Environment Variable Health Checker
- * ===================================
+ * Environment Variable + DB Settings Health Checker
+ * ===================================================
  *
- * Reads `process.env` at request time to determine which required
- * and optional variables are present. NEVER returns the value — only
- * a boolean `configured` flag. This is the single source of truth
- * for "is X configured?" in the Admin UI.
+ * The application has TWO sources of configuration:
  *
- * Secrets handled here:
- *   - DATABASE_URL, AUTH_SECRET, NEXTAUTH_URL
- *   - EMAIL_SERVER / EMAIL_FROM (nodemailer)
- *   - BACKUP_BUCKET / BACKUP_REGION / BACKUP_ENDPOINT /
- *     BACKUP_ACCESS_KEY / BACKUP_SECRET_KEY
- *   - GA4 / GTM / Meta Pixel (these are PUBLIC IDs, but listed here
- *     for completeness — they're read by the analytics module).
+ * 1. process.env (true env vars)
+ *    - DATABASE_URL, AUTH_SECRET, NEXT_PUBLIC_APP_URL, CRON_SECRET
+ *    - BACKUP_* (external storage credentials)
+ *    - NEXT_PUBLIC_GA4_MEASUREMENT_ID, NEXT_PUBLIC_GTM_CONTAINER_ID,
+ *      NEXT_PUBLIC_META_PIXEL_ID (public analytics IDs — set as env
+ *      vars so they're available at build time)
+ *
+ * 2. SystemSetting (DB-stored, edited via /admin/settings)
+ *    - email_server_host, email_server_port, email_server_user,
+ *      email_server_password, email_from, email_from_name
+ *    - company_name, company_email, etc.
+ *
+ * The Admin Settings page writes SMTP config to SystemSetting (DB),
+ * NOT to process.env. So the System Operations → Configuration page
+ * must check BOTH sources when reporting "Configured / Not Configured".
+ *
+ * Secrets are NEVER returned — only a boolean `configured` flag.
  */
 
 export type EnvVarStatus = {
@@ -21,6 +31,8 @@ export type EnvVarStatus = {
   label: string;
   category: string;
   configured: boolean;
+  /** Source of the configuration: env | db | null */
+  source?: "env" | "db" | null;
   /** Optional hint shown in the admin UI when not configured. */
   hint?: string;
   /** Whether the value is considered public (safe to display). */
@@ -39,7 +51,19 @@ export type EnvCategory =
   | "Analytics"
   | "Tracking";
 
-const REQUIRED_VARS: Array<{
+// ─── DB-stored setting keys (read from SystemSetting) ────────────
+// Map our public label → the SystemSetting key the admin edits.
+const DB_SETTING_KEYS: Array<{ dbKey: string; envKey: string; label: string; isSecret?: boolean }> = [
+  // Email — these are stored in DB by /admin/settings → Email section
+  { dbKey: "email_server_host", envKey: "EMAIL_SERVER_HOST", label: "SMTP host" },
+  { dbKey: "email_server_port", envKey: "EMAIL_SERVER_PORT", label: "SMTP port" },
+  { dbKey: "email_server_user", envKey: "EMAIL_SERVER_USER", label: "SMTP username" },
+  { dbKey: "email_server_password", envKey: "EMAIL_SERVER_PASSWORD", label: "SMTP password", isSecret: true },
+  { dbKey: "email_from", envKey: "EMAIL_FROM", label: "From address" },
+];
+
+// ─── process.env-only vars (NOT stored in DB) ─────────────────────
+const PROCESS_ENV_VARS: Array<{
   key: string;
   label: string;
   category: EnvCategory;
@@ -61,17 +85,13 @@ const REQUIRED_VARS: Array<{
     category: "Application",
     public: true,
   },
-  // Email
+  // Cron secret (production-only)
   {
-    key: "EMAIL_SERVER_HOST",
-    label: "SMTP host",
-    category: "Email",
-    hint: "Used by nodemailer to send transactional emails.",
+    key: "CRON_SECRET",
+    label: "Cron job secret",
+    category: "Application",
+    hint: "Protects /api/admin/system/*/cron endpoints. Required in production.",
   },
-  { key: "EMAIL_SERVER_PORT", label: "SMTP port", category: "Email" },
-  { key: "EMAIL_SERVER_USER", label: "SMTP username", category: "Email" },
-  { key: "EMAIL_SERVER_PASSWORD", label: "SMTP password", category: "Email" },
-  { key: "EMAIL_FROM", label: "From address", category: "Email", public: true },
   // Backup
   {
     key: "BACKUP_STORAGE_PROVIDER",
@@ -85,27 +105,27 @@ const REQUIRED_VARS: Array<{
   { key: "BACKUP_ENDPOINT", label: "Backup endpoint (R2/S3-compatible)", category: "Backup", public: true },
   { key: "BACKUP_ACCESS_KEY", label: "Backup access key", category: "Backup" },
   { key: "BACKUP_SECRET_KEY", label: "Backup secret key", category: "Backup" },
-  // Analytics
+  // Analytics (public IDs — usually env vars so they're available at build)
   {
     key: "NEXT_PUBLIC_GA4_MEASUREMENT_ID",
     label: "GA4 Measurement ID",
     category: "Analytics",
     public: true,
-    hint: "Format: G-XXXXXXXXXX",
+    hint: "Format: G-XXXXXXXXXX. Also configurable via /admin/system/analytics.",
   },
   {
     key: "NEXT_PUBLIC_GTM_CONTAINER_ID",
     label: "GTM Container ID",
     category: "Analytics",
     public: true,
-    hint: "Format: GTM-XXXXXXX",
+    hint: "Format: GTM-XXXXXXX. Also configurable via /admin/system/analytics.",
   },
   {
     key: "NEXT_PUBLIC_META_PIXEL_ID",
     label: "Meta Pixel ID",
     category: "Analytics",
     public: true,
-    hint: "Numeric, ~15-16 digits",
+    hint: "Numeric, ~15-16 digits. Also configurable via /admin/system/analytics.",
   },
 ];
 
@@ -120,8 +140,70 @@ const CATEGORY_ORDER: EnvCategory[] = [
   "Tracking",
 ];
 
-/** Returns the status of every tracked env var. Never returns raw secret values. */
-export function checkEnvironment(): {
+// ─── DB settings cache (per-request) ──────────────────────────────
+let dbSettingsCache: Map<string, string> | null = null;
+let dbSettingsCacheTime = 0;
+const DB_CACHE_TTL_MS = 30 * 1000; // 30s
+
+async function loadDbSettings(): Promise<Map<string, string>> {
+  const now = Date.now();
+  if (dbSettingsCache && now - dbSettingsCacheTime < DB_CACHE_TTL_MS) {
+    return dbSettingsCache;
+  }
+  const map = new Map<string, string>();
+  try {
+    const rows = await prisma.systemSetting.findMany({
+      where: { key: { in: DB_SETTING_KEYS.map((d) => d.dbKey) } },
+    });
+    for (const r of rows) {
+      if (r.value !== null && r.value !== undefined) {
+        map.set(r.key, String(r.value));
+      }
+    }
+  } catch {
+    // DB unavailable — return empty map (will fall through to env check)
+  }
+  dbSettingsCache = map;
+  dbSettingsCacheTime = now;
+  return map;
+}
+
+/** Clear the in-process cache (used by tests + after admin settings save). */
+export function __clearEnvCacheForTests(): void {
+  dbSettingsCache = null;
+  dbSettingsCacheTime = 0;
+}
+
+/**
+ * Check whether a config key is configured — in either process.env OR
+ * the SystemSetting table. Returns the source so the admin UI can show
+ * "Configured via env var" vs "Configured via Settings page".
+ */
+export async function isConfigured(envKey: string): Promise<{
+  configured: boolean;
+  source: "env" | "db" | null;
+}> {
+  // Check env first
+  if (isProcessEnvConfigured(envKey)) {
+    return { configured: true, source: "env" };
+  }
+  // Check DB
+  const dbKey = envKey.toLowerCase();
+  const dbSettings = await loadDbSettings();
+  const value = dbSettings.get(dbKey);
+  if (value && value.trim().length > 0) {
+    return { configured: true, source: "db" };
+  }
+  return { configured: false, source: null };
+}
+
+/** Synchronous env-only check (kept for backwards compat with health.ts). */
+export function isEnvConfigured(key: string): boolean {
+  return isProcessEnvConfigured(key);
+}
+
+/** Returns the status of every tracked config var (env + DB). Never returns raw secret values. */
+export async function checkEnvironment(): Promise<{
   categories: Array<{
     name: EnvCategory;
     vars: EnvVarStatus[];
@@ -131,13 +213,15 @@ export function checkEnvironment(): {
   totalConfigured: number;
   totalVars: number;
   missingCritical: string[];
-} {
+}> {
+  const dbSettings = await loadDbSettings();
   const byCategory = new Map<EnvCategory, EnvVarStatus[]>();
   const missingCritical: string[] = [];
 
-  for (const def of REQUIRED_VARS) {
+  // Process env-only vars
+  for (const def of PROCESS_ENV_VARS) {
     const raw = process.env[def.key];
-    const configured = !!raw && raw.trim().length > 0 && raw.trim() !== "change-me-to-a-random-32-char-string";
+    const configured = isProcessEnvConfigured(def.key);
     if (!configured && (def.category === "Database" || def.category === "Authentication")) {
       missingCritical.push(def.key);
     }
@@ -146,6 +230,7 @@ export function checkEnvironment(): {
       label: def.label,
       category: def.category,
       configured,
+      source: configured ? "env" : null,
       hint: def.hint,
       public: def.public,
     };
@@ -153,6 +238,34 @@ export function checkEnvironment(): {
     const arr = byCategory.get(def.category) ?? [];
     arr.push(status);
     byCategory.set(def.category, arr);
+  }
+
+  // DB-stored vars (Email section)
+  for (const def of DB_SETTING_KEYS) {
+    const envConfigured = isProcessEnvConfigured(def.envKey);
+    const dbValue = dbSettings.get(def.dbKey);
+    const dbConfigured = !!dbValue && dbValue.trim().length > 0;
+    const configured = envConfigured || dbConfigured;
+    const source: "env" | "db" | null = envConfigured ? "env" : dbConfigured ? "db" : null;
+    const status: EnvVarStatus = {
+      key: def.envKey,
+      label: def.label,
+      category: "Email",
+      configured,
+      source,
+      hint: def.isSecret
+        ? "Configured via /admin/settings → Email"
+        : undefined,
+    };
+    if (def.isSecret) {
+      // Never return secret values
+    } else if (configured) {
+      status.value = envConfigured ? process.env[def.envKey] : dbValue;
+      status.public = true;
+    }
+    const arr = byCategory.get("Email") ?? [];
+    arr.push(status);
+    byCategory.set("Email", arr);
   }
 
   const categories = CATEGORY_ORDER.map((name) => {
@@ -172,10 +285,4 @@ export function checkEnvironment(): {
     totalVars: allVars.length,
     missingCritical,
   };
-}
-
-/** Convenience: returns true if a given env var is set to a non-empty, non-placeholder value. */
-export function isEnvConfigured(key: string): boolean {
-  const raw = process.env[key];
-  return !!raw && raw.trim().length > 0 && raw.trim() !== "change-me-to-a-random-32-char-string";
 }

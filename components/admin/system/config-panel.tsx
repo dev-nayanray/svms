@@ -100,16 +100,29 @@ export function ConfigPanel() {
 function EnvVarRow({
   varDef,
 }: {
-  varDef: { key: string; label: string; configured: boolean; hint?: string; public?: boolean; value?: string };
+  varDef: {
+    key: string;
+    label: string;
+    configured: boolean;
+    source?: "env" | "db" | null;
+    hint?: string;
+    public?: boolean;
+    value?: string;
+  };
 }) {
   const [revealed, setRevealed] = useState(false);
 
   return (
     <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-background/50 p-2">
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <code className="font-mono text-xs font-medium">{varDef.key}</code>
           <StatusBadge status={varDef.configured ? "healthy" : "not_configured"} label={varDef.configured ? "Configured" : "Missing"} />
+          {varDef.configured && varDef.source && (
+            <span className="text-[10px] text-muted-foreground">
+              via {varDef.source === "env" ? "env var" : "Settings page"}
+            </span>
+          )}
         </div>
         <p className="mt-0.5 text-xs text-muted-foreground">{varDef.label}</p>
         {varDef.hint && <p className="text-xs text-muted-foreground">{varDef.hint}</p>}

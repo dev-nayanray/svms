@@ -3,28 +3,28 @@ import { checkEnvironment, isEnvConfigured } from "@/lib/system/env";
 
 describe("Environment Variable Health Check", () => {
   describe("checkEnvironment", () => {
-    it("returns an array of categories", () => {
-      const result = checkEnvironment();
+    it("returns an array of categories", async () => {
+      const result = await checkEnvironment();
       expect(Array.isArray(result.categories)).toBe(true);
       expect(result.categories.length).toBeGreaterThan(0);
     });
 
-    it("includes Database category with DATABASE_URL", () => {
-      const result = checkEnvironment();
+    it("includes Database category with DATABASE_URL", async () => {
+      const result = await checkEnvironment();
       const db = result.categories.find((c) => c.name === "Database");
       expect(db).toBeDefined();
       expect(db?.vars.some((v) => v.key === "DATABASE_URL")).toBe(true);
     });
 
-    it("includes Authentication category with AUTH_SECRET", () => {
-      const result = checkEnvironment();
+    it("includes Authentication category with AUTH_SECRET", async () => {
+      const result = await checkEnvironment();
       const auth = result.categories.find((c) => c.name === "Authentication");
       expect(auth).toBeDefined();
       expect(auth?.vars.some((v) => v.key === "AUTH_SECRET")).toBe(true);
     });
 
-    it("includes Backup category with all backup env vars", () => {
-      const result = checkEnvironment();
+    it("includes Backup category with all backup env vars", async () => {
+      const result = await checkEnvironment();
       const backup = result.categories.find((c) => c.name === "Backup");
       expect(backup).toBeDefined();
       const keys = backup?.vars.map((v) => v.key) ?? [];
@@ -34,8 +34,20 @@ describe("Environment Variable Health Check", () => {
       expect(keys).toContain("BACKUP_SECRET_KEY");
     });
 
-    it("includes Analytics category with GA4 / GTM / Meta", () => {
-      const result = checkEnvironment();
+    it("includes Email category with all SMTP keys (env OR db)", async () => {
+      const result = await checkEnvironment();
+      const email = result.categories.find((c) => c.name === "Email");
+      expect(email).toBeDefined();
+      const keys = email?.vars.map((v) => v.key) ?? [];
+      expect(keys).toContain("EMAIL_SERVER_HOST");
+      expect(keys).toContain("EMAIL_SERVER_PORT");
+      expect(keys).toContain("EMAIL_SERVER_USER");
+      expect(keys).toContain("EMAIL_SERVER_PASSWORD");
+      expect(keys).toContain("EMAIL_FROM");
+    });
+
+    it("includes Analytics category with GA4 / GTM / Meta", async () => {
+      const result = await checkEnvironment();
       const analytics = result.categories.find((c) => c.name === "Analytics");
       expect(analytics).toBeDefined();
       const keys = analytics?.vars.map((v) => v.key) ?? [];
@@ -44,22 +56,24 @@ describe("Environment Variable Health Check", () => {
       expect(keys).toContain("NEXT_PUBLIC_META_PIXEL_ID");
     });
 
-    it("marks secrets as not public", () => {
-      const result = checkEnvironment();
+    it("marks secrets as not public", async () => {
+      const result = await checkEnvironment();
       const allVars = result.categories.flatMap((c) => c.vars);
       const authSecret = allVars.find((v) => v.key === "AUTH_SECRET");
       expect(authSecret?.public).toBeFalsy();
+      const smtpPass = allVars.find((v) => v.key === "EMAIL_SERVER_PASSWORD");
+      expect(smtpPass?.public).toBeFalsy();
     });
 
-    it("marks public IDs as public", () => {
-      const result = checkEnvironment();
+    it("marks public IDs as public", async () => {
+      const result = await checkEnvironment();
       const allVars = result.categories.flatMap((c) => c.vars);
       const ga4 = allVars.find((v) => v.key === "NEXT_PUBLIC_GA4_MEASUREMENT_ID");
       expect(ga4?.public).toBe(true);
     });
 
-    it("never returns the actual value of a secret", () => {
-      const result = checkEnvironment();
+    it("never returns the actual value of a secret", async () => {
+      const result = await checkEnvironment();
       const allVars = result.categories.flatMap((c) => c.vars);
       const secrets = allVars.filter((v) => !v.public);
       for (const s of secrets) {
@@ -67,20 +81,20 @@ describe("Environment Variable Health Check", () => {
       }
     });
 
-    it("computes totalConfigured and totalVars", () => {
-      const result = checkEnvironment();
+    it("computes totalConfigured and totalVars", async () => {
+      const result = await checkEnvironment();
       expect(result.totalVars).toBeGreaterThan(0);
       expect(result.totalConfigured).toBeGreaterThanOrEqual(0);
       expect(result.totalConfigured).toBeLessThanOrEqual(result.totalVars);
     });
 
-    it("includes missingCritical list (may be empty)", () => {
-      const result = checkEnvironment();
+    it("includes missingCritical list (may be empty)", async () => {
+      const result = await checkEnvironment();
       expect(Array.isArray(result.missingCritical)).toBe(true);
     });
   });
 
-  describe("isEnvConfigured", () => {
+  describe("isEnvConfigured (sync process.env only)", () => {
     it("returns false for undefined vars", () => {
       expect(isEnvConfigured("NONEXISTENT_VAR_12345")).toBe(false);
     });

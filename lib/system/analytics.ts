@@ -137,12 +137,22 @@ export async function getAnalyticsStatus(): Promise<{
     gtmContainerId: config.gtm.containerId,
     metaPixelId: config.meta.pixelId,
   });
+  // An analytics ID is "configured" if EITHER:
+  //  - it's set as an env var (e.g. NEXT_PUBLIC_GA4_MEASUREMENT_ID), OR
+  //  - it's been saved via /admin/system/analytics (stored in SystemSetting).
+  // The admin UI uses this status to show "Configured" / "Not set".
   return {
     config,
     env: {
-      ga4MeasurementId: isEnvConfigured("NEXT_PUBLIC_GA4_MEASUREMENT_ID"),
-      gtmContainerId: isEnvConfigured("NEXT_PUBLIC_GTM_CONTAINER_ID"),
-      metaPixelId: isEnvConfigured("NEXT_PUBLIC_META_PIXEL_ID"),
+      ga4MeasurementId:
+        isEnvConfigured("NEXT_PUBLIC_GA4_MEASUREMENT_ID") ||
+        (!!config.ga4.measurementId && config.ga4.measurementId.length > 0),
+      gtmContainerId:
+        isEnvConfigured("NEXT_PUBLIC_GTM_CONTAINER_ID") ||
+        (!!config.gtm.containerId && config.gtm.containerId.length > 0),
+      metaPixelId:
+        isEnvConfigured("NEXT_PUBLIC_META_PIXEL_ID") ||
+        (!!config.meta.pixelId && config.meta.pixelId.length > 0),
     },
     validation,
   };

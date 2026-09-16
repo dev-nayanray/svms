@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { isEnvConfigured } from "./env";
+import { isConfigured, isEnvConfigured } from "./env";
 
 /**
  * System Health Check Service
@@ -106,28 +106,41 @@ function checkStorage(): HealthCheck {
   };
 }
 
-function checkEmail(): HealthCheck {
-  // SMTP env vars are optional — email is only used for transactional sends.
-  if (!isEnvConfigured("EMAIL_SERVER_HOST")) {
+async function checkEmail(): Promise<HealthCheck> {
+  // SMTP can be configured via process.env OR via /admin/settings → Email
+  // (SystemSetting rows). Check both sources.
+  const host = await isConfigured("EMAIL_SERVER_HOST");
+  if (!host.configured) {
     return {
       component: "email",
       status: "not_configured",
-      message: "SMTP not configured — password reset / notifications will not send",
+      message: "SMTP not configured — set it via /admin/settings → Email or EMAIL_SERVER_HOST env var",
     };
   }
-  const required = ["EMAIL_SERVER_PORT", "EMAIL_SERVER_USER", "EMAIL_SERVER_PASSWORD", "EMAIL_FROM"];
-  const missing = required.filter((k) => !isEnvConfigured(k));
+  // Check the other required fields
+  const [port, user, pass, from] = await Promise.all([
+    isConfigured("EMAIL_SERVER_PORT"),
+    isConfigured("EMAIL_SERVER_USER"),
+    isConfigured("EMAIL_SERVER_PASSWORD"),
+    isConfigured("EMAIL_FROM"),
+  ]);
+  const missing: string[] = [];
+  if (!port.configured) missing.push("port");
+  if (!user.configured) missing.push("username");
+  if (!pass.configured) missing.push("password");
+  if (!from.configured) missing.push("from address");
+
   if (missing.length > 0) {
     return {
       component: "email",
       status: "warning",
-      message: `SMTP partially configured (missing ${missing.join(", ")})`,
+      message: `SMTP partially configured (missing: ${missing.join(", ")})`,
     };
   }
   return {
     component: "email",
     status: "healthy",
-    message: "SMTP configured — transactional email enabled",
+    message: `SMTP configured via ${host.source === "db" ? "/admin/settings" : "env var"} — transactional email enabled`,
   };
 }
 
@@ -229,7 +242,6 @@ export async function runHealthChecks(): Promise<HealthReport> {
   const checks: HealthCheck[] = [
     checkAuth(),
     checkStorage(),
-    checkEmail(),
     checkBackup(),
     checkCron(),
     checkCache(),
@@ -237,7 +249,8 @@ export async function runHealthChecks(): Promise<HealthReport> {
     checkAnalytics(),
   ];
 
-  // Async checks (require DB)
+  // Async checks (require DB or async env checks)
+  checks.push(await checkEmail());
   checks.push(await checkDatabase());
   checks.push(await checkApi());
 
@@ -284,12 +297,12 @@ export async function getQuickHealthSummary(): Promise<{
   backup: HealthStatus;
   analytics: HealthStatus;
 }> {
-  const db = await checkDatabase();
+  const [db, email] = await Promise.all([checkDatabase(), checkEmail()]);
   return {
     database: db.status,
     auth: checkAuth().status,
     storage: checkStorage().status,
-    email: checkEmail().status,
+    email: email.status,
     backup: checkBackup().status,
     analytics: checkAnalytics().status,
   };

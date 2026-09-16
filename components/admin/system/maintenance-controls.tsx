@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { PageHeader, LoadingState, ConfirmDialog } from "@/components/shared/page-kit";
 import { Button, Input, Label, Textarea } from "@/components/ui";
+import { Dialog, DialogContent } from "@/components/ui/overlays";
 import { useToast } from "@/components/ui/toast";
 import { SectionCard, StatusBadge } from "./shared";
 import { Wrench, AlertTriangle, Power, Clock } from "lucide-react";
@@ -36,7 +37,7 @@ export function MaintenanceControls() {
       <PageHeader
         title="Maintenance Mode"
         description="Put the application into maintenance mode. Public users see a maintenance page; admins can still log in."
-        breadcrumbs={["Admin", "System Administration", "Maintenance"]}
+        breadcrumbs={["Admin", "System Operations", "Maintenance"]}
         actions={
           <Button variant="outline" onClick={() => refetch()}>
             Refresh
@@ -84,6 +85,11 @@ export function MaintenanceControls() {
             <p className="mt-1 text-xs text-muted-foreground">
               Public users see a maintenance page. {data.allowAdminAccess ? "Admins can still access /admin." : "Admin access also blocked."}
             </p>
+            {data.message && (
+              <p className="mt-2 rounded bg-background/50 p-2 text-xs italic">
+                &ldquo;{data.message}&rdquo;
+              </p>
+            )}
           </div>
         )}
 
@@ -168,53 +174,49 @@ function EnableDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v:
   });
 
   return (
-    <>
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-lg border border-border bg-card p-5 shadow-lg">
-            <h2 className="text-lg font-semibold">Enable Maintenance Mode</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Public users will see the maintenance page until you disable it.
-            </p>
-            <div className="mt-4 space-y-3">
-              <div className="space-y-1">
-                <Label>Maintenance message</Label>
-                <Textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  rows={3}
-                  maxLength={500}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>Expected end time (optional)</Label>
-                <Input
-                  type="datetime-local"
-                  value={expectedEndAt}
-                  onChange={(e) => setExpectedEndAt(e.target.value)}
-                />
-              </div>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={allowAdminAccess}
-                  onChange={(e) => setAllowAdminAccess(e.target.checked)}
-                  className="h-4 w-4"
-                />
-                Allow admin access during maintenance
-              </label>
-            </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={mutation.isPending}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={() => mutation.mutate()} disabled={mutation.isPending || !message}>
-                {mutation.isPending ? "Enabling…" : "Enable Now"}
-              </Button>
-            </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent title="Enable Maintenance Mode" description="Public users will see the maintenance page until you disable it.">
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label>Maintenance message</Label>
+            <Textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={3}
+              maxLength={500}
+            />
           </div>
+          <div className="space-y-1">
+            <Label>Expected end time (optional)</Label>
+            <Input
+              type="datetime-local"
+              value={expectedEndAt}
+              onChange={(e) => setExpectedEndAt(e.target.value)}
+            />
+          </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={allowAdminAccess}
+              onChange={(e) => setAllowAdminAccess(e.target.checked)}
+              className="h-4 w-4"
+            />
+            Allow admin access during maintenance
+          </label>
         </div>
-      )}
-    </>
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={mutation.isPending}>
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => mutation.mutate()}
+            disabled={mutation.isPending || !message}
+          >
+            {mutation.isPending ? "Enabling…" : "Enable Now"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
