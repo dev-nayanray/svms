@@ -18,7 +18,7 @@
     },
     {
       "path": "/api/admin/system/health/cron?job=health-check",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 6 * * *"
     }
   ]
 }
