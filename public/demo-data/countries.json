@@ -1,0 +1,129 @@
+{
+  "version": "1.0",
+  "module": "countries",
+  "description": "Demo data for countries — 15 records",
+  "generatedAt": "2026-09-15T22:20:32.656Z",
+  "count": 15,
+  "records": [
+    {
+      "id": "country-de",
+      "name": "Germany",
+      "code": "DE",
+      "flag": "🇩🇪",
+      "currency": "EUR",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "country-fr",
+      "name": "France",
+      "code": "FR",
+      "flag": "🇫🇷",
+      "currency": "EUR",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "country-it",
+      "name": "Italy",
+      "code": "IT",
+      "flag": "🇮🇹",
+      "currency": "EUR",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "country-es",
+      "name": "Spain",
+      "code": "ES",
+      "flag": "🇪🇸",
+      "currency": "EUR",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "country-nl",
+      "name": "Netherlands",
+      "code": "NL",
+      "flag": "🇳🇱",
+      "currency": "EUR",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "country-se",
+      "name": "Sweden",
+      "code": "SE",
+      "flag": "🇸🇪",
+      "currency": "SEK",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "country-fi",
+      "name": "Finland",
+      "code": "FI",
+      "flag": "🇫🇮",
+      "currency": "EUR",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "country-ie",
+      "name": "Ireland",
+      "code": "IE",
+      "flag": "🇮🇪",
+      "currency": "EUR",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "country-dk",
+      "name": "Denmark",
+      "code": "DK",
+      "flag": "🇩🇰",
+      "currency": "DKK",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "country-at",
+      "name": "Austria",
+      "code": "AT",
+      "flag": "🇦🇹",
+      "currency": "EUR",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "country-be",
+      "name": "Belgium",
+      "code": "BE",
+      "flag": "🇧🇪",
+      "currency": "EUR",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "country-hu",
+      "name": "Hungary",
+      "code": "HU",
+      "flag": "🇭🇺",
+      "currency": "HUF",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "country-pl",
+      "name": "Poland",
+      "code": "PL",
+      "flag": "🇵🇱",
+      "currency": "PLN",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "country-pt",
+      "name": "Portugal",
+      "code": "PT",
+      "flag": "🇵🇹",
+      "currency": "EUR",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "country-mt",
+      "name": "Malta",
+      "code": "MT",
+      "flag": "🇲🇹",
+      "currency": "EUR",
+      "status": "ACTIVE"
+    }
+  ]
+}

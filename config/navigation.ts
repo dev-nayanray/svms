@@ -5,13 +5,13 @@ export type NavGroup = { label: string; items: NavItem[] };
 
 export const ADMIN_NAV_GROUPS: NavGroup[] = [
   {
-    label: "Main",
+    label: "Overview",
     items: [
       { href: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
     ],
   },
   {
-    label: "Sales & Admissions",
+    label: "CRM",
     items: [
       { href: "/admin/leads", label: "Leads", icon: "Target" },
       { href: "/admin/students", label: "Students", icon: "Users" },
@@ -19,7 +19,7 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Academic",
+    label: "Academic Catalog",
     items: [
       { href: "/admin/countries", label: "Countries", icon: "Globe" },
       { href: "/admin/universities", label: "Universities", icon: "Building2" },
@@ -30,7 +30,7 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
   {
     label: "Documents & Visa",
     items: [
-      { href: "/admin/documents", label: "Documents", icon: "FileText" },
+      { href: "/admin/documents", label: "Document Review", icon: "FileText" },
       { href: "/admin/visa", label: "Visa Management", icon: "Stamp" },
     ],
   },
@@ -39,7 +39,7 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/admin/tasks", label: "Tasks", icon: "CheckSquare" },
       { href: "/admin/appointments", label: "Appointments", icon: "CalendarClock" },
-      { href: "/admin/support", label: "Support", icon: "LifeBuoy" },
+      { href: "/admin/support", label: "Support Tickets", icon: "LifeBuoy" },
       { href: "/admin/messages", label: "Messages", icon: "MessageSquare" },
       { href: "/admin/notifications", label: "Notifications", icon: "Bell" },
     ],
@@ -53,25 +53,26 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Organization",
+    label: "Team & Organization",
     items: [
-      { href: "/admin/users", label: "User Management", icon: "Users" },
+      { href: "/admin/users", label: "Team & Users", icon: "Users" },
       { href: "/admin/employees", label: "Employees", icon: "GraduationCap" },
       { href: "/admin/branches", label: "Branches", icon: "GitBranch" },
       { href: "/admin/roles-permissions", label: "Roles & Permissions", icon: "ShieldCheck" },
     ],
   },
   {
-    label: "System",
+    label: "System Administration",
     items: [
+      { href: "/admin/data-management", label: "Data Management", icon: "Database" },
       { href: "/admin/branding", label: "Branding & Logo", icon: "Image" },
       { href: "/admin/marketing", label: "Marketing Site", icon: "Megaphone" },
-      { href: "/admin/settings", label: "Settings", icon: "Settings" },
+      { href: "/admin/settings", label: "System Settings", icon: "Settings" },
       { href: "/admin/audit", label: "Audit Logs", icon: "ScrollText" },
     ],
   },
   {
-    label: "System Administration",
+    label: "System Operations",
     items: [
       { href: "/admin/system", label: "Overview", icon: "LayoutDashboard" },
       { href: "/admin/system/backups", label: "Backup & Restore", icon: "DatabaseBackup" },

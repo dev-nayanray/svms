@@ -1,0 +1,621 @@
+{
+  "version": "1.0",
+  "module": "appointments",
+  "description": "Demo data for appointments — 68 records",
+  "generatedAt": "2026-09-15T22:20:32.665Z",
+  "count": 68,
+  "records": [
+    {
+      "studentId": "STD-DEMO-00001",
+      "employeeId": "emp-004",
+      "scheduledAt": "2026-08-02T22:20:32.660Z",
+      "durationMins": 45,
+      "purpose": "Review English proficiency",
+      "meetingMethod": "PHONE_CALL",
+      "status": "CANCELLED"
+    },
+    {
+      "studentId": "STD-DEMO-00004",
+      "employeeId": "emp-005",
+      "scheduledAt": "2026-09-14T22:20:32.660Z",
+      "durationMins": 30,
+      "purpose": "Prepare visa documents",
+      "meetingMethod": "IN_PERSON",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00005",
+      "employeeId": "emp-001",
+      "scheduledAt": "2026-09-18T22:20:32.660Z",
+      "durationMins": 60,
+      "purpose": "Schedule IELTS test",
+      "meetingMethod": "PHONE_CALL",
+      "status": "SCHEDULED"
+    },
+    {
+      "studentId": "STD-DEMO-00007",
+      "employeeId": "emp-004",
+      "scheduledAt": "2026-08-29T22:20:32.660Z",
+      "durationMins": 60,
+      "purpose": "Collect bank statement",
+      "meetingMethod": "PHONE_CALL",
+      "status": "NO_SHOW"
+    },
+    {
+      "studentId": "STD-DEMO-00008",
+      "employeeId": "emp-002",
+      "scheduledAt": "2026-09-24T22:20:32.660Z",
+      "durationMins": 45,
+      "purpose": "Collect bank statement",
+      "meetingMethod": "IN_PERSON",
+      "status": "CANCELLED"
+    },
+    {
+      "studentId": "STD-DEMO-00009",
+      "employeeId": "emp-002",
+      "scheduledAt": "2026-09-13T22:20:32.660Z",
+      "durationMins": 45,
+      "purpose": "Submit university application",
+      "meetingMethod": "IN_PERSON",
+      "status": "CANCELLED"
+    },
+    {
+      "studentId": "STD-DEMO-00013",
+      "employeeId": "emp-005",
+      "scheduledAt": "2026-10-05T22:20:32.660Z",
+      "durationMins": 45,
+      "purpose": "Collect bank statement",
+      "meetingMethod": "VIDEO_CALL",
+      "status": "CANCELLED"
+    },
+    {
+      "studentId": "STD-DEMO-00015",
+      "employeeId": "emp-004",
+      "scheduledAt": "2026-08-03T22:20:32.660Z",
+      "durationMins": 60,
+      "purpose": "Prepare visa documents",
+      "meetingMethod": "PHONE_CALL",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00017",
+      "employeeId": "emp-005",
+      "scheduledAt": "2026-09-23T22:20:32.660Z",
+      "durationMins": 30,
+      "purpose": "Schedule IELTS test",
+      "meetingMethod": "PHONE_CALL",
+      "status": "CONFIRMED"
+    },
+    {
+      "studentId": "STD-DEMO-00020",
+      "employeeId": "emp-004",
+      "scheduledAt": "2026-10-11T22:20:32.660Z",
+      "durationMins": 30,
+      "purpose": "Prepare for visa interview",
+      "meetingMethod": "PHONE_CALL",
+      "status": "CANCELLED"
+    },
+    {
+      "studentId": "STD-DEMO-00021",
+      "employeeId": "emp-003",
+      "scheduledAt": "2026-09-27T22:20:32.660Z",
+      "durationMins": 45,
+      "purpose": "Collect passport copy",
+      "meetingMethod": "VIDEO_CALL",
+      "status": "SCHEDULED"
+    },
+    {
+      "studentId": "STD-DEMO-00022",
+      "employeeId": "emp-002",
+      "scheduledAt": "2026-08-08T22:20:32.660Z",
+      "durationMins": 30,
+      "purpose": "Prepare for visa interview",
+      "meetingMethod": "IN_PERSON",
+      "status": "SCHEDULED"
+    },
+    {
+      "studentId": "STD-DEMO-00023",
+      "employeeId": "emp-002",
+      "scheduledAt": "2026-07-24T22:20:32.660Z",
+      "durationMins": 45,
+      "purpose": "Prepare for visa interview",
+      "meetingMethod": "PHONE_CALL",
+      "status": "SCHEDULED"
+    },
+    {
+      "studentId": "STD-DEMO-00024",
+      "employeeId": "emp-002",
+      "scheduledAt": "2026-10-08T22:20:32.660Z",
+      "durationMins": 45,
+      "purpose": "Submit university application",
+      "meetingMethod": "VIDEO_CALL",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00025",
+      "employeeId": "emp-004",
+      "scheduledAt": "2026-09-20T22:20:32.660Z",
+      "durationMins": 45,
+      "purpose": "Collect passport copy",
+      "meetingMethod": "IN_PERSON",
+      "status": "SCHEDULED"
+    },
+    {
+      "studentId": "STD-DEMO-00026",
+      "employeeId": "emp-004",
+      "scheduledAt": "2026-09-15T22:20:32.660Z",
+      "durationMins": 30,
+      "purpose": "Follow up on offer letter",
+      "meetingMethod": "IN_PERSON",
+      "status": "SCHEDULED"
+    },
+    {
+      "studentId": "STD-DEMO-00027",
+      "employeeId": "emp-005",
+      "scheduledAt": "2026-07-29T22:20:32.660Z",
+      "durationMins": 45,
+      "purpose": "Collect passport copy",
+      "meetingMethod": "IN_PERSON",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00028",
+      "employeeId": "emp-005",
+      "scheduledAt": "2026-08-14T22:20:32.660Z",
+      "durationMins": 60,
+      "purpose": "Review English proficiency",
+      "meetingMethod": "PHONE_CALL",
+      "status": "CANCELLED"
+    },
+    {
+      "studentId": "STD-DEMO-00030",
+      "employeeId": "emp-001",
+      "scheduledAt": "2026-09-11T22:20:32.660Z",
+      "durationMins": 60,
+      "purpose": "Submit university application",
+      "meetingMethod": "IN_PERSON",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00031",
+      "employeeId": "emp-004",
+      "scheduledAt": "2026-09-02T22:20:32.660Z",
+      "durationMins": 30,
+      "purpose": "Schedule IELTS test",
+      "meetingMethod": "PHONE_CALL",
+      "status": "SCHEDULED"
+    },
+    {
+      "studentId": "STD-DEMO-00032",
+      "employeeId": "emp-002",
+      "scheduledAt": "2026-08-30T22:20:32.660Z",
+      "durationMins": 45,
+      "purpose": "Verify academic transcripts",
+      "meetingMethod": "VIDEO_CALL",
+      "status": "CONFIRMED"
+    },
+    {
+      "studentId": "STD-DEMO-00034",
+      "employeeId": "emp-001",
+      "scheduledAt": "2026-09-28T22:20:32.660Z",
+      "durationMins": 45,
+      "purpose": "Prepare visa documents",
+      "meetingMethod": "PHONE_CALL",
+      "status": "NO_SHOW"
+    },
+    {
+      "studentId": "STD-DEMO-00035",
+      "employeeId": "emp-001",
+      "scheduledAt": "2026-09-01T22:20:32.660Z",
+      "durationMins": 30,
+      "purpose": "Prepare for visa interview",
+      "meetingMethod": "VIDEO_CALL",
+      "status": "SCHEDULED"
+    },
+    {
+      "studentId": "STD-DEMO-00037",
+      "employeeId": "emp-001",
+      "scheduledAt": "2026-09-13T22:20:32.660Z",
+      "durationMins": 45,
+      "purpose": "Verify passport validity",
+      "meetingMethod": "IN_PERSON",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00038",
+      "employeeId": "emp-001",
+      "scheduledAt": "2026-10-07T22:20:32.660Z",
+      "durationMins": 60,
+      "purpose": "Collect passport copy",
+      "meetingMethod": "VIDEO_CALL",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00039",
+      "employeeId": "emp-001",
+      "scheduledAt": "2026-08-12T22:20:32.660Z",
+      "durationMins": 30,
+      "purpose": "Submit university application",
+      "meetingMethod": "VIDEO_CALL",
+      "status": "SCHEDULED"
+    },
+    {
+      "studentId": "STD-DEMO-00040",
+      "employeeId": "emp-003",
+      "scheduledAt": "2026-10-08T22:20:32.660Z",
+      "durationMins": 45,
+      "purpose": "Submit university application",
+      "meetingMethod": "PHONE_CALL",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00041",
+      "employeeId": "emp-002",
+      "scheduledAt": "2026-08-26T22:20:32.660Z",
+      "durationMins": 60,
+      "purpose": "Schedule IELTS test",
+      "meetingMethod": "PHONE_CALL",
+      "status": "CONFIRMED"
+    },
+    {
+      "studentId": "STD-DEMO-00042",
+      "employeeId": "emp-001",
+      "scheduledAt": "2026-07-21T22:20:32.660Z",
+      "durationMins": 30,
+      "purpose": "Prepare visa documents",
+      "meetingMethod": "IN_PERSON",
+      "status": "NO_SHOW"
+    },
+    {
+      "studentId": "STD-DEMO-00043",
+      "employeeId": "emp-001",
+      "scheduledAt": "2026-10-04T22:20:32.660Z",
+      "durationMins": 30,
+      "purpose": "Prepare visa documents",
+      "meetingMethod": "PHONE_CALL",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00044",
+      "employeeId": "emp-005",
+      "scheduledAt": "2026-09-01T22:20:32.660Z",
+      "durationMins": 30,
+      "purpose": "Submit university application",
+      "meetingMethod": "PHONE_CALL",
+      "status": "CONFIRMED"
+    },
+    {
+      "studentId": "STD-DEMO-00045",
+      "employeeId": "emp-001",
+      "scheduledAt": "2026-09-15T22:20:32.660Z",
+      "durationMins": 30,
+      "purpose": "Prepare for visa interview",
+      "meetingMethod": "IN_PERSON",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00048",
+      "employeeId": "emp-005",
+      "scheduledAt": "2026-08-12T22:20:32.660Z",
+      "durationMins": 45,
+      "purpose": "Submit university application",
+      "meetingMethod": "IN_PERSON",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00049",
+      "employeeId": "emp-004",
+      "scheduledAt": "2026-10-01T22:20:32.660Z",
+      "durationMins": 30,
+      "purpose": "Review English proficiency",
+      "meetingMethod": "PHONE_CALL",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00050",
+      "employeeId": "emp-003",
+      "scheduledAt": "2026-10-02T22:20:32.660Z",
+      "durationMins": 45,
+      "purpose": "Prepare for visa interview",
+      "meetingMethod": "IN_PERSON",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00051",
+      "employeeId": "emp-005",
+      "scheduledAt": "2026-09-22T22:20:32.660Z",
+      "durationMins": 60,
+      "purpose": "Collect passport copy",
+      "meetingMethod": "PHONE_CALL",
+      "status": "CANCELLED"
+    },
+    {
+      "studentId": "STD-DEMO-00052",
+      "employeeId": "emp-004",
+      "scheduledAt": "2026-09-22T22:20:32.660Z",
+      "durationMins": 60,
+      "purpose": "Schedule counselling session",
+      "meetingMethod": "IN_PERSON",
+      "status": "NO_SHOW"
+    },
+    {
+      "studentId": "STD-DEMO-00053",
+      "employeeId": "emp-005",
+      "scheduledAt": "2026-09-12T22:20:32.660Z",
+      "durationMins": 60,
+      "purpose": "Collect passport copy",
+      "meetingMethod": "VIDEO_CALL",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00055",
+      "employeeId": "emp-002",
+      "scheduledAt": "2026-08-23T22:20:32.660Z",
+      "durationMins": 30,
+      "purpose": "Review English proficiency",
+      "meetingMethod": "IN_PERSON",
+      "status": "CONFIRMED"
+    },
+    {
+      "studentId": "STD-DEMO-00057",
+      "employeeId": "emp-005",
+      "scheduledAt": "2026-08-11T22:20:32.661Z",
+      "durationMins": 45,
+      "purpose": "Verify academic transcripts",
+      "meetingMethod": "PHONE_CALL",
+      "status": "CANCELLED"
+    },
+    {
+      "studentId": "STD-DEMO-00059",
+      "employeeId": "emp-004",
+      "scheduledAt": "2026-09-20T22:20:32.661Z",
+      "durationMins": 30,
+      "purpose": "Verify passport validity",
+      "meetingMethod": "VIDEO_CALL",
+      "status": "SCHEDULED"
+    },
+    {
+      "studentId": "STD-DEMO-00060",
+      "employeeId": "emp-001",
+      "scheduledAt": "2026-09-03T22:20:32.661Z",
+      "durationMins": 30,
+      "purpose": "Follow up on offer letter",
+      "meetingMethod": "VIDEO_CALL",
+      "status": "CANCELLED"
+    },
+    {
+      "studentId": "STD-DEMO-00062",
+      "employeeId": "emp-002",
+      "scheduledAt": "2026-08-10T22:20:32.661Z",
+      "durationMins": 30,
+      "purpose": "Verify academic transcripts",
+      "meetingMethod": "PHONE_CALL",
+      "status": "CANCELLED"
+    },
+    {
+      "studentId": "STD-DEMO-00063",
+      "employeeId": "emp-001",
+      "scheduledAt": "2026-09-06T22:20:32.661Z",
+      "durationMins": 45,
+      "purpose": "Collect bank statement",
+      "meetingMethod": "IN_PERSON",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00064",
+      "employeeId": "emp-001",
+      "scheduledAt": "2026-08-22T22:20:32.661Z",
+      "durationMins": 60,
+      "purpose": "Collect bank statement",
+      "meetingMethod": "VIDEO_CALL",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00065",
+      "employeeId": "emp-002",
+      "scheduledAt": "2026-09-19T22:20:32.661Z",
+      "durationMins": 60,
+      "purpose": "Schedule counselling session",
+      "meetingMethod": "IN_PERSON",
+      "status": "SCHEDULED"
+    },
+    {
+      "studentId": "STD-DEMO-00068",
+      "employeeId": "emp-002",
+      "scheduledAt": "2026-07-23T22:20:32.661Z",
+      "durationMins": 45,
+      "purpose": "Collect passport copy",
+      "meetingMethod": "PHONE_CALL",
+      "status": "NO_SHOW"
+    },
+    {
+      "studentId": "STD-DEMO-00069",
+      "employeeId": "emp-002",
+      "scheduledAt": "2026-09-24T22:20:32.661Z",
+      "durationMins": 30,
+      "purpose": "Review English proficiency",
+      "meetingMethod": "IN_PERSON",
+      "status": "CANCELLED"
+    },
+    {
+      "studentId": "STD-DEMO-00070",
+      "employeeId": "emp-003",
+      "scheduledAt": "2026-08-11T22:20:32.661Z",
+      "durationMins": 60,
+      "purpose": "Collect bank statement",
+      "meetingMethod": "PHONE_CALL",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00072",
+      "employeeId": "emp-004",
+      "scheduledAt": "2026-09-03T22:20:32.661Z",
+      "durationMins": 45,
+      "purpose": "Verify academic transcripts",
+      "meetingMethod": "IN_PERSON",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00073",
+      "employeeId": "emp-005",
+      "scheduledAt": "2026-08-26T22:20:32.661Z",
+      "durationMins": 30,
+      "purpose": "Collect bank statement",
+      "meetingMethod": "VIDEO_CALL",
+      "status": "CANCELLED"
+    },
+    {
+      "studentId": "STD-DEMO-00075",
+      "employeeId": "emp-005",
+      "scheduledAt": "2026-07-19T22:20:32.662Z",
+      "durationMins": 30,
+      "purpose": "Collect bank statement",
+      "meetingMethod": "PHONE_CALL",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00080",
+      "employeeId": "emp-002",
+      "scheduledAt": "2026-09-10T22:20:32.662Z",
+      "durationMins": 30,
+      "purpose": "Verify academic transcripts",
+      "meetingMethod": "VIDEO_CALL",
+      "status": "SCHEDULED"
+    },
+    {
+      "studentId": "STD-DEMO-00081",
+      "employeeId": "emp-003",
+      "scheduledAt": "2026-09-20T22:20:32.662Z",
+      "durationMins": 45,
+      "purpose": "Prepare for visa interview",
+      "meetingMethod": "VIDEO_CALL",
+      "status": "CANCELLED"
+    },
+    {
+      "studentId": "STD-DEMO-00083",
+      "employeeId": "emp-004",
+      "scheduledAt": "2026-08-20T22:20:32.662Z",
+      "durationMins": 60,
+      "purpose": "Submit university application",
+      "meetingMethod": "IN_PERSON",
+      "status": "CONFIRMED"
+    },
+    {
+      "studentId": "STD-DEMO-00085",
+      "employeeId": "emp-003",
+      "scheduledAt": "2026-08-18T22:20:32.662Z",
+      "durationMins": 30,
+      "purpose": "Prepare for visa interview",
+      "meetingMethod": "PHONE_CALL",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00086",
+      "employeeId": "emp-005",
+      "scheduledAt": "2026-09-12T22:20:32.662Z",
+      "durationMins": 45,
+      "purpose": "Prepare for visa interview",
+      "meetingMethod": "VIDEO_CALL",
+      "status": "CONFIRMED"
+    },
+    {
+      "studentId": "STD-DEMO-00087",
+      "employeeId": "emp-005",
+      "scheduledAt": "2026-10-07T22:20:32.662Z",
+      "durationMins": 30,
+      "purpose": "Prepare visa documents",
+      "meetingMethod": "PHONE_CALL",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00088",
+      "employeeId": "emp-002",
+      "scheduledAt": "2026-09-21T22:20:32.662Z",
+      "durationMins": 30,
+      "purpose": "Collect passport copy",
+      "meetingMethod": "PHONE_CALL",
+      "status": "CONFIRMED"
+    },
+    {
+      "studentId": "STD-DEMO-00090",
+      "employeeId": "emp-003",
+      "scheduledAt": "2026-08-12T22:20:32.662Z",
+      "durationMins": 45,
+      "purpose": "Verify academic transcripts",
+      "meetingMethod": "VIDEO_CALL",
+      "status": "SCHEDULED"
+    },
+    {
+      "studentId": "STD-DEMO-00091",
+      "employeeId": "emp-004",
+      "scheduledAt": "2026-09-30T22:20:32.662Z",
+      "durationMins": 60,
+      "purpose": "Review English proficiency",
+      "meetingMethod": "IN_PERSON",
+      "status": "CONFIRMED"
+    },
+    {
+      "studentId": "STD-DEMO-00093",
+      "employeeId": "emp-003",
+      "scheduledAt": "2026-10-08T22:20:32.662Z",
+      "durationMins": 45,
+      "purpose": "Collect bank statement",
+      "meetingMethod": "PHONE_CALL",
+      "status": "NO_SHOW"
+    },
+    {
+      "studentId": "STD-DEMO-00094",
+      "employeeId": "emp-002",
+      "scheduledAt": "2026-09-19T22:20:32.662Z",
+      "durationMins": 30,
+      "purpose": "Collect bank statement",
+      "meetingMethod": "PHONE_CALL",
+      "status": "NO_SHOW"
+    },
+    {
+      "studentId": "STD-DEMO-00095",
+      "employeeId": "emp-004",
+      "scheduledAt": "2026-07-24T22:20:32.662Z",
+      "durationMins": 30,
+      "purpose": "Follow up on offer letter",
+      "meetingMethod": "PHONE_CALL",
+      "status": "SCHEDULED"
+    },
+    {
+      "studentId": "STD-DEMO-00096",
+      "employeeId": "emp-003",
+      "scheduledAt": "2026-07-30T22:20:32.662Z",
+      "durationMins": 60,
+      "purpose": "Collect recommendation letters",
+      "meetingMethod": "PHONE_CALL",
+      "status": "CANCELLED"
+    },
+    {
+      "studentId": "STD-DEMO-00097",
+      "employeeId": "emp-005",
+      "scheduledAt": "2026-09-21T22:20:32.662Z",
+      "durationMins": 60,
+      "purpose": "Review English proficiency",
+      "meetingMethod": "VIDEO_CALL",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00098",
+      "employeeId": "emp-001",
+      "scheduledAt": "2026-08-12T22:20:32.662Z",
+      "durationMins": 30,
+      "purpose": "Collect recommendation letters",
+      "meetingMethod": "VIDEO_CALL",
+      "status": "COMPLETED"
+    },
+    {
+      "studentId": "STD-DEMO-00100",
+      "employeeId": "emp-001",
+      "scheduledAt": "2026-08-26T22:20:32.662Z",
+      "durationMins": 45,
+      "purpose": "Prepare for visa interview",
+      "meetingMethod": "IN_PERSON",
+      "status": "NO_SHOW"
+    }
+  ]
+}

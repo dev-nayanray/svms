@@ -82,22 +82,31 @@ export function AdminDashboardView() {
       </div>
 
       {/* ── Quick Actions ── */}
-      <div className="flex flex-wrap gap-2">
-        <Link href="/admin/students" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary-hover hover:-translate-y-0.5">
-          <UserPlus className="h-4 w-4" /> New Student
-        </Link>
-        <Link href="/admin/tasks" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
-          <CheckSquare className="h-4 w-4" /> New Task
-        </Link>
-        <Link href="/admin/invoices" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
-          <CreditCard className="h-4 w-4" /> New Invoice
-        </Link>
-        <Link href="/admin/leads" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
-          <Plus className="h-4 w-4" /> New Lead
-        </Link>
-        <Link href="/admin/applications" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
-          <FileText className="h-4 w-4" /> New Application
-        </Link>
+      <div>
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Quick Actions</h2>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/students" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary-hover hover:-translate-y-0.5">
+            <UserPlus className="h-4 w-4" /> Add Student
+          </Link>
+          <Link href="/admin/leads" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
+            <Plus className="h-4 w-4" /> Add Lead
+          </Link>
+          <Link href="/admin/applications" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
+            <FileText className="h-4 w-4" /> Create Application
+          </Link>
+          <Link href="/admin/documents" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
+            <FileText className="h-4 w-4" /> Review Documents
+          </Link>
+          <Link href="/admin/payments" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
+            <CreditCard className="h-4 w-4" /> Record Payment
+          </Link>
+          <Link href="/admin/invoices" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
+            <CreditCard className="h-4 w-4" /> Create Invoice
+          </Link>
+          <Link href="/admin/tasks" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-sm transition-all hover:bg-muted hover:-translate-y-0.5">
+            <CheckSquare className="h-4 w-4" /> Create Task
+          </Link>
+        </div>
       </div>
 
       {/* ── Error state ── */}
@@ -110,6 +119,38 @@ export function AdminDashboardView() {
           </Button>
         </div>
       )}
+
+      {/* ── Action Required — consolidated attention banner ── */}
+      {k && (w?.overdueTasks || 0) > 0 || (k?.pendingDocuments || 0) > 0 || (k?.outstandingPayments || 0) > 0 ? (
+        <div className="rounded-xl border border-amber-200/60 bg-amber-50/50 p-4 dark:bg-amber-950/10">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-amber-700 dark:text-amber-400">
+            <AlertCircle className="h-4 w-4" /> Action Required
+          </h2>
+          <div className="mt-3 flex flex-wrap gap-3">
+            {(w?.overdueTasks ?? 0) > 0 && (
+              <Link href="/admin/tasks" className="group inline-flex items-center gap-2 rounded-lg border border-amber-300/50 bg-white px-3 py-2 text-sm font-medium shadow-sm transition-all hover:border-amber-400 hover:shadow dark:bg-card">
+                <span className="grid h-6 w-6 place-items-center rounded-md bg-red-500/15 text-xs font-bold text-red-600">{w?.overdueTasks}</span>
+                Overdue tasks
+                <span className="text-amber-500 transition-transform group-hover:translate-x-0.5">→</span>
+              </Link>
+            )}
+            {(k?.pendingDocuments ?? 0) > 0 && (
+              <Link href="/admin/documents" className="group inline-flex items-center gap-2 rounded-lg border border-amber-300/50 bg-white px-3 py-2 text-sm font-medium shadow-sm transition-all hover:border-amber-400 hover:shadow dark:bg-card">
+                <span className="grid h-6 w-6 place-items-center rounded-md bg-amber-500/15 text-xs font-bold text-amber-600">{k?.pendingDocuments}</span>
+                Documents need review
+                <span className="text-amber-500 transition-transform group-hover:translate-x-0.5">→</span>
+              </Link>
+            )}
+            {(k?.outstandingPayments ?? 0) > 0 && (
+              <Link href="/admin/invoices" className="group inline-flex items-center gap-2 rounded-lg border border-amber-300/50 bg-white px-3 py-2 text-sm font-medium shadow-sm transition-all hover:border-amber-400 hover:shadow dark:bg-card">
+                <span className="grid h-6 w-6 place-items-center rounded-md bg-blue-500/15 text-xs font-bold text-blue-600">{formatMoney(k?.outstandingPayments ?? 0)}</span>
+                Outstanding payments
+                <span className="text-amber-500 transition-transform group-hover:translate-x-0.5">→</span>
+              </Link>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       {/* ── KPI Cards — clickable, navigate to filtered list ── */}
       <KpiGrid

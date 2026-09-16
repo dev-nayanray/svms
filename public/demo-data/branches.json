@@ -1,0 +1,44 @@
+{
+  "version": "1.0",
+  "module": "branches",
+  "description": "Demo data for branches — 5 records",
+  "generatedAt": "2026-09-15T22:20:32.657Z",
+  "count": 5,
+  "records": [
+    {
+      "id": "branch-dhaka",
+      "name": "Dhaka Main Branch",
+      "code": "DHK",
+      "address": "Gulshan-2, Dhaka",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "branch-ctg",
+      "name": "Chattogram Branch",
+      "code": "CTG",
+      "address": "Agrabad, Chattogram",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "branch-sylhet",
+      "name": "Sylhet Branch",
+      "code": "SYL",
+      "address": "Zindabazar, Sylhet",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "branch-khulna",
+      "name": "Khulna Branch",
+      "code": "KHL",
+      "address": "New Market, Khulna",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "branch-rajshahi",
+      "name": "Rajshahi Branch",
+      "code": "RAJ",
+      "address": "Saheb Bazar, Rajshahi",
+      "status": "ACTIVE"
+    }
+  ]
+}

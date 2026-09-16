@@ -1,4 +1,3 @@
-import nodemailer from "nodemailer";
 import { prisma } from "@/lib/db";
 
 /**
@@ -80,6 +79,7 @@ export async function sendEmail(opts: MailOptions): Promise<boolean> {
       return false;
     }
 
+    const { default: nodemailer } = await import("nodemailer");
     const transporter = nodemailer.createTransport({
       host: config.host,
       port: config.port,
@@ -113,6 +113,7 @@ export async function testSmtpConnection(targetEmail: string): Promise<{ ok: boo
       return { ok: false, message: "SMTP settings are not configured. Set host, username, and password in Settings → Email." };
     }
 
+    const { default: nodemailer } = await import("nodemailer");
     const transporter = nodemailer.createTransport({
       host: config.host,
       port: config.port,

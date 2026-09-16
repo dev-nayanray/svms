@@ -1,0 +1,54 @@
+{
+  "version": "1.0",
+  "module": "employees",
+  "description": "Demo data for employees — 5 records",
+  "generatedAt": "2026-09-15T22:20:32.657Z",
+  "count": 5,
+  "records": [
+    {
+      "id": "emp-001",
+      "name": "Sarah Chen",
+      "email": "sarah@euroscope.app",
+      "designation": "Senior Counselor",
+      "branchId": "branch-dhaka",
+      "title": "Senior Counselor",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "emp-002",
+      "name": "James Wilson",
+      "email": "james@euroscope.app",
+      "designation": "Counselor",
+      "branchId": "branch-dhaka",
+      "title": "Counselor",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "emp-003",
+      "name": "Maria Garcia",
+      "email": "maria@euroscope.app",
+      "designation": "Visa Specialist",
+      "branchId": "branch-ctg",
+      "title": "Visa Specialist",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "emp-004",
+      "name": "Ahmed Hassan",
+      "email": "ahmed@euroscope.app",
+      "designation": "Counselor",
+      "branchId": "branch-sylhet",
+      "title": "Counselor",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "emp-005",
+      "name": "Lisa Anderson",
+      "email": "lisa@euroscope.app",
+      "designation": "Senior Counselor",
+      "branchId": "branch-khulna",
+      "title": "Senior Counselor",
+      "status": "ACTIVE"
+    }
+  ]
+}
