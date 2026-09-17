@@ -15,6 +15,28 @@ import {
 
 type FormValues = { email: string; password: string };
 
+/**
+ * After a successful sign-in, send the user to their role's home
+ * instead of the marketing site — students expect to land in their
+ * dashboard, not the homepage. Falls back to "/" when the session
+ * can't be read.
+ */
+export async function pushRoleHome(router: { push: (url: string) => void }, fallback?: string | null) {
+  if (fallback && fallback.startsWith("/") && fallback !== "/") {
+    router.push(fallback);
+    return;
+  }
+  try {
+    const res = await fetch("/api/auth/session");
+    const session = await res.json();
+    const role = session?.user?.role;
+    const home = role === "ADMIN" ? "/admin" : role === "EMPLOYEE" ? "/employee" : "/student";
+    router.push(home);
+  } catch {
+    router.push("/");
+  }
+}
+
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
@@ -40,19 +62,14 @@ export function LoginForm() {
       setError("Invalid email or password. Please try again.");
       return;
     }
-    const callbackUrl = params.get("callbackUrl");
-    if (callbackUrl && callbackUrl !== "/") {
-      router.push(callbackUrl);
-    } else {
-      router.push("/");
-    }
+    await pushRoleHome(router, params.get("callbackUrl"));
     router.refresh();
   };
 
   function handleGoogleSignIn() {
     setGoogleLoading(true);
     setError(null);
-    const callbackUrl = params.get("callbackUrl") ?? "/";
+    const callbackUrl = params.get("callbackUrl") ?? "/auth/callback";
     signIn("google", { callbackUrl }).catch(() => {
       setGoogleLoading(false);
       setError("Google sign-in failed. Please try again.");

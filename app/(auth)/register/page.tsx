@@ -12,6 +12,7 @@ import {
   Eye, EyeOff, Loader2, AlertCircle, CheckCircle2,
   ArrowRight, ShieldCheck,
 } from "lucide-react";
+import { pushRoleHome } from "@/app/(auth)/login/login-form";
 
 type FormValues = { name: string; email: string; phone?: string; password: string };
 
@@ -45,14 +46,14 @@ export default function RegisterPage() {
       password: values.password,
       redirect: false,
     });
-    router.push("/");
+    await pushRoleHome(router);
     router.refresh();
   };
 
   function handleGoogleSignIn() {
     setGoogleLoading(true);
     setError(null);
-    signIn("google", { callbackUrl: "/" }).catch(() => {
+    signIn("google", { callbackUrl: "/auth/callback" }).catch(() => {
       setGoogleLoading(false);
       setError("Google sign-in failed. Please try again.");
     });
