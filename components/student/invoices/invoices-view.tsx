@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
-  AlertTriangle,
   ChevronRight,
   FileText,
   RefreshCw,
@@ -12,8 +11,14 @@ import {
   WifiOff,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
-import { Button, Badge } from "@/components/ui";
-import { MobilePage, MobileCard } from "@/components/student/ui";
+import { Button } from "@/components/ui";
+import {
+  MobilePage,
+  MobileCard,
+  StudentEmptyState,
+  StudentErrorState,
+  StatusBadge,
+} from "@/components/student/ui";
 import { Skeleton } from "@/components/ui/overlays";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
@@ -70,22 +75,12 @@ export function InvoicesView() {
   if (listQ.isError && !listQ.data) {
     return (
       <MobilePage>
-        <MobileCard className="py-8 text-center">
-          {!online ? (
-            <WifiOff className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden />
-          ) : (
-            <AlertTriangle className="mx-auto h-10 w-10 text-destructive" aria-hidden />
-          )}
-          <h2 className="mt-3 text-base font-semibold">
-            {!online ? "You're offline" : "Couldn't load your invoices"}
-          </h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            {!online ? "Check your connection and try again." : "Please try again in a moment."}
-          </p>
-          <Button onClick={() => listQ.refetch()} className="mt-4" disabled={!online}>
-            <RefreshCw className="h-4 w-4" aria-hidden /> Retry
-          </Button>
-        </MobileCard>
+        <StudentErrorState
+          online={online}
+          title={!online ? "You're offline" : "Couldn't load your invoices"}
+          description={!online ? "Check your connection and try again." : "Please try again in a moment."}
+          onRetry={() => listQ.refetch()}
+        />
       </MobilePage>
     );
   }
@@ -108,11 +103,13 @@ export function InvoicesView() {
       {/* Summary card */}
       <MobileCard className="space-y-3">
         <div className="flex items-center justify-between gap-2">
-          <h1 className="flex items-center gap-2 text-sm font-semibold">
-            <Wallet className="h-4 w-4 text-primary" aria-hidden />
+          <h1 className="flex items-center gap-2 text-sm font-bold tracking-tight">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-amber-500/10 text-amber-600">
+              <Wallet className="h-4 w-4" aria-hidden />
+            </span>
             Invoice Summary
           </h1>
-          <Badge tone="default">{invoices.length} invoices</Badge>
+          <StatusBadge>{invoices.length} invoices</StatusBadge>
         </div>
         <div className="grid grid-cols-3 gap-2">
           <SummaryTile label="Total" value={fmtMoney(totalAmount)} tone="default" />
@@ -123,15 +120,11 @@ export function InvoicesView() {
 
       {/* Invoice list */}
       {invoices.length === 0 ? (
-        <MobileCard className="py-8 text-center">
-          <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
-            <FileText className="h-6 w-6" aria-hidden />
-          </span>
-          <h2 className="mt-3 text-base font-semibold">No invoices yet</h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            Your counselor will issue invoices as your application progresses.
-          </p>
-        </MobileCard>
+        <StudentEmptyState
+          icon={<FileText className="h-5 w-5" aria-hidden />}
+          title="No invoices yet"
+          description="Your counselor will issue invoices as your application progresses."
+        />
       ) : (
         <div className="space-y-2">
           {invoices.map((inv) => (
@@ -144,19 +137,19 @@ export function InvoicesView() {
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         <Link
           href="/student/payments"
-          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary"
+          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-amber-500"
         >
           <Wallet className="h-3.5 w-3.5" aria-hidden /> Payments
         </Link>
         <Link
           href="/student/application"
-          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary"
+          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-amber-500"
         >
           Application
         </Link>
         <Link
           href="/student/messages"
-          className="col-span-2 flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary sm:col-span-1"
+          className="col-span-2 flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-amber-500 sm:col-span-1"
         >
           Contact Counselor
         </Link>
@@ -166,7 +159,7 @@ export function InvoicesView() {
       <div className="flex items-center justify-between gap-2 pt-1 text-xs text-muted-foreground">
         <span>{listQ.isFetching ? "Refreshing…" : "Updated just now"}</span>
         {!online && (
-          <span className="flex items-center gap-1 text-warning">
+          <span className="flex items-center gap-1 text-amber-600">
             <WifiOff className="h-3 w-3" aria-hidden /> Offline
           </span>
         )}
@@ -183,27 +176,36 @@ export function InvoicesView() {
 function InvoiceCard({ invoice }: { invoice: Invoice }) {
   const tone = STATUS_TONE[invoice.status] ?? "default";
 
+  // Border color per tone
+  const borderCls = {
+    default: "",
+    success: "border-emerald-200/60",
+    warning: "border-amber-300/60",
+    info: "border-blue-300/60",
+    destructive: "border-red-300/60",
+  }[tone];
+
+  // Icon background per tone
+  const iconCls = {
+    default: "bg-muted text-muted-foreground",
+    success: "bg-emerald-500/10 text-emerald-600",
+    warning: "bg-amber-500/10 text-amber-600",
+    info: "bg-blue-500/10 text-blue-600",
+    destructive: "bg-red-500/10 text-red-600",
+  }[tone];
+
   return (
     <Link
       href={`/student/invoices/${invoice.id}`}
-      className="block focus-visible:outline-2 focus-visible:outline-primary"
+      className="block focus-visible:outline-2 focus-visible:outline-amber-500"
     >
       <MobileCard className={cn(
-        "flex items-start justify-between gap-3 p-3 transition-colors hover:bg-muted/30",
-        tone === "success" && "border-success/30",
-        tone === "destructive" && "border-destructive/30",
-        tone === "warning" && "border-warning/30",
+        "flex items-start justify-between gap-3 p-3 transition-all hover:bg-muted/30 active:scale-[0.99]",
+        borderCls,
       )}>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className={cn(
-              "grid h-8 w-8 shrink-0 place-items-center rounded-full",
-              tone === "success" && "bg-success/10 text-success",
-              tone === "warning" && "bg-warning/10 text-warning",
-              tone === "destructive" && "bg-destructive/10 text-destructive",
-              tone === "info" && "bg-info/10 text-info",
-              tone === "default" && "bg-muted text-muted-foreground",
-            )}>
+            <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-lg", iconCls)}>
               <FileText className="h-4 w-4" aria-hidden />
             </span>
             <div className="min-w-0">
@@ -214,18 +216,18 @@ function InvoiceCard({ invoice }: { invoice: Invoice }) {
               </p>
             </div>
           </div>
-          <div className="mt-2 flex items-center gap-3 text-xs">
+          <div className="mt-2 flex items-center gap-3 text-xs tabular-nums">
             <span className="font-semibold">{fmtMoney(invoice.total)}</span>
             {invoice.paidAmount > 0 && (
-              <span className="text-success">Paid {fmtMoney(invoice.paidAmount)}</span>
+              <span className="text-emerald-600">Paid {fmtMoney(invoice.paidAmount)}</span>
             )}
             {invoice.dueAmount > 0 && (
-              <span className="text-warning">Bal {fmtMoney(invoice.dueAmount)}</span>
+              <span className="text-amber-600">Bal {fmtMoney(invoice.dueAmount)}</span>
             )}
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          <Badge tone={tone}>{invoice.statusLabel}</Badge>
+          <StatusBadge tone={tone}>{invoice.statusLabel}</StatusBadge>
           <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
         </div>
       </MobileCard>
@@ -246,14 +248,14 @@ function SummaryTile({
 }) {
   const toneCls = {
     default: "bg-muted text-foreground",
-    success: "bg-success/10 text-success",
-    warning: "bg-warning/10 text-warning",
+    success: "bg-emerald-500/10 text-emerald-600",
+    warning: "bg-amber-500/10 text-amber-600",
   }[tone];
 
   return (
-    <div className={cn("rounded-lg p-2.5 text-center", toneCls)}>
+    <div className={cn("rounded-xl p-2.5 text-center", toneCls)}>
       <p className="text-[10px] uppercase tracking-wide opacity-80">{label}</p>
-      <p className="mt-0.5 text-sm font-semibold leading-none">{value}</p>
+      <p className="mt-0.5 text-sm font-bold leading-none tabular-nums">{value}</p>
     </div>
   );
 }

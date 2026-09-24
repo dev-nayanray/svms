@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
-  AlertTriangle,
   CalendarClock,
   CheckCircle2,
   ChevronDown,
@@ -16,8 +15,14 @@ import {
   WifiOff,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
-import { Button, Badge } from "@/components/ui";
-import { MobilePage, MobileCard } from "@/components/student/ui";
+import { Button } from "@/components/ui";
+import {
+  MobilePage,
+  MobileCard,
+  StudentEmptyState,
+  StudentErrorState,
+  StatusBadge,
+} from "@/components/student/ui";
 import { Skeleton } from "@/components/ui/overlays";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
@@ -117,28 +122,12 @@ export function PaymentsView() {
   if (error && !summaryQ.data && !listQ.data) {
     return (
       <MobilePage>
-        <MobileCard className="py-8 text-center">
-          {!online ? (
-            <WifiOff className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden />
-          ) : (
-            <AlertTriangle className="mx-auto h-10 w-10 text-destructive" aria-hidden />
-          )}
-          <h2 className="mt-3 text-base font-semibold">
-            {!online ? "You're offline" : "Couldn't load your payments"}
-          </h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            {!online
-              ? "Check your connection and try again."
-              : "Please try again in a moment."}
-          </p>
-          <Button
-            onClick={() => { summaryQ.refetch(); listQ.refetch(); }}
-            className="mt-4"
-            disabled={!online}
-          >
-            <RefreshCw className="h-4 w-4" aria-hidden /> Retry
-          </Button>
-        </MobileCard>
+        <StudentErrorState
+          online={online}
+          title={!online ? "You're offline" : "Couldn't load your payments"}
+          description={!online ? "Check your connection and try again." : "Please try again in a moment."}
+          onRetry={() => { summaryQ.refetch(); listQ.refetch(); }}
+        />
       </MobilePage>
     );
   }
@@ -153,10 +142,10 @@ export function PaymentsView() {
 
       {/* Next Open Invoice (if any) */}
       {summary?.nextOpenInvoice && (
-        <MobileCard className="border-warning/40 bg-warning/5">
+        <MobileCard className="border-amber-300/60 bg-amber-50/40 dark:bg-amber-950/10">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <p className="flex items-center gap-1.5 text-xs font-medium text-warning">
+              <p className="flex items-center gap-1.5 text-xs font-medium text-amber-600">
                 <CalendarClock className="h-3.5 w-3.5" aria-hidden />
                 Next Payment Due
               </p>
@@ -170,7 +159,7 @@ export function PaymentsView() {
             </div>
             <Link
               href="/student/invoices"
-              className="shrink-0 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+              className="shrink-0 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
             >
               View Invoice
             </Link>
@@ -180,23 +169,21 @@ export function PaymentsView() {
 
       {/* Payment History */}
       <div className="flex items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 text-sm font-semibold">
-          <CreditCard className="h-4 w-4 text-primary" aria-hidden />
+        <h2 className="flex items-center gap-2 text-sm font-bold tracking-tight">
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-amber-500/10 text-amber-600">
+            <CreditCard className="h-4 w-4" aria-hidden />
+          </span>
           Payment History
-          <Badge tone="default">{payments.length}</Badge>
+          <StatusBadge>{payments.length}</StatusBadge>
         </h2>
       </div>
 
       {payments.length === 0 ? (
-        <MobileCard className="py-8 text-center">
-          <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
-            <Wallet className="h-6 w-6" aria-hidden />
-          </span>
-          <h2 className="mt-3 text-base font-semibold">No payments yet</h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            Your payment history will appear here once your counselor records a payment.
-          </p>
-        </MobileCard>
+        <StudentEmptyState
+          icon={<Wallet className="h-5 w-5" aria-hidden />}
+          title="No payments yet"
+          description="Your payment history will appear here once your counselor records a payment."
+        />
       ) : (
         <div className="space-y-2">
           {payments.map((p) => (
@@ -209,19 +196,19 @@ export function PaymentsView() {
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         <Link
           href="/student/invoices"
-          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary"
+          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-amber-500"
         >
           <FileText className="h-3.5 w-3.5" aria-hidden /> Invoices
         </Link>
         <Link
           href="/student/application"
-          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary"
+          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-amber-500"
         >
           <ChevronLeft className="h-3.5 w-3.5" aria-hidden /> Application
         </Link>
         <Link
           href="/student/messages"
-          className="col-span-2 flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary sm:col-span-1"
+          className="col-span-2 flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-amber-500 sm:col-span-1"
         >
           Contact Counselor
         </Link>
@@ -231,7 +218,7 @@ export function PaymentsView() {
       <div className="flex items-center justify-between gap-2 pt-1 text-xs text-muted-foreground">
         <span>{listQ.isFetching || summaryQ.isFetching ? "Refreshing…" : "Updated just now"}</span>
         {!online && (
-          <span className="flex items-center gap-1 text-warning">
+          <span className="flex items-center gap-1 text-amber-600">
             <WifiOff className="h-3 w-3" aria-hidden /> Offline
           </span>
         )}
@@ -261,11 +248,13 @@ function SummaryCard({ summary }: { summary: Summary }) {
   return (
     <MobileCard className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h1 className="flex items-center gap-2 text-sm font-semibold">
-          <Wallet className="h-4 w-4 text-primary" aria-hidden />
+        <h1 className="flex items-center gap-2 text-sm font-bold tracking-tight">
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-amber-500/10 text-amber-600">
+            <Wallet className="h-4 w-4" aria-hidden />
+          </span>
           Financial Summary
         </h1>
-        <Badge tone="default">{summary.invoiceCount} invoices</Badge>
+        <StatusBadge>{summary.invoiceCount} invoices</StatusBadge>
       </div>
 
       {/* 2x2 grid of financial metrics */}
@@ -314,7 +303,7 @@ function SummaryCard({ summary }: { summary: Summary }) {
             className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-muted"
           >
             <div
-              className="h-full rounded-full bg-success transition-[width] motion-reduce:transition-none"
+              className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-[width] motion-reduce:transition-none"
               style={{ width: `${(summary.paid / summary.totalAmount) * 100}%` }}
             />
           </div>
@@ -337,15 +326,15 @@ function MetricTile({
 }) {
   const toneCls = {
     default: "bg-muted text-foreground",
-    success: "bg-success/10 text-success",
-    warning: "bg-warning/10 text-warning",
-    info: "bg-info/10 text-info",
+    success: "bg-emerald-500/10 text-emerald-600",
+    warning: "bg-amber-500/10 text-amber-600",
+    info: "bg-blue-500/10 text-blue-600",
   }[tone];
 
   return (
-    <div className={cn("rounded-lg p-3", toneCls)}>
+    <div className={cn("rounded-xl p-3", toneCls)}>
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 text-lg font-semibold leading-none">
+      <p className="mt-1 text-lg font-semibold leading-none tabular-nums">
         {currency} {value}
       </p>
     </div>
@@ -358,33 +347,39 @@ function PaymentCard({ payment }: { payment: Payment }) {
   const [expanded, setExpanded] = useState(false);
   const tone = STATUS_TONE[payment.status] ?? "default";
 
+  // Border color per tone
+  const borderCls = {
+    default: "",
+    success: "border-emerald-200/60",
+    warning: "border-amber-300/60",
+    info: "border-blue-300/60",
+    destructive: "border-red-300/60",
+  }[tone];
+
+  // Icon background per tone
+  const iconCls = {
+    default: "bg-muted text-muted-foreground",
+    success: "bg-emerald-500/10 text-emerald-600",
+    warning: "bg-amber-500/10 text-amber-600",
+    info: "bg-blue-500/10 text-blue-600",
+    destructive: "bg-red-500/10 text-red-600",
+  }[tone];
+
   return (
-    <MobileCard className={cn(
-      "overflow-hidden p-0",
-      tone === "success" && "border-success/30",
-      tone === "warning" && "border-warning/30",
-      tone === "destructive" && "border-destructive/30",
-    )}>
+    <MobileCard className={cn("overflow-hidden p-0", borderCls)}>
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        className="flex w-full items-start justify-between gap-3 p-3 text-left focus-visible:outline-2 focus-visible:outline-primary"
+        className="flex w-full items-start justify-between gap-3 p-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-2 focus-visible:outline-amber-500"
       >
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className={cn(
-              "grid h-7 w-7 shrink-0 place-items-center rounded-full",
-              tone === "success" && "bg-success/10 text-success",
-              tone === "warning" && "bg-warning/10 text-warning",
-              tone === "info" && "bg-info/10 text-info",
-              tone === "destructive" && "bg-destructive/10 text-destructive",
-              tone === "default" && "bg-muted text-muted-foreground",
-            )}>
+            <span className={cn("grid h-7 w-7 shrink-0 place-items-center rounded-lg", iconCls)}>
               {statusIcon(payment.status)}
             </span>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold">
+              <p className="truncate text-sm font-semibold tabular-nums">
                 {payment.currency} {payment.amount.toLocaleString()}
               </p>
               <p className="truncate text-xs text-muted-foreground">
@@ -395,7 +390,7 @@ function PaymentCard({ payment }: { payment: Payment }) {
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          <Badge tone={tone}>{payment.statusLabel}</Badge>
+          <StatusBadge tone={tone}>{payment.statusLabel}</StatusBadge>
           <ChevronDown
             className={cn("h-4 w-4 text-muted-foreground transition-transform", expanded && "rotate-180")}
             aria-hidden
@@ -408,7 +403,7 @@ function PaymentCard({ payment }: { payment: Payment }) {
           <dl className="grid grid-cols-2 gap-2">
             <div>
               <dt className="text-xs text-muted-foreground">Amount</dt>
-              <dd className="mt-0.5 font-medium">
+              <dd className="mt-0.5 font-medium tabular-nums">
                 {payment.currency} {payment.amount.toLocaleString()}
               </dd>
             </div>
@@ -425,7 +420,7 @@ function PaymentCard({ payment }: { payment: Payment }) {
             <div>
               <dt className="text-xs text-muted-foreground">Status</dt>
               <dd className="mt-0.5">
-                <Badge tone={tone}>{payment.statusLabel}</Badge>
+                <StatusBadge tone={tone}>{payment.statusLabel}</StatusBadge>
               </dd>
             </div>
             {payment.transactionReference && (
@@ -435,15 +430,15 @@ function PaymentCard({ payment }: { payment: Payment }) {
               </div>
             )}
             {payment.invoice && (
-              <div className="col-span-2 rounded-md border border-border p-2">
+              <div className="col-span-2 rounded-lg border border-border p-2">
                 <p className="text-xs font-medium">Related Invoice</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
+                <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
                   {payment.invoice.invoiceNumber} · Total {payment.invoice.total.toLocaleString()} ·
                   Due {payment.invoice.dueAmount.toLocaleString()}
                 </p>
                 <Link
                   href="/student/invoices"
-                  className="mt-1 inline-flex text-xs text-primary hover:underline"
+                  className="mt-1 inline-flex text-xs text-amber-600 hover:underline"
                 >
                   View invoice →
                 </Link>

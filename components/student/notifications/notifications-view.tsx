@@ -26,8 +26,14 @@ import {
   XCircle,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
-import { Button, Badge } from "@/components/ui";
-import { MobilePage, MobileCard } from "@/components/student/ui";
+import { Button } from "@/components/ui";
+import {
+  MobilePage,
+  StudentEmptyState,
+  StudentErrorState,
+  FilterChip,
+  StatusBadge,
+} from "@/components/student/ui";
 import { Skeleton } from "@/components/ui/overlays";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
@@ -117,22 +123,12 @@ export function NotificationsView() {
   if (listQ.isError && !listQ.data) {
     return (
       <MobilePage>
-        <MobileCard className="py-8 text-center">
-          {!online ? (
-            <WifiOff className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden />
-          ) : (
-            <AlertTriangle className="mx-auto h-10 w-10 text-destructive" aria-hidden />
-          )}
-          <h2 className="mt-3 text-base font-semibold">
-            {!online ? "You're offline" : "Couldn't load notifications"}
-          </h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            {!online ? "Check your connection and try again." : "Please try again in a moment."}
-          </p>
-          <Button onClick={() => listQ.refetch()} className="mt-4" disabled={!online}>
-            <RefreshCw className="h-4 w-4" aria-hidden /> Retry
-          </Button>
-        </MobileCard>
+        <StudentErrorState
+          online={online}
+          title={!online ? "You're offline" : "Couldn't load notifications"}
+          description={!online ? "Check your connection and try again." : "Please try again in a moment."}
+          onRetry={() => listQ.refetch()}
+        />
       </MobilePage>
     );
   }
@@ -199,10 +195,12 @@ export function NotificationsView() {
     <MobilePage>
       {/* Header with unread count + mark all */}
       <div className="flex items-center justify-between gap-2">
-        <h1 className="flex items-center gap-2 text-base font-semibold">
-          <Bell className="h-4 w-4 text-primary" aria-hidden />
+        <h1 className="flex items-center gap-2 text-base font-bold tracking-tight">
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-amber-500/10 text-amber-600">
+            <Bell className="h-4 w-4" aria-hidden />
+          </span>
           Notifications
-          {unreadCount > 0 && <Badge tone="destructive">{unreadCount}</Badge>}
+          {unreadCount > 0 && <StatusBadge tone="destructive">{unreadCount}</StatusBadge>}
         </h1>
         {unreadCount > 0 && (
           <Button size="sm" variant="outline" onClick={handleMarkAllRead}>
@@ -217,26 +215,15 @@ export function NotificationsView() {
           {TABS.map((tab) => {
             const isActive = activeTab === tab.value;
             return (
-              <button
+              <FilterChip
                 key={tab.value}
-                type="button"
+                active={isActive}
                 onClick={() => setActiveTab(tab.value)}
-                aria-pressed={isActive}
-                className={cn(
-                  "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-primary",
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "border border-border bg-card text-muted-foreground hover:text-foreground",
-                )}
+                count={tab.value === "unread" ? unreadCount : undefined}
               >
                 {tab.icon}
                 {tab.label}
-                {tab.value === "unread" && unreadCount > 0 && (
-                  <span className="ml-0.5 rounded-full bg-destructive px-1 text-[10px] font-bold text-white">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                )}
-              </button>
+              </FilterChip>
             );
           })}
         </div>
@@ -244,19 +231,15 @@ export function NotificationsView() {
 
       {/* Notification list */}
       {items.length === 0 ? (
-        <MobileCard className="py-8 text-center">
-          <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
-            <Bell className="h-6 w-6" aria-hidden />
-          </span>
-          <h2 className="mt-3 text-base font-semibold">
-            {activeTab === "unread" ? "No unread notifications" : "No notifications"}
-          </h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            {activeTab === "unread"
+        <StudentEmptyState
+          icon={<Bell className="h-5 w-5" aria-hidden />}
+          title={activeTab === "unread" ? "No unread notifications" : "No notifications"}
+          description={
+            activeTab === "unread"
               ? "You're all caught up. New notifications will appear here."
-              : "Notifications about your application, documents, payments, and visa will appear here."}
-          </p>
-        </MobileCard>
+              : "Notifications about your application, documents, payments, and visa will appear here."
+          }
+        />
       ) : (
         <div className="space-y-1.5">
           {items.map((item) => (
@@ -269,7 +252,7 @@ export function NotificationsView() {
       <div className="flex items-center justify-between gap-2 pt-1 text-xs text-muted-foreground">
         <span>{listQ.isFetching ? "Refreshing…" : "Auto-refreshes every 30s"}</span>
         {!online && (
-          <span className="flex items-center gap-1 text-warning">
+          <span className="flex items-center gap-1 text-amber-600">
             <WifiOff className="h-3 w-3" aria-hidden /> Offline
           </span>
         )}
@@ -295,19 +278,19 @@ function NotificationCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-primary",
+        "flex w-full items-start gap-3 rounded-2xl border p-3 text-left transition-all focus-visible:outline-2 focus-visible:outline-amber-500 active:scale-[0.99]",
         item.isRead
-          ? "border-border bg-card hover:bg-muted/30"
-          : "border-primary/30 bg-primary/5 hover:bg-primary/10",
+          ? "border-border/60 bg-card hover:bg-muted/30"
+          : "border-amber-300/60 bg-amber-50/40 hover:bg-amber-50/70 dark:bg-amber-950/10 dark:hover:bg-amber-950/15",
       )}
     >
       {/* Icon */}
       <span
         className={cn(
-          "grid h-9 w-9 shrink-0 place-items-center rounded-full",
+          "grid h-9 w-9 shrink-0 place-items-center rounded-lg",
           item.isRead
             ? "bg-muted text-muted-foreground"
-            : "bg-primary/15 text-primary",
+            : "bg-amber-500/15 text-amber-600",
         )}
       >
         <NotificationIcon name={item.icon} className="h-4 w-4" />
@@ -320,14 +303,14 @@ function NotificationCard({
             {item.title}
           </p>
           {!item.isRead && (
-            <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" aria-label="Unread" />
+            <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-amber-500" aria-label="Unread" />
           )}
         </div>
         <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{item.message}</p>
         <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
           <span>{fmtRelative(item.createdAt)}</span>
           {item.link && (
-            <span className="flex items-center gap-0.5 text-primary">
+            <span className="flex items-center gap-0.5 text-amber-600">
               View <ChevronRight className="h-3 w-3" aria-hidden />
             </span>
           )}

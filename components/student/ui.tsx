@@ -298,6 +298,151 @@ export function StatusBadge({
   );
 }
 
+/**
+ * StudentErrorState — unified error/offline state.
+ * Replaces the ad-hoc "Couldn't load X" cards across view files.
+ *
+ * Pass `online=false` to show the offline variant.
+ */
+export function StudentErrorState({
+  online = true,
+  title,
+  description,
+  onRetry,
+}: {
+  online?: boolean;
+  title?: string;
+  description?: string;
+  onRetry?: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 bg-card/50 p-8 text-center">
+      <span className="grid h-12 w-12 place-items-center rounded-2xl bg-red-500/10 text-red-600">
+        {!online ? (
+          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <line x1="1" y1="1" x2="23" y2="23" />
+            <path d="M16.72 11.06A10.94 10.94 0 0 1 23 12.55" />
+            <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39" />
+            <path d="M10.71 5.05A16 16 0 0 1 22.58 9" />
+            <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88" />
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+            <line x1="12" y1="20" x2="12.01" y2="20" />
+          </svg>
+        ) : (
+          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        )}
+      </span>
+      <p className="mt-3 text-sm font-semibold text-foreground">
+        {title ?? (!online ? "You're offline" : "Couldn't load")}
+      </p>
+      <p className="mt-1 max-w-xs text-xs leading-relaxed text-muted-foreground">
+        {description ?? (!online ? "Check your connection and try again." : "Please try again in a moment.")}
+      </p>
+      {onRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          disabled={!online}
+          className="mt-4 inline-flex min-h-[40px] items-center gap-1.5 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:from-amber-600 hover:to-amber-700 hover:shadow-md active:scale-95 disabled:opacity-50"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <polyline points="23 4 23 10 17 10" />
+            <polyline points="1 20 1 14 7 14" />
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+          </svg>
+          Retry
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * FilterChip — unified filter/category pill.
+ * Used by the tab rows in Documents, Tasks, Notifications, etc.
+ */
+export function FilterChip({
+  active,
+  onClick,
+  children,
+  count,
+  className,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  count?: number;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all focus-visible:outline-2 focus-visible:outline-amber-500",
+        active
+          ? "bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-sm"
+          : "border border-border bg-card text-muted-foreground hover:border-amber-300/60 hover:text-foreground",
+        className,
+      )}
+    >
+      {children}
+      {active && count !== undefined && count > 0 && (
+        <span className="ml-0.5 rounded-full bg-white/25 px-1.5 text-[10px] font-bold">
+          {count > 9 ? "9+" : count}
+        </span>
+      )}
+    </button>
+  );
+}
+
+/**
+ * PageHeader — unified page title row with optional action.
+ * Replaces the ad-hoc "title + button" patterns in view headers.
+ */
+export function PageHeader({
+  title,
+  subtitle,
+  icon,
+  action,
+  badge,
+}: {
+  title: string;
+  subtitle?: string;
+  icon?: React.ReactNode;
+  action?: React.ReactNode;
+  badge?: React.ReactNode;
+}) {
+  return (
+    <MobileCard>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-3">
+          {icon && (
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500/10 text-amber-600">
+              {icon}
+            </span>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-base font-bold tracking-tight">{title}</h1>
+              {badge}
+            </div>
+            {subtitle && (
+              <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{subtitle}</p>
+            )}
+          </div>
+        </div>
+        {action && <div className="shrink-0">{action}</div>}
+      </div>
+    </MobileCard>
+  );
+}
+
 /** Progress card with gradient bar + percentage badge. */
 export function ProgressCard({
   title,

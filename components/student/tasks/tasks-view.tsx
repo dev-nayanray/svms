@@ -16,8 +16,15 @@ import {
   WifiOff,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
-import { Button, Badge } from "@/components/ui";
-import { MobilePage, MobileCard } from "@/components/student/ui";
+import { Button } from "@/components/ui";
+import {
+  MobilePage,
+  MobileCard,
+  StudentEmptyState,
+  StudentErrorState,
+  FilterChip,
+  StatusBadge,
+} from "@/components/student/ui";
 import { Skeleton } from "@/components/ui/overlays";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -97,26 +104,18 @@ export function TasksView() {
   if (listQ.isError && !listQ.data) {
     return (
       <MobilePage>
-        <MobileCard className="py-8 text-center">
-          {!online ? (
-            <WifiOff className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden />
-          ) : (
-            <AlertTriangle className="mx-auto h-10 w-10 text-destructive" aria-hidden />
-          )}
-          <h2 className="mt-3 text-base font-semibold">
-            {!online ? "You're offline" : "Couldn't load your tasks"}
-          </h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            {!online
+        <StudentErrorState
+          online={online}
+          title={!online ? "You're offline" : "Couldn't load your tasks"}
+          description={
+            !online
               ? "Check your connection and try again."
               : listQ.error instanceof Error
                 ? listQ.error.message
-                : "Please try again in a moment."}
-          </p>
-          <Button onClick={() => listQ.refetch()} className="mt-4" disabled={!online}>
-            <RefreshCw className="h-4 w-4" aria-hidden /> Retry
-          </Button>
-        </MobileCard>
+                : "Please try again in a moment."
+          }
+          onRetry={() => listQ.refetch()}
+        />
       </MobilePage>
     );
   }
@@ -212,31 +211,20 @@ export function TasksView() {
       />
 
       {/* Tab bar */}
-      <div className="sticky top-14 z-20 -mx-4 overflow-x-auto border-b border-border bg-card/95 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:static md:mx-0 md:rounded-lg md:border md:bg-card md:backdrop-blur-none">
+      <div className="sticky top-14 z-20 -mx-4 overflow-x-auto border-b border-border bg-card/95 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:static md:mx-0 md:rounded-2xl md:border md:bg-card md:backdrop-blur-none">
         <div className="flex min-w-max gap-1.5">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.value;
             return (
-              <button
+              <FilterChip
                 key={tab.value}
-                type="button"
+                active={isActive}
                 onClick={() => setActiveTab(tab.value)}
-                aria-pressed={isActive}
-                className={cn(
-                  "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-primary",
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "border border-border bg-card text-muted-foreground hover:text-foreground",
-                )}
+                count={isActive ? activeCount : undefined}
               >
                 {tab.icon}
                 {tab.label}
-                {isActive && activeCount > 0 && (
-                  <span className="ml-0.5 rounded-full bg-primary-foreground/20 px-1.5 text-[10px] font-bold">
-                    {activeCount}
-                  </span>
-                )}
-              </button>
+              </FilterChip>
             );
           })}
         </div>
@@ -244,35 +232,32 @@ export function TasksView() {
 
       {/* Empty state */}
       {tasks.length === 0 ? (
-        <MobileCard className="py-8 text-center">
-          <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
-            <CheckCircle2 className="h-6 w-6" aria-hidden />
-          </span>
-          <h2 className="mt-3 text-base font-semibold">
-            {activeTab === "today" && "No tasks due today"}
-            {activeTab === "upcoming" && "No upcoming tasks"}
-            {activeTab === "overdue" && "No overdue tasks"}
-            {activeTab === "completed" && "No completed tasks yet"}
-            {activeTab === "all" && "No tasks assigned to you"}
-          </h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            {activeTab === "completed"
+        <StudentEmptyState
+          icon={<CheckCircle2 className="h-5 w-5" aria-hidden />}
+          title={
+            activeTab === "today" ? "No tasks due today"
+            : activeTab === "upcoming" ? "No upcoming tasks"
+            : activeTab === "overdue" ? "No overdue tasks"
+            : activeTab === "completed" ? "No completed tasks yet"
+            : "No tasks assigned to you"
+          }
+          description={
+            activeTab === "completed"
               ? "Tasks you complete will appear here."
               : activeTab === "all"
                 ? "Tap \"New personal task\" above to track your own to-dos, or ask your counselor to assign tasks."
-                : "Your counselor will assign tasks as your application progresses — or tap \"New personal task\" above to add your own."}
-          </p>
-          {activeTab !== "all" && (
+                : "Your counselor will assign tasks as your application progresses — or tap \"New personal task\" above to add your own."
+          }
+          action={activeTab !== "all" ? (
             <Button
               variant="outline"
               size="sm"
-              className="mt-4"
               onClick={() => setActiveTab("all")}
             >
               View all tasks
             </Button>
-          )}
-        </MobileCard>
+          ) : undefined}
+        />
       ) : (
         /* Task list */
         <div className="space-y-2">
@@ -291,7 +276,7 @@ export function TasksView() {
       <div className="flex items-center justify-between gap-2 pt-1 text-xs text-muted-foreground">
         <span>{listQ.isFetching ? "Refreshing…" : "Updated just now"}</span>
         {!online && (
-          <span className="flex items-center gap-1 text-warning">
+          <span className="flex items-center gap-1 text-amber-600">
             <WifiOff className="h-3 w-3" aria-hidden /> Offline
           </span>
         )}
@@ -335,8 +320,8 @@ function TaskCard({
     <MobileCard
       className={cn(
         "space-y-2 p-3",
-        isOverdue && "border-destructive/40",
-        isCompleted && "border-success/30 bg-success/5",
+        isOverdue && "border-red-400/60",
+        isCompleted && "border-emerald-200/60 bg-emerald-50/40 dark:bg-emerald-950/10",
       )}
     >
       {/* Header: checkbox + title + priority */}
@@ -346,16 +331,16 @@ function TaskCard({
           onClick={isTodo || isInProgress ? handleCompleteClick : undefined}
           disabled={isCompleted || isCancelled || completing}
           aria-label={isCompleted ? "Task completed" : "Mark as completed"}
-          className="mt-0.5 shrink-0 focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-default"
+          className="mt-0.5 shrink-0 focus-visible:outline-2 focus-visible:outline-amber-500 disabled:cursor-default"
         >
           {isCompleted ? (
-            <CheckSquare className="h-5 w-5 text-success" aria-hidden />
+            <CheckSquare className="h-5 w-5 text-emerald-600" aria-hidden />
           ) : isCancelled ? (
             <Square className="h-5 w-5 text-muted-foreground/50" aria-hidden />
           ) : completing ? (
-            <RefreshCw className="h-5 w-5 animate-spin text-primary" aria-hidden />
+            <RefreshCw className="h-5 w-5 animate-spin text-amber-600" aria-hidden />
           ) : (
-            <Square className="h-5 w-5 text-muted-foreground hover:text-primary" aria-hidden />
+            <Square className="h-5 w-5 text-muted-foreground hover:text-amber-600" aria-hidden />
           )}
         </button>
         <div className="min-w-0 flex-1">
@@ -370,9 +355,9 @@ function TaskCard({
             <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{task.description}</p>
           )}
         </div>
-        <Badge tone={PRIORITY_TONE[task.priority] ?? "default"}>
+        <StatusBadge tone={PRIORITY_TONE[task.priority] ?? "default"}>
           {TASK_PRIORITY_LABELS[task.priority as keyof typeof TASK_PRIORITY_LABELS] ?? task.priority}
-        </Badge>
+        </StatusBadge>
       </div>
 
       {/* Meta row: deadline + status + application */}
@@ -380,7 +365,7 @@ function TaskCard({
         {task.dueDate && (
           <span className={cn(
             "inline-flex items-center gap-1",
-            isOverdue && "font-semibold text-destructive",
+            isOverdue && "font-semibold text-red-600",
           )}>
             <CalendarClock className="h-3 w-3" aria-hidden />
             {DeadlineLabel(task.dueDate, task.status)}
@@ -393,7 +378,7 @@ function TaskCard({
         {task.application && (
           <Link
             href={`/student/application`}
-            className="inline-flex items-center gap-1 hover:text-primary"
+            className="inline-flex items-center gap-1 hover:text-amber-600"
           >
             <FileText className="h-3 w-3" aria-hidden />
             {task.application.applicationNumber}
@@ -415,7 +400,7 @@ function TaskCard({
             </Button>
           )}
           {isOverdue && (
-            <span className="text-[11px] font-medium text-destructive">
+            <span className="text-[11px] font-medium text-red-600">
               Overdue — please complete as soon as possible
             </span>
           )}
