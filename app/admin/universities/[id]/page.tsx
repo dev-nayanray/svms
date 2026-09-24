@@ -367,7 +367,7 @@ export default async function UniversityDetailPage({
                         <span
                           className={
                             r.required
-                              ? "text-xs font-medium text-warning"
+                              ? "text-xs font-medium text-amber-600"
                               : "text-xs text-muted-foreground"
                           }
                         >
@@ -406,7 +406,7 @@ export default async function UniversityDetailPage({
                         <span
                           className={
                             r.required
-                              ? "text-xs font-medium text-warning"
+                              ? "text-xs font-medium text-amber-600"
                               : "text-xs text-muted-foreground"
                           }
                         >

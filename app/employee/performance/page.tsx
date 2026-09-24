@@ -139,7 +139,7 @@ export default async function PerformancePage() {
               <p className="text-xs text-muted-foreground">Total handled</p>
             </div>
             <div className="rounded-lg border border-border p-4">
-              <div className="flex items-center justify-center gap-2 text-2xl font-bold text-success">
+              <div className="flex items-center justify-center gap-2 text-2xl font-bold text-emerald-600 tabular-nums">
                 <CheckSquare className="h-5 w-5" />
                 {wonApplications}
               </div>

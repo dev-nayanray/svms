@@ -154,10 +154,10 @@ export function StatusBadge({ status }: { status: string }) {
     <span
       className={cn(
         "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold whitespace-nowrap",
-        tone === "success" && "border-success/20 bg-success/10 text-success",
-        tone === "warning" && "border-warning/20 bg-warning/10 text-warning",
-        tone === "destructive" && "border-destructive/20 bg-destructive/10 text-destructive",
-        tone === "info" && "border-info/20 bg-info/10 text-info",
+        tone === "success" && "border-emerald-500/20 bg-emerald-500/10 text-emerald-600",
+        tone === "warning" && "border-amber-500/20 bg-amber-500/10 text-amber-600",
+        tone === "destructive" && "border-red-500/20 bg-red-500/10 text-red-600",
+        tone === "info" && "border-blue-500/20 bg-blue-500/10 text-blue-600",
         tone === "default" && "border-border bg-muted text-muted-foreground",
       )}
     >

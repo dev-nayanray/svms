@@ -329,7 +329,7 @@ export function AdminShell({
             >
               <Bell className="h-4 w-4" aria-hidden />
               {!!notif?.unreadCount && (
-                <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-destructive-foreground">
                   {notif.unreadCount > 9 ? "9+" : notif.unreadCount}
                 </span>
               )}
@@ -365,7 +365,7 @@ export function AdminShell({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => signOut({ callbackUrl: "/login" })}
-                  className="text-destructive"
+                  className="text-red-600"
                 >
                   <LogOut className="h-4 w-4" aria-hidden /> Sign out
                 </DropdownMenuItem>

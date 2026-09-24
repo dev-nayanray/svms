@@ -108,7 +108,7 @@ export default async function InvoiceDetailPage({
             {invoice.discount > 0 && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Discount</span>
-                <span className="font-medium text-destructive">- {formatMoney(invoice.discount)}</span>
+                <span className="font-medium text-red-600 tabular-nums">- {formatMoney(invoice.discount)}</span>
               </div>
             )}
             <div className="flex justify-between border-t border-border pt-2">
@@ -117,11 +117,11 @@ export default async function InvoiceDetailPage({
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Paid</span>
-              <span className="font-medium text-success">{formatMoney(invoice.paidAmount)}</span>
+              <span className="font-medium text-emerald-600 tabular-nums">{formatMoney(invoice.paidAmount)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Due</span>
-              <span className={cn("font-bold", invoice.dueAmount > 0 ? "text-warning" : "")}>
+              <span className={cn("font-bold tabular-nums", invoice.dueAmount > 0 ? "text-amber-600" : "")}>
                 {formatMoney(invoice.dueAmount)}
               </span>
             </div>
@@ -202,7 +202,7 @@ export default async function InvoiceDetailPage({
               <div
                 className={cn(
                   "h-full rounded-full transition-all",
-                  progress === 100 ? "bg-success" : progress > 0 ? "bg-primary" : "bg-muted",
+                  progress === 100 ? "bg-emerald-500" : progress > 0 ? "bg-primary" : "bg-muted",
                 )}
                 style={{ width: `${progress}%` }}
               />

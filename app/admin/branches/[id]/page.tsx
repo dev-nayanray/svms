@@ -233,7 +233,7 @@ export default async function BranchDetailPage({
                 <Row label="Open tasks" value={tasks.filter((t) => t.status === "TODO" || t.status === "IN_PROGRESS").length} />
                 <Row label="Total revenue (paid)" value={formatMoney(revenue)} />
                 <Row label="Outstanding (due)" value={
-                  <span className={outstanding > 0 ? "font-medium text-warning" : ""}>
+                  <span className={outstanding > 0 ? "font-medium text-amber-600 tabular-nums" : "tabular-nums"}>
                     {formatMoney(outstanding)}
                   </span>
                 } />
@@ -388,7 +388,7 @@ export default async function BranchDetailPage({
                 <Row label="Total revenue (paid)" value={formatMoney(revenue)} />
                 <Row label="Payment count" value={revenueAgg._count} />
                 <Row label="Outstanding (due)" value={
-                  <span className={outstanding > 0 ? "font-medium text-warning" : ""}>
+                  <span className={outstanding > 0 ? "font-medium text-amber-600 tabular-nums" : "tabular-nums"}>
                     {formatMoney(outstanding)}
                   </span>
                 } />

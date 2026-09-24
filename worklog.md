@@ -259,3 +259,61 @@ Stage Summary:
 - One minor tooling note: `MultiEdit` reported "No replacement was performed" on a Badge → StatusBadge swap when I had a typo in the old_str (wrote `<StatusBadge>` instead of `<Badge>` in one of the edits), but the prior 2 edits in the same MultiEdit call had already been applied — confirming the tool is non-atomic in practice (matches the observation in task 3-b's worklog). Caught immediately by re-reading the file; redid the missed edit with a single `Edit` call. No impact on final outcome.
 - `npx tsc --noEmit` passes; `npx eslint <6 files>` passes (0 errors, 0 warnings).
 - Did NOT commit; parent agent will verify and commit.
+
+---
+Task ID: 4-a
+Agent: general-purpose (migrate-employee-admin)
+Task: Migrate shared components + employee/admin pages from semantic CSS vars to explicit Tailwind colors
+
+Work Log:
+- Read the 4 Priority 1 shared components (admin-shell, data-table, sidebar-shell, page-kit) and grepped each for semantic color refs (text-/bg-/border-(success|warning|info|destructive)). Found: admin-shell has 2 (notification badge bg-destructive + sign-out menu item text-destructive); data-table has 3 (destructive bulk-action button, destructive row-action button, error alert card); sidebar-shell has 0 (only `--primary` refs which per migration rules we leave alone); page-kit has 2 (required-asterisk + inline error).
+- Migrated `components/shared/admin-shell.tsx` — 2 swaps:
+  * Notification unread-count badge: `bg-destructive` → `bg-red-500` (left `text-destructive-foreground` alone — not in migration list, CSS variable still resolves, visually identical: white-on-red in light, slate-on-red in dark).
+  * Sign-out DropdownMenuItem: `text-destructive` → `text-red-600`.
+  * Left all `bg-primary`, `text-primary`, `border-primary`, `bg-primary/10`, `bg-primary/15`, `bg-primary/8`, `bg-primary/5`, `text-primary-foreground` references alone (employee/admin panels keep their dark-slate `--primary`; per migration rules).
+- Migrated `components/shared/data-table.tsx` — 3 swaps:
+  * Destructive bulk-action button: `border-destructive/30 text-destructive hover:bg-destructive/10` → `border-red-300/60 text-red-600 hover:bg-red-500/10`.
+  * Destructive row-action button: `text-destructive hover:bg-destructive/10 border-destructive/20` → `text-red-600 hover:bg-red-500/10 border-red-500/20`.
+  * Error alert card: `border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive` → `border border-red-300/60 bg-red-500/5 p-4 text-sm text-red-600`.
+  * Left `border-primary/30 bg-primary/5`, `text-primary` (bulk-action bar + selection checkbox) alone.
+- Migrated `components/shared/page-kit.tsx` — 2 swaps:
+  * Required-field asterisk: `text-destructive` → `text-red-600` (not a destructive-action button, just a "required" indicator — matches prior student-panel pattern).
+  * Inline field-error message: `text-xs text-destructive` → `text-xs text-red-600`.
+- `components/shared/sidebar-shell.tsx` — NO changes: only `--primary` references in this file (logo tile `bg-primary text-primary-foreground`, active nav `bg-primary/10 text-primary`, mobile nav same). Per migration rules these stay untouched.
+- Verified Priority 1 with `npx tsc --noEmit` — passed cleanly.
+- Read the 7 Priority 2 employee pages. Grepped each for semantic refs:
+  * `app/employee/page.tsx` (dashboard, claimed "9 refs") — actually 0 semantic refs found; the 9 counted refs are all `--primary` references (View all links, folder icons, student avatar tile) which per migration rules we leave alone. NO changes needed.
+  * `app/employee/invoices/[id]/page.tsx` — 4 swaps: print-mode Discount `text-destructive` → `text-red-600` (added `tabular-nums`); print-mode Paid `text-success` → `text-emerald-600` (added `tabular-nums`); print-mode Due `text-warning` → `text-amber-600` (added `tabular-nums` to the cn() string); payment-progress bar `bg-success` → `bg-emerald-500` (kept `bg-primary` for partial-progress and `bg-muted` for empty). Left the Print Invoice button `bg-primary text-primary-foreground` and the "View all →" `text-primary` / `hover:text-primary` links alone.
+  * `app/employee/visa/[id]/page.tsx` — NO semantic refs found (despite task description claiming 4). Skipped.
+  * `app/employee/performance/page.tsx` — 1 swap: won-applications number `text-2xl font-bold text-success` → `text-2xl font-bold text-emerald-600 tabular-nums`.
+  * `app/employee/profile/page.tsx` — NO semantic refs found (despite task description claiming 1). Skipped.
+  * `app/employee/courses/page.tsx` — NO semantic refs found (despite task description claiming 1). Skipped.
+  * `app/employee/students/[id]/page.tsx` — NO semantic refs found. Skipped.
+- Verified Priority 2 with `npx tsc --noEmit` — passed cleanly.
+- Read the 11 Priority 3 admin pages. Grepped each for semantic refs:
+  * `app/admin/courses/[id]/page.tsx` — 4 swaps across 2 areas: (1) IntakeTable urgency cells: urgent `text-destructive` → `text-red-600`, soon `text-warning` → `text-amber-600`, none `text-success` → `text-emerald-600`; (2) DeadlineBanner tone map: urgent `border-destructive/40 bg-destructive/10 text-destructive` → `border-red-300/60 bg-red-500/10 text-red-600`, soon `border-warning/40 bg-warning/10 text-warning` → `border-amber-300/60 bg-amber-500/10 text-amber-600`.
+  * `app/admin/invoices/[id]/page.tsx` — 4 swaps identical to the employee invoice page (same file structure with /admin/ URLs): Discount `text-destructive` → `text-red-600` (+ tabular-nums), Paid `text-success` → `text-emerald-600` (+ tabular-nums), Due `text-warning` → `text-amber-600` (+ tabular-nums), payment-progress `bg-success` → `bg-emerald-500` (kept `bg-primary`).
+  * `app/admin/branches/[id]/page.tsx` — 2 swaps (both for Outstanding-amount spans using `text-warning`): one in the Branch info tab and one in the Multi-branch access tab. Both migrated to `text-amber-600 tabular-nums` (added tabular-nums unconditionally in the falsy branch too, for consistent numeric alignment).
+  * `app/admin/admin-dashboard-view.tsx` — 2 swaps: error alert `border-destructive/30 bg-destructive/5 text-destructive` → `border-red-300/60 bg-red-500/5 text-red-600`; MetricRow tone map danger `text-destructive` → `text-red-600`, warning `text-warning` → `text-amber-600`.
+  * `app/admin/universities/[id]/page.tsx` — 2 swaps (both identical): VisaRequirement + DocumentRequirement "Required" labels `text-warning` → `text-amber-600` (used replace_all since the strings were identical).
+  * `app/admin/countries/[id]/page.tsx` — NO semantic refs found (despite task description claiming 6). Skipped.
+  * `app/admin/visa/[id]/page.tsx` — NO semantic refs found (despite task description claiming 5). Skipped.
+  * `app/admin/visa/requirements-admin.tsx` — NO semantic refs found. Skipped.
+  * `app/admin/employees/[id]/page.tsx` — 2 swaps: Overdue-Tasks KPI card `text-destructive` → `text-red-600` (added `tabular-nums` to the cn() string for consistent number alignment); MetricRow tone="danger" `text-destructive` → `text-red-600` (added `tabular-nums` likewise).
+  * `app/admin/students/[id]/page.tsx` — NO semantic refs found. Skipped.
+  * `app/admin/leads/[id]/page.tsx` — NO semantic refs found (despite task description claiming 3). Skipped.
+- Final verification: `npx tsc --noEmit` — passed cleanly (exit 0, no output).
+- Final lint: `npx eslint <11 files>` — 0 errors, 1 pre-existing warning (`homeHref` unused in admin-shell.tsx). Verified via `git stash` + `npx eslint admin-shell.tsx` that the warning pre-existed before my migration; not introduced by this task.
+- Final scan: `rg '(bg|text|border)-(success|warning|destructive|info)\b' app/employee app/admin components/shared/admin-shell.tsx components/shared/data-table.tsx components/shared/page-kit.tsx components/shared/sidebar-shell.tsx` — only 1 remaining match: `text-destructive-foreground` in admin-shell.tsx notification badge, which is intentionally NOT in the migration list (the CSS variable still resolves to white/slate-950 per globals.css).
+
+Stage Summary:
+- 11 files refactored (4 Priority 1, 2 Priority 2 employee, 5 Priority 3 admin). 6 files in the original list had NO semantic refs to migrate and were skipped (employee/page.tsx, employee/visa/[id]/page.tsx, employee/profile/page.tsx, employee/courses/page.tsx, employee/students/[id]/page.tsx, admin/countries/[id]/page.tsx, admin/visa/[id]/page.tsx, admin/visa/requirements-admin.tsx, admin/students/[id]/page.tsx, admin/leads/[id]/page.tsx — actually 10 skipped files). Note: the task description's reference-counts for those 10 files appear to have been over-counts (likely counting `--primary` refs that we leave untouched, or counting refs in sibling files like `components/admin/country-visa-requirements.tsx`).
+- Total diff: 30 insertions + 30 deletions = 60 lines changed across 11 files (per `git diff --stat`; net 0 — pure token renames + a few `tabular-nums` additions, no structural changes).
+- All `--success` / `--warning` / `--info` / `--destructive` status-color references in employee + admin panels migrated to explicit emerald-500 / amber-500 / blue-500 / red-500 Tailwind classes.
+- All `--primary` references left untouched (employee/admin panels keep dark-slate primary): `bg-primary`, `text-primary`, `bg-primary/8`, `bg-primary/10`, `bg-primary/15`, `bg-primary/5`, `text-primary-foreground`, `border-primary/30`, `hover:text-primary`, `hover:border-primary/30`, `hover:bg-primary/5`, `focus-visible:outline-primary`, `bg-primary text-primary-foreground`.
+- `text-destructive-foreground` left alone in admin-shell.tsx notification badge — not in migration list, CSS variable still resolves, visually identical (white on red-500 in light, slate-950 on red-500 in dark).
+- `tabular-nums` added to monetary / count displays: employee+admin invoice Discount/Paid/Due spans, performance won-applications count, admin employees KPI cards + Row component, branches Outstanding spans.
+- `npx tsc --noEmit` passes (exit 0).
+- `npx eslint <11 files>` passes with 0 errors, 1 pre-existing warning (unrelated `homeHref` unused in admin-shell.tsx).
+- No partial migrations remain. No structural/behavioral changes. No `cn()` call structure changes — only the strings inside.
+- Did NOT commit; parent agent will verify and commit.

@@ -111,7 +111,7 @@ export function AdminDashboardView() {
 
       {/* ── Error state ── */}
       {isError && (
-        <div role="alert" className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+        <div role="alert" className="flex items-center gap-3 rounded-xl border border-red-300/60 bg-red-500/5 p-4 text-sm text-red-600">
           <AlertCircle className="h-5 w-5 shrink-0" aria-hidden />
           <span>Failed to load dashboard: {(error as Error).message}</span>
           <Button variant="outline" size="sm" className="ml-auto" onClick={() => refetch()}>
@@ -290,9 +290,9 @@ function WidgetRow({
       <span
         className={
           tone === "danger"
-            ? "font-bold text-destructive"
+            ? "font-bold text-red-600"
             : tone === "warning"
-              ? "font-bold text-warning"
+              ? "font-bold text-amber-600"
               : "font-semibold"
         }
       >

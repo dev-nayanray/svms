@@ -247,7 +247,7 @@ export function DataTable<T extends { id: string }>({
                 className={cn(
                   "inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors",
                   action.destructive
-                    ? "border-destructive/30 text-destructive hover:bg-destructive/10"
+                    ? "border-red-300/60 text-red-600 hover:bg-red-500/10"
                     : "border-border text-foreground hover:bg-muted",
                 )}
               >
@@ -359,7 +359,7 @@ export function DataTable<T extends { id: string }>({
                               onClick={() => a.onClick(row)}
                               className={cn(
                                 "rounded-md border border-border px-2 py-1 text-xs font-medium transition-colors hover:bg-muted",
-                                a.destructive && "text-destructive hover:bg-destructive/10 border-destructive/20",
+                                a.destructive && "text-red-600 hover:bg-red-500/10 border-red-500/20",
                               )}
                             >
                               {a.label}
@@ -378,7 +378,7 @@ export function DataTable<T extends { id: string }>({
 
       {/* Error */}
       {isError && (
-        <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+        <div role="alert" className="rounded-xl border border-red-300/60 bg-red-500/5 p-4 text-sm text-red-600">
           {(error as Error).message}
           <Button variant="outline" size="sm" className="ml-3" onClick={() => refetch()}>
             Retry
