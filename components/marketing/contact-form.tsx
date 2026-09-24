@@ -76,8 +76,8 @@ export function ContactForm() {
 
   if (status === "success") {
     return (
-      <div className="rounded-2xl border border-success/30 bg-success/5 p-8 text-center">
-        <CheckCircle2 className="mx-auto h-12 w-12 text-success" aria-hidden />
+      <div className="rounded-2xl border border-emerald-300/60 bg-emerald-50/40 dark:bg-emerald-950/10 p-8 text-center">
+        <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600" aria-hidden />
         <h3 className="mt-4 font-display text-xl font-bold">Thank you!</h3>
         <p className="mt-2 text-sm text-muted-foreground">
           We&apos;ve received your request. One of our counselors will reach out within 24 hours.
@@ -101,7 +101,7 @@ export function ContactForm() {
       aria-label="Consultation request"
     >
       {status === "error" && (
-        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+        <div className="flex items-start gap-2 rounded-lg border border-red-300/60 bg-red-50/40 dark:bg-red-950/10 p-3 text-sm text-red-600">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <span>Something went wrong. Please try again or email us directly.</span>
         </div>
@@ -213,10 +213,10 @@ function Field({
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium text-foreground">
         {label}
-        {required && <span className="ml-0.5 text-destructive">*</span>}
+        {required && <span className="ml-0.5 text-red-600">*</span>}
       </span>
       {children}
-      {error && <span className="mt-1 block text-xs text-destructive">{error}</span>}
+      {error && <span className="mt-1 block text-xs text-red-600">{error}</span>}
     </label>
   );
 }
@@ -224,6 +224,6 @@ function Field({
 function inputClass(hasError: boolean) {
   return cn(
     "h-11 w-full rounded-lg border bg-background px-3 text-sm transition-colors placeholder:text-muted-foreground/70 focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50",
-    hasError ? "border-destructive" : "border-border focus:border-primary",
+    hasError ? "border-red-500" : "border-border focus:border-primary",
   );
 }

@@ -317,3 +317,28 @@ Stage Summary:
 - `npx eslint <11 files>` passes with 0 errors, 1 pre-existing warning (unrelated `homeHref` unused in admin-shell.tsx).
 - No partial migrations remain. No structural/behavioral changes. No `cn()` call structure changes — only the strings inside.
 - Did NOT commit; parent agent will verify and commit.
+
+---
+Task ID: 5-a
+Agent: general-purpose (migrate-marketing)
+Task: Migrate marketing site from semantic CSS vars to explicit Tailwind colors
+
+Work Log:
+- Read worklog.md and all 5 target marketing files (showcase.tsx, sections.tsx, navbar.tsx, support-widget.tsx, contact-form.tsx).
+- Migrated showcase.tsx: 2x `"bg-success"` → `"bg-emerald-500"` in StudentMockup/EmployeeMockup data arrays (replace_all).
+- Migrated sections.tsx: `bg-destructive/10 text-destructive ring-1 ring-destructive/10` → `bg-red-500/10 text-red-600 ring-1 ring-red-500/10` (ProblemSection icon); `bg-success/15 text-success` → `bg-emerald-500/15 text-emerald-600` (SolutionSection check badges).
+- Migrated navbar.tsx: `hover:text-destructive` → `hover:text-red-600` (desktop logout button); `text-destructive hover:bg-destructive/10` → `text-red-600 hover:bg-red-500/10` (mobile logout button).
+- Migrated support-widget.tsx: `bg-success/10` → `bg-emerald-500/10` (success circle); `text-success` → `text-emerald-600` (CheckCircle2); `text-destructive` ×3 → `text-red-600` (name/email/message error messages, replace_all).
+- Migrated contact-form.tsx: `border-success/30 bg-success/5` → `border-emerald-300/60 bg-emerald-50/40 dark:bg-emerald-950/10` (success card); `text-success` → `text-emerald-600`; `border-destructive/30 bg-destructive/5` → `border-red-300/60 bg-red-50/40 dark:bg-red-950/10` (error banner); `text-destructive` ×3 → `text-red-600` (error banner, required asterisk, error span, replace_all); standalone `border-destructive` → `border-red-500` (inputClass error border).
+- Left `--primary` references untouched (bg-primary, text-primary, border-primary, hover:bg-primary-hover, focus:border-primary, etc.) per instructions.
+- Verified with `rg` — no remaining `--success/--warning/--info/--destructive` or `bg-/text-/border-/ring-` semantic class refs anywhere in components/marketing/.
+- Ran `npx tsc --noEmit` — passed with no output (clean).
+- Ran `npx eslint` on all 5 files — 0 errors, 2 pre-existing warnings (`cn` and `router` unused in support-widget.tsx — not introduced by this migration).
+
+Stage Summary:
+- 5 files refactored, 17 unique lines modified (~18 string substitutions including the line 104 double-edit in contact-form.tsx).
+- `npx tsc --noEmit` passes clean.
+- `npx eslint` passes for all 5 files (only pre-existing unused-var warnings in support-widget.tsx, unrelated to color migration).
+- Marketing site is now visually consistent with the migrated student/employee/admin panels — no `--success/--warning/--info/--destructive` semantic CSS var refs remain in components/marketing/.
+- `--primary` accent refs intentionally preserved per task scope.
+- No commit performed — parent agent will commit.
