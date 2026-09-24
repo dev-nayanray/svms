@@ -23,6 +23,7 @@ export const STUDENT_MORE = [
   { href: "/student/notifications", label: "Notifications", icon: "Bell" },
   { href: "/student/support", label: "Support", icon: "LifeBuoy" },
   { href: "/student/settings", label: "Settings", icon: "Settings" },
+  { href: "/student/design-preview", label: "Design System", icon: "Palette" },
 ] as const;
 
 export type StudentTab = (typeof STUDENT_TABS)[number];

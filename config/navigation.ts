@@ -69,6 +69,7 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
       { href: "/admin/marketing", label: "Marketing Site", icon: "Megaphone" },
       { href: "/admin/settings", label: "System Settings", icon: "Settings" },
       { href: "/admin/audit", label: "Audit Logs", icon: "ScrollText" },
+      { href: "/admin/design-preview", label: "Design System", icon: "Palette" },
     ],
   },
   {
@@ -139,6 +140,12 @@ export const EMPLOYEE_NAV_GROUPS: NavGroup[] = [
     label: "Insights",
     items: [
       { href: "/employee/reports", label: "Reports", icon: "BarChart3" },
+    ],
+  },
+  {
+    label: "Resources",
+    items: [
+      { href: "/employee/design-preview", label: "Design System", icon: "Palette" },
     ],
   },
 ];

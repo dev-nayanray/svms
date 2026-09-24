@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/overlays";
-import { House, FolderKanban, FileText, MessageSquare, UserRound, Building2, BookOpen, Stamp, CheckSquare, CreditCard, Receipt, CalendarClock, Bell, LifeBuoy, Settings } from "lucide-react";
+import { House, FolderKanban, FileText, MessageSquare, UserRound, Building2, BookOpen, Stamp, CheckSquare, CreditCard, Receipt, CalendarClock, Bell, LifeBuoy, Settings, Palette } from "lucide-react";
 
 export const STUDENT_NAV_ICONS = {
   House, FolderKanban, FileText, MessageSquare, UserRound, Building2, BookOpen,
-  Stamp, CheckSquare, CreditCard, Receipt, CalendarClock, Bell, LifeBuoy, Settings,
+  Stamp, CheckSquare, CreditCard, Receipt, CalendarClock, Bell, LifeBuoy, Settings, Palette,
 } as const;
 
 export type StudentNavIconName = keyof typeof STUDENT_NAV_ICONS;
