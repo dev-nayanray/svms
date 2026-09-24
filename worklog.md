@@ -123,3 +123,139 @@ Stage Summary:
 - `npx tsc --noEmit` passes; `npx eslint <6 files>` passes with no errors or warnings.
 - No behavior changes — all event handlers, conditional rendering, and accessibility attributes preserved.
 - Did NOT commit; parent agent will verify and commit.
+
+---
+Task ID: 3-a
+Agent: general-purpose (migrate-section-cards)
+Task: Migrate application/section-cards.tsx to unified design system
+
+Work Log:
+- Read shared UI module `components/student/ui.tsx` to confirm `StatusBadge` signature (`tone?: "default" | "success" | "warning" | "destructive" | "info"`, plus optional `className`) — drop-in compatible with the existing `Badge` API in `components/ui`.
+- Inspected the 820-line `components/student/application/section-cards.tsx` end-to-end (types, helpers, `SectionCard` / `NavButton` / `DetailRow` primitives, all 14 exported cards, and `NextActionBanner`).
+- Imports: removed `Badge` from the `@/components/ui` import; added a new `import { StatusBadge } from "@/components/student/ui";` line directly beneath it. Kept `Button`, `Card`, `CardHeader`, `CardContent`, `CardTitle` from `@/components/ui` (shared primitives, per migration rules). Kept `AlertTriangle`, `cn`, `format`/`parseISO` — all still in use.
+- Replaced all 11 `<Badge tone=…>` usages with `<StatusBadge tone=…>` (matching closing tags): OverviewCard status badge, OverviewCard priority badge, StatusCard status badge, DocumentsCard required-count badge, DocumentsCard per-item status badge, TasksCard open-count badge, TasksCard per-item priority+status badges, PaymentsCard due/paid badges, PaymentsCard per-item status badge, VisaCard stage badge. All tone values used (`info`, `default`, `success`, `warning`, `destructive`, and the dynamic results of `priorityTone`/`statusTone`) are within the `StatusBadge` tone union.
+- Color-tone migrations:
+  * SectionCard header icon accent `text-primary` → `text-amber-600` (line 266).
+  * DatesCard visa/payment tone `border-info/30 bg-info/5` → `border-blue-300/60 bg-blue-50/40 dark:bg-blue-950/10`; left the fallback `border-border bg-card` branch untouched.
+  * CounselorCard mailto link `text-primary hover:underline` → `text-amber-600 hover:underline`.
+  * PaymentsCard next-invoice callout `border border-warning/30 bg-warning/5` → `border-amber-300/60 bg-amber-50/40 dark:bg-amber-950/10`; accompanying `text-warning` heading → `text-amber-600`.
+  * TimelineCard dot `bg-primary` → `bg-amber-500` (matches the unified `Timeline` component in `student/ui.tsx`).
+  * DocCountTile color map: `bg-success/10 text-success` → `bg-emerald-500/10 text-emerald-600`; `bg-warning/10 text-warning` → `bg-amber-500/10 text-amber-600`; `bg-info/10 text-info` → `bg-blue-500/10 text-blue-600`; `bg-destructive/10 text-destructive` → `bg-red-500/10 text-red-600`.
+  * PaymentTile color map: `bg-success/10 text-success` → `bg-emerald-500/10 text-emerald-600`; `bg-warning/10 text-warning` → `bg-amber-500/10 text-amber-600`; left `default: "bg-muted text-foreground"` untouched.
+- Added `tabular-nums` to numeric displays: DocCountTile value `<p className="text-lg font-semibold leading-none tabular-nums">`, PaymentTile value `<p className="tabular-nums text-sm font-semibold leading-none">`, PaymentsCard per-item amount `<p className="tabular-nums text-sm font-medium">`, PaymentsCard next-invoice summary `<p className="tabular-nums text-muted-foreground">`, "+N more documents" / "+N more tasks" `<li>` rows.
+- Did NOT touch the NextActionBanner — it already uses explicit Tailwind colors (`red-200/50/950/500/700`, `amber-200/50/950/500/700`, `blue-200/50/950/500/700`) and is structurally compliant.
+- Did NOT touch the type definitions, `fmtDate`/`fmtDateTime`, `priorityTone`/`statusTone` helpers, `SectionCard`/`NavButton`/`DetailRow` component contracts, or any `cn()` call structure — only the strings inside.
+- Verified zero remaining semantic-CSS-variable references via ripgrep (no `bg-success`, `bg-warning`, `bg-info`, `bg-destructive`, `bg-primary`, `text-success`, `text-warning`, `text-info`, `text-destructive`, `text-primary`, `border-success`, `border-warning`, `border-info`, `border-destructive`, `outline-primary`, `hover:bg-primary`, or `<Badge` matches in the file).
+- Ran `npx tsc --noEmit` (project-wide) — passed with no output.
+- Ran `npx eslint components/student/application/section-cards.tsx` — passed with no errors or warnings.
+
+Stage Summary:
+- File migrated: `components/student/application/section-cards.tsx` (820 → 821 lines; 31 insertions + 30 deletions per `git diff --numstat`).
+- 11 `<Badge tone=…>` → `<StatusBadge tone=…>` swaps; `Badge` import removed from `@/components/ui`; `StatusBadge` import added from `@/components/student/ui`.
+- All semantic color tokens replaced with the unified amber/emerald/red/blue palette; tone-aware border/background tiles now use the `border-{color}-300/60 bg-{color}-50/40 dark:bg-{color}-950/10` pattern; `text-primary` icon accents → `text-amber-600`; timeline dot → `bg-amber-500`.
+- `tabular-nums` added to 5 numeric displays (counts, money, count-deltas).
+- No structural/behavioral changes; no renames; no removed or merged components; no type changes.
+- `npx tsc --noEmit` passes; `npx eslint` passes (0 errors, 0 warnings).
+- Did NOT commit; parent agent will verify and commit.
+
+---
+Task ID: 3-b
+Agent: general-purpose (migrate-remaining-views)
+Task: Migrate remaining 11 student component files to unified design system (actually 12 — see Work Log)
+
+Work Log:
+- Re-read shared UI module `components/student/ui.tsx` to confirm `StatusBadge` signature (drop-in compatible with the existing `Badge` API — same `tone` union + `className`, optional `children`) and `StudentErrorState` signature (`online`, `title`, `description`, `onRetry`).
+- Migrated `components/student/module-page.tsx` — replaced `bg-primary/10 text-primary` placeholder tile with `bg-amber-500/10 text-amber-600` (1 change, 2 lines diff).
+- Migrated `components/student/application/pipeline-progress.tsx` — 5 swaps: vertical + horizontal connecting lines `bg-primary` → `bg-amber-500`; StageDot completed/current states from `border-primary bg-primary text-primary-foreground` / `border-primary bg-primary/15 text-primary` to `border-amber-500 bg-amber-500 text-white` / `border-amber-500 bg-amber-500/15 text-amber-600`; ProgressBar percent label `text-success`/`text-primary` → `text-emerald-600`/`text-amber-600` (added `tabular-nums`); ProgressBar fill `bg-success`/`bg-primary` → `bg-emerald-500`/`bg-amber-500`.
+- Migrated `components/student/application/application-selector.tsx` — swapped `Badge` import from `@/components/ui` for `StatusBadge` from `@/components/student/ui`; replaced 2 `<Badge tone>` (selected-percent + per-row-percent) with `<StatusBadge tone>`; migrated `focus-visible:outline-primary` (×2) → `focus-visible:outline-amber-500`; migrated `bg-primary/10 ring-1 ring-primary` selected row → `bg-amber-500/10 ring-1 ring-amber-500`.
+- Migrated `components/student/documents/document-card.tsx` — swapped `Badge` for `StatusBadge`; replaced the document status `<Badge tone>` with `<StatusBadge tone>`; migrated the per-status card border (`border-destructive/40` / `border-success/30` → `border-red-300/60` / `border-emerald-300/60`), the previewable-file icon (`bg-primary/10 text-primary` → `bg-amber-500/10 text-amber-600`), the rejection banner (`border-destructive/30 bg-destructive/5` + `text-destructive` icon/text → `border-red-300/60 bg-red-50/40 dark:bg-red-950/10` + `text-red-600`), the expired banner (same migration), and the requested banner (`border-warning/30 bg-warning/5` + `text-warning` → `border-amber-300/60 bg-amber-50/40 dark:bg-amber-950/10` + `text-amber-600`).
+- Migrated `components/student/appointments/request-appointment-sheet.tsx` — no `Badge` to replace (uses `Button`, `Input`, `Select`, `Label`, `Textarea` shared primitives only); migrated 2 required-asterisk `text-destructive` to `text-red-600`; migrated the purpose-preset chip `focus-visible:outline-primary` + `border-primary bg-primary/10 text-primary` to amber tokens; migrated the inline error alert `border-destructive/30 bg-destructive/5 text-destructive` → `border-red-300/60 bg-red-50/40 text-red-600 dark:bg-red-950/10`; added `tabular-nums` to the notes `{notes.length}/2000 characters` counter.
+- Migrated `components/student/tasks/create-task-sheet.tsx` — migrated the `PRIORITIES` tone map: `bg-info/15 text-info` → `bg-blue-500/15 text-blue-600`, `bg-warning/15 text-warning` → `bg-amber-500/15 text-amber-600`, `bg-destructive/15 text-destructive` → `bg-red-500/15 text-red-600`; migrated the priority-button ring focus + per-value ring colors (`focus-visible:outline-primary` → `focus-visible:outline-amber-500`; `ring-info/40`/`ring-warning/40`/`ring-destructive/40` → `ring-blue-500/40`/`ring-amber-500/40`/`ring-red-500/40`); migrated title-suggestion chip (`border-primary bg-primary/10 text-primary` + outline → amber tokens); migrated required asterisk + inline error banner same as appointment sheet; added `tabular-nums` to both `{title.length}/200` and `{description.length}/2000` counters.
+- Migrated `components/student/search/global-search-overlay.tsx` — migrated search-icon container `bg-primary/10 text-primary` → `bg-amber-500/10 text-amber-600`; result-button `focus-visible:outline-primary` → `focus-visible:outline-amber-500` + result-row icon `group-hover:bg-primary/10 group-hover:text-primary` → `group-hover:bg-amber-500/10 group-hover:text-amber-600`; empty-state hint icon `bg-primary/10 text-primary` → amber tokens; added `tabular-nums` to the per-group count pill.
+- Migrated `components/student/invoices/invoice-detail-view.tsx` — replaced the 1 inline error/offline card with `<StudentErrorState>` (passing `online`, `title`, `description`, `onRetry`); removed `AlertTriangle`, `WifiOff`, `RefreshCw` from lucide-react imports (no longer needed); removed unused `useEffect`/`useState` React imports (the file only uses `useQuery`); swapped `Badge` import from `@/components/ui` for `StatusBadge` + `StudentErrorState` from `@/components/student/ui`; replaced the payment-history `<Badge tone>` with `<StatusBadge tone>`; migrated the status tone pill (success/warning/destructive/info/default `bg-{tone}/10 text-{tone}` → emerald/amber/red/blue equivalents), the discount/paid/balance totals `text-success`/`text-warning` → `text-emerald-600`/`text-amber-600`, the payment-progress bar `bg-success` → `bg-emerald-500`, the back-link `hover:text-primary` → `hover:text-amber-600`; added `tabular-nums` to all monetary `<dd>` values, the line-item unit/total row, and the payment-progress percentage.
+- Migrated `components/student/documents/upload-sheet.tsx` — no `Badge` usage; migrated the drag-zone `focus-visible:outline-primary` + `border-primary bg-primary/5` (dragOver) → amber tokens; migrated the selected-file icon `text-primary` → `text-amber-600`; migrated the "Remove file" link `text-destructive` → `text-red-600`; migrated the replace-mode hint `border-info/30 bg-info/5` + `text-info` icon → `border-blue-300/60 bg-blue-50/40 dark:bg-blue-950/10` + `text-blue-600`; migrated the upload-progress bar `bg-primary` → `bg-amber-500`; migrated the `UploadSuccessInline` border + bg + text (`border-success/30 bg-success/10 text-success` → `border-emerald-300/60 bg-emerald-500/10 text-emerald-600`); added `tabular-nums` to the file-size label and the upload-progress percent.
+- Migrated `components/student/courses/course-detail-view.tsx` — replaced the 1 inline error card with `<StudentErrorState>`; removed `AlertTriangle`/`WifiOff`/`RefreshCw` from lucide-react (initially removed all three, then re-added `AlertTriangle` after realizing it's still used in the `IntakeCard` urgency badge); removed unused `useEffect` from the React import; removed `Badge` from `@/components/ui`; added `StatusBadge` + `StudentErrorState` imports; replaced the intakes-count `<Badge tone="info">` with `<StatusBadge tone="info">`; migrated all 4 section-icon accents `text-primary` → `text-amber-600` (Overview, Intakes, Requirements, Application Info); migrated the university-initials tile `bg-primary/10 text-primary` → `bg-amber-500/10 text-amber-600`; migrated the degree-level pill `bg-primary/10 text-primary` → amber tokens; migrated the 3 CTA-link `focus-visible:outline-primary` → `focus-visible:outline-amber-500`; migrated the ExpandableCard header `focus-visible:outline-primary` → `focus-visible:outline-amber-500`; migrated the IntakeCard urgency badges (`bg-destructive/15 text-destructive` → `bg-red-500/15 text-red-600`; `bg-warning/15 text-warning` → `bg-amber-500/15 text-amber-600`; `bg-success/15 text-success` → `bg-emerald-500/15 text-emerald-600`); migrated the DeadlineBanner tone map (`border-destructive/40 bg-destructive/10 text-destructive` → `border-red-300/60 bg-red-500/10 text-red-600`; `border-warning/40 bg-warning/10 text-warning` → `border-amber-300/60 bg-amber-500/10 text-amber-600`); added `tabular-nums` to the "Open intakes" count FactRow; migrated back-link `hover:text-primary` → `hover:text-amber-600` + university link.
+- Migrated `components/student/universities/university-detail-view.tsx` — replaced the 1 inline error card with `<StudentErrorState>`; removed `AlertTriangle`/`WifiOff`/`RefreshCw` from lucide-react (none still used after error state refactor); removed unused `useEffect` from the React import; removed `Badge` from `@/components/ui`; added `StatusBadge` + `StudentErrorState` imports; replaced 4 `<Badge tone>` usages (header "Active" badge, courses count, intakes count, intake deadline badge, requirements count) with `<StatusBadge tone>`; migrated all 5 section-icon accents `text-primary` → `text-amber-600` (Overview, Courses, Intakes, Requirements, Application Info); migrated the university-initials tile `bg-primary/10 text-primary` → `bg-amber-500/10 text-amber-600`; migrated the 3 CTA-link `focus-visible:outline-primary` → `focus-visible:outline-amber-500`; migrated the ExpandableCard header + CourseCard header `focus-visible:outline-primary` → `focus-visible:outline-amber-500`; migrated the RequirementItem required-label `text-warning` → `text-amber-600`; migrated back-link `hover:text-primary` → `hover:text-amber-600`; added `tabular-nums` to the world-ranking FactRow, courses-available count, open-intakes count, and the CourseCard tuition/app-fee spans.
+- Migrated `components/student/documents/bulk-upload-sheet.tsx` — no `Badge` usage; migrated the drag-zone `focus-visible:outline-primary` + `border-primary bg-primary/5` (dragOver) → amber tokens; migrated the file-list summary counts (`text-success` → `text-emerald-600`, `text-destructive` → `text-red-600`); migrated the FileRow per-status border + bg (`border-success/40 bg-success/5` → `border-emerald-300/60 bg-emerald-50/40 dark:bg-emerald-950/10`; same for error → red and uploading → blue); migrated the FileRow per-status icon container (`bg-success/15 text-success` → `bg-emerald-500/15 text-emerald-600`; same for error and uploading); migrated the FileRow progress bar `bg-info` → `bg-blue-500`; added `tabular-nums` to the total-file count, the done/failed/queued summary span, the file-size label, and the upload-progress percent.
+- After each file: ran `npx tsc --noEmit` (passed cleanly every time) and ripgrep-verified zero remaining semantic-token references (`bg-primary`, `text-primary`, `text-success`, `text-warning`, `text-info`, `text-destructive`, `border-primary`, `border-success`, `border-warning`, `border-info`, `border-destructive`, `outline-primary`, `<Badge`).
+- Final lint: `npx eslint <12 files>` — passed with 0 errors and 0 warnings (exit 0).
+- Final type check: `npx tsc --noEmit` — passed (exit 0).
+
+Stage Summary:
+- 12 files migrated: module-page, pipeline-progress, application-selector, document-card, request-appointment-sheet, create-task-sheet, global-search-overlay, invoice-detail-view, upload-sheet, course-detail-view, university-detail-view, bulk-upload-sheet.
+- Total diff: 189 insertions + 229 deletions = ~418 lines changed across the 12 files (net −40 lines thanks to the 3 inline error cards consolidated into `<StudentErrorState>`).
+- 3 ad-hoc error/offline cards replaced with `<StudentErrorState>` (invoice-detail-view, course-detail-view, university-detail-view).
+- 9 `<Badge tone>` usages replaced with `<StatusBadge tone>`: application-selector (×2), document-card (×1), invoice-detail-view (×1), course-detail-view (×1), university-detail-view (×4).
+- Imports cleaned: removed `Badge` from `@/components/ui` in 4 files (application-selector, document-card, invoice-detail-view, course-detail-view, university-detail-view — actually 5 files); removed `AlertTriangle`/`WifiOff`/`RefreshCw` where no longer needed; removed unused `useEffect` (invoice-detail-view, course-detail-view, university-detail-view).
+- All semantic color tokens replaced with the unified amber/emerald/red/blue palette; tone-aware border/background tiles now use the `border-{color}-300/60 bg-{color}-50/40 dark:bg-{color}-950/10` pattern; `text-primary` icon accents → `text-amber-600`; `bg-primary` progress bars/dots → `bg-amber-500`; `bg-info` progress bars/dots → `bg-blue-500`; `bg-success` → `bg-emerald-500`; `bg-destructive` → `bg-red-500`; `focus-visible:outline-primary` → `focus-visible:outline-amber-500`.
+- `tabular-nums` added to numeric displays (counts, money, percentages, file sizes, character counters) across all files.
+- One unusual pattern: in `course-detail-view.tsx`, initially removed `AlertTriangle` from imports during the error-state refactor, then had to re-add it because `AlertTriangle` is still used inside the `IntakeCard` sub-component for the "≤7 days" urgent badge. Caught via TypeScript.
+- Another unusual pattern: `MultiEdit` reported "No replacement was performed" on `pipeline-progress.tsx` when one of 5 edits failed to match verbatim, but the diff showed 3 of 5 edits had been applied. Treated as non-atomic; redid the remaining 2 edits with separate `Edit` calls. (This contradicts the tool's documented "atomic" guarantee; flagged for awareness but did not affect final outcome — file ended up fully migrated and passes both tsc and eslint.)
+- No partial migrations remain. `npx tsc --noEmit` passes; `npx eslint <12 files>` passes (0 errors, 0 warnings).
+- Did NOT commit; parent agent will verify and commit.
+
+---
+Task ID: 3-c
+Agent: general-purpose (migrate-app-shell-and-profile)
+Task: Migrate app-shell + profile sub-components + document-preview to unified design system
+
+Work Log:
+- Read shared UI module `components/student/ui.tsx` to confirm `StatusBadge` signature (drop-in compatible with `Badge` — same `tone` union + `className`) and `MobileCard` (already used by 2 of the 6 target files).
+- Migrated `components/student/app-shell.tsx` (583 lines) — 14 mechanical edits, no `Badge` usage to swap:
+  * Home header background `from-primary/5 via-card/80 to-info/5` → `from-amber-500/5 via-card/80 to-amber-500/5`.
+  * Home header top accent line `from-primary via-info to-primary` → `from-amber-400 via-amber-500 to-amber-400`.
+  * 5× `focus-visible:outline-primary` → `focus-visible:outline-amber-500` (back button, home link, search button, notifications bell, profile avatar link).
+  * Profile avatar fallback tile (mobile) `bg-gradient-to-br from-primary/20 to-info/20 text-xs font-bold text-primary ring-2 ring-card transition-shadow group-hover:ring-primary/40` → `bg-gradient-to-br from-amber-500/20 to-amber-500/10 text-xs font-bold text-amber-600 ring-2 ring-card transition-shadow group-hover:ring-amber-500/40`.
+  * Profile avatar `<img>` ring (mobile) `group-hover:ring-primary/40` → `group-hover:ring-amber-500/40`.
+  * More sheet grid item active state `border-primary/30 bg-primary/5 text-primary` → `border-amber-300/60 bg-amber-50/40 dark:bg-amber-950/10 text-amber-600`.
+  * More sheet grid icon container active `bg-primary/15 text-primary` → `bg-amber-500/15 text-amber-600`.
+  * Desktop sidebar search button `hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-2 focus-visible:outline-primary` → `hover:border-amber-300/60 hover:bg-amber-500/5 focus-visible:outline-2 focus-visible:outline-amber-500`.
+  * Desktop sidebar user card `hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-2 focus-visible:outline-primary` → same migration as search button.
+  * Desktop user card avatar `<img>` ring `group-hover:ring-primary/40` → `group-hover:ring-amber-500/40`.
+  * Desktop user card avatar fallback tile (same migration as mobile — `from-amber-500/20 to-amber-500/10 text-amber-600 ... group-hover:ring-amber-500/40`).
+  * Desktop sidebar active nav item `bg-gradient-to-r from-primary/15 to-info/10 font-semibold text-primary` → `bg-gradient-to-r from-amber-500/15 to-amber-500/10 font-semibold text-amber-600`.
+  * Desktop sidebar active accent bar `bg-gradient-to-b from-primary to-info` → `bg-gradient-to-b from-amber-400 to-amber-600`.
+  * Left the brand-text gradient `bg-gradient-to-r from-foreground to-foreground/80` untouched (per migration rules — not a primary/info gradient).
+  * Left the two Log out buttons untouched (`text-destructive hover:bg-destructive/10 focus-visible:outline-destructive` + `bg-destructive/10` icon container) — legitimate destructive confirmations per migration rules.
+- Migrated `components/student/profile/english-proficiency.tsx` (331 lines):
+  * Removed `Badge` from `@/components/ui` import; added `StatusBadge` to `@/components/student/ui` import.
+  * Languages section-icon accent `text-primary` → `text-amber-600`.
+  * Test-type `<Badge tone="info">{rec.testType}</Badge>` → `<StatusBadge tone="info">{rec.testType}</StatusBadge>`.
+  * Left the per-row Delete button's `hover:bg-destructive/10 hover:text-destructive` untouched (legitimate destructive confirmation).
+- Migrated `components/student/profile/academic-records.tsx` (270 lines):
+  * Removed `Badge` from `@/components/ui` import; added `StatusBadge` to `@/components/student/ui` import.
+  * GraduationCap section-icon accent `text-primary` → `text-amber-600`.
+  * Education-level `<Badge tone="info">{rec.level}</Badge>` → `<StatusBadge tone="info">{rec.level}</StatusBadge>`.
+  * Left the per-row Delete button's `hover:bg-destructive/10 hover:text-destructive` untouched (legitimate destructive confirmation).
+- Migrated `components/student/profile/profile-sheet.tsx` (148 lines):
+  * Required-asterisk `text-destructive` → `text-red-600` (NOT a destructive-action button — just a visual "required field" indicator; per prior agents' pattern in request-appointment-sheet.tsx and create-task-sheet.tsx).
+  * Inline error `<p role="alert" className="text-xs text-destructive">` → `text-red-600` (NOT a destructive-action button — inline validation feedback).
+  * No `Badge` to swap; no other semantic tokens in the file.
+- Migrated `components/student/profile/profile-photo.tsx` (236 lines):
+  * Upload-area initials fallback `bg-primary/10 text-2xl font-bold text-primary` → `bg-amber-500/10 text-2xl font-bold text-amber-600`.
+  * `ProfileAvatar` initials fallback `bg-primary/10 font-semibold text-primary` → `bg-amber-500/10 font-semibold text-amber-600`.
+  * Left the "Remove photo" button's `text-destructive hover:bg-destructive/10` untouched (legitimate destructive confirmation — equivalent to a delete action).
+- Migrated `components/student/documents/document-preview.tsx` (218 lines):
+  * Error-state `AlertTriangle` icon `text-destructive` → `text-red-600` (NOT a destructive-action button — error indicator on the "Couldn't load preview" state; matches prior agents' pattern of migrating `text-destructive` on error-alert icons to `text-red-600`).
+  * No `Badge` to swap; no other semantic tokens in the file.
+- After each file: ran `npx tsc --noEmit` (passed cleanly every time) and ripgrep-verified zero remaining semantic-token references that should have been migrated (kept `text-destructive` / `hover:bg-destructive/10` / `outline-destructive` only on the legitimate destructive-action buttons: 2× Log out in app-shell, 2× per-row Delete in english-proficiency/academic-records, 1× Remove photo in profile-photo).
+- Final lint: `npx eslint <6 files>` — passed with 0 errors and 0 warnings (exit 0, no output).
+- Final type check: `npx tsc --noEmit` — passed (exit 0, no output).
+
+Stage Summary:
+- 6 files migrated: app-shell, profile/english-proficiency, profile/academic-records, profile/profile-sheet, profile/profile-photo, documents/document-preview.
+- Total diff: 30 insertions + 30 deletions = 60 lines changed across the 6 files (per `git diff --numstat`; net 0 lines — pure token renames, no structural changes).
+- 2 `<Badge tone>` usages replaced with `<StatusBadge tone>` (english-proficiency test-type, academic-records education-level); `Badge` import removed from `@/components/ui` in those 2 files; `StatusBadge` import added to `@/components/student/ui` import.
+- 5 `text-destructive` instances migrated to `text-red-600` (profile-sheet required-asterisk + inline error, document-preview AlertTriangle error icon — none of which are destructive-action buttons).
+- All `from-primary`/`via-info`/`to-info` gradients migrated to amber equivalents per the design-system rule (header bg, header accent line, sidebar active item bg, sidebar active accent bar, 2× fallback-initials avatar tiles).
+- All `focus-visible:outline-primary` instances (5 in app-shell) → `focus-visible:outline-amber-500`.
+- All `bg-primary/10` / `bg-primary/15` / `bg-primary/5` (icon accents, hover backgrounds, active grid states) → amber equivalents.
+- All `border-primary/30 bg-primary/5` (active grid item + hover variants on sidebar search/user card) → `border-amber-300/60 bg-amber-50/40 dark:bg-amber-950/10` (or `hover:border-amber-300/60 hover:bg-amber-500/5` for the hover variant per migration rules).
+- All `ring-primary/40` (group-hover avatar rings) → `ring-amber-500/40`.
+- 5 destructive-action buttons left untouched: 2× Log out (mobile More sheet + desktop sidebar footer), 2× per-row Delete (english-proficiency + academic-records), 1× Remove photo (profile-photo) — all carry `text-destructive` / `hover:bg-destructive/10` / `focus-visible:outline-destructive` per migration rules.
+- Brand-text gradient `bg-gradient-to-r from-foreground to-foreground/80` left untouched (not a primary/info gradient).
+- Brand logo image path `/euroscope-mark.png` left untouched.
+- No structural/behavioral changes; no renames; no type changes; no `cn()` call structure changes — only the strings inside.
+- One minor tooling note: `MultiEdit` reported "No replacement was performed" on a Badge → StatusBadge swap when I had a typo in the old_str (wrote `<StatusBadge>` instead of `<Badge>` in one of the edits), but the prior 2 edits in the same MultiEdit call had already been applied — confirming the tool is non-atomic in practice (matches the observation in task 3-b's worklog). Caught immediately by re-reading the file; redid the missed edit with a single `Edit` call. No impact on final outcome.
+- `npx tsc --noEmit` passes; `npx eslint <6 files>` passes (0 errors, 0 warnings).
+- Did NOT commit; parent agent will verify and commit.

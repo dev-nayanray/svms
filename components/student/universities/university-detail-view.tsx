@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AlertTriangle,
   Bookmark,
   CalendarClock,
   ChevronDown,
@@ -16,13 +15,11 @@ import {
   GraduationCap,
   Heart,
   Info,
-  RefreshCw,
   Star,
-  WifiOff,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
-import { Button, Badge } from "@/components/ui";
-import { MobilePage, MobileCard } from "@/components/student/ui";
+import { Button } from "@/components/ui";
+import { MobilePage, MobileCard, StatusBadge, StudentErrorState } from "@/components/student/ui";
 import { Skeleton } from "@/components/ui/overlays";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -145,34 +142,24 @@ export function UniversityDetailView({ id }: { id: string }) {
   if (detailQ.isError || !detailQ.data) {
     return (
       <MobilePage>
-        <MobileCard className="py-8 text-center">
-          {!online ? (
-            <WifiOff className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden />
-          ) : (
-            <AlertTriangle className="mx-auto h-10 w-10 text-destructive" aria-hidden />
-          )}
-          <h2 className="mt-3 text-base font-semibold">
-            {!online ? "You're offline" : "University not found"}
-          </h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            {!online
-              ? "Check your connection and try again."
-              : detailQ.error instanceof Error
-                ? detailQ.error.message
-                : "This university may have been archived or is no longer available."}
-          </p>
-          <div className="mt-4 flex justify-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => router.push("/student/universities")}
-            >
-              <ChevronLeft className="h-4 w-4" aria-hidden /> Back to list
-            </Button>
-            <Button onClick={() => detailQ.refetch()} disabled={!online}>
-              <RefreshCw className="h-4 w-4" aria-hidden /> Retry
-            </Button>
-          </div>
-        </MobileCard>
+        <StudentErrorState
+          online={online}
+          title={!online ? "You're offline" : "University not found"}
+          description={!online
+            ? "Check your connection and try again."
+            : detailQ.error instanceof Error
+              ? detailQ.error.message
+              : "This university may have been archived or is no longer available."}
+          onRetry={() => detailQ.refetch()}
+        />
+        <div className="mt-4 flex justify-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => router.push("/student/universities")}
+          >
+            <ChevronLeft className="h-4 w-4" aria-hidden /> Back to list
+          </Button>
+        </div>
       </MobilePage>
     );
   }
@@ -218,7 +205,7 @@ export function UniversityDetailView({ id }: { id: string }) {
       {/* Back link */}
       <Link
         href="/student/universities"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-amber-600"
       >
         <ChevronLeft className="h-3.5 w-3.5" aria-hidden /> Universities
       </Link>
@@ -236,7 +223,7 @@ export function UniversityDetailView({ id }: { id: string }) {
             />
           ) : (
             <span
-              className="grid h-16 w-16 shrink-0 place-items-center rounded-lg bg-primary/10 text-base font-semibold text-primary"
+              className="grid h-16 w-16 shrink-0 place-items-center rounded-lg bg-amber-500/10 text-base font-semibold text-amber-600"
               aria-hidden
             >
               {universityInitials(uni.name)}
@@ -261,7 +248,7 @@ export function UniversityDetailView({ id }: { id: string }) {
                   {tier === "leading" && " · Top 200"}
                 </span>
               )}
-              <Badge tone="success">Active</Badge>
+              <StatusBadge tone="success">Active</StatusBadge>
             </div>
           </div>
         </div>
@@ -323,7 +310,7 @@ export function UniversityDetailView({ id }: { id: string }) {
       <div className="space-y-3">
         {/* Overview */}
         <ExpandableCard
-          icon={<Info className="h-4 w-4 text-primary" aria-hidden />}
+          icon={<Info className="h-4 w-4 text-amber-600" aria-hidden />}
           title="Overview"
           defaultOpen
         >
@@ -341,7 +328,7 @@ export function UniversityDetailView({ id }: { id: string }) {
                 </span>
               } />
               {uni.city && <FactRow label="City" value={uni.city} />}
-              {uni.ranking != null && <FactRow label="World ranking" value={`#${uni.ranking}`} />}
+              {uni.ranking != null && <FactRow label="World ranking" value={<span className="tabular-nums">#{uni.ranking}</span>} />}
               {uni.applicationFee != null && (
                 <FactRow
                   label="Application fee"
@@ -357,9 +344,9 @@ export function UniversityDetailView({ id }: { id: string }) {
 
         {/* Courses */}
         <ExpandableCard
-          icon={<GraduationCap className="h-4 w-4 text-primary" aria-hidden />}
+          icon={<GraduationCap className="h-4 w-4 text-amber-600" aria-hidden />}
           title={`Courses (${uni.courses.length})`}
-          badge={<Badge tone="info">{uni.courses.length}</Badge>}
+          badge={<StatusBadge tone="info">{uni.courses.length}</StatusBadge>}
         >
           {uni.courses.length === 0 ? (
             <p className="text-sm text-muted-foreground">No courses published yet.</p>
@@ -374,9 +361,9 @@ export function UniversityDetailView({ id }: { id: string }) {
 
         {/* Intakes */}
         <ExpandableCard
-          icon={<CalendarClock className="h-4 w-4 text-primary" aria-hidden />}
+          icon={<CalendarClock className="h-4 w-4 text-amber-600" aria-hidden />}
           title={`Intakes (${uni.intakes.length})`}
-          badge={<Badge tone="info">{uni.intakes.length}</Badge>}
+          badge={<StatusBadge tone="info">{uni.intakes.length}</StatusBadge>}
         >
           {uni.intakes.length === 0 ? (
             <p className="text-sm text-muted-foreground">No open intakes right now.</p>
@@ -390,9 +377,9 @@ export function UniversityDetailView({ id }: { id: string }) {
                       <p className="text-xs text-muted-foreground">{i.courseName} · {i.degreeLevel}</p>
                     </div>
                     {i.deadline && (
-                      <Badge tone={isDeadlineSoon(i.deadline) ? "warning" : "default"}>
+                      <StatusBadge tone={isDeadlineSoon(i.deadline) ? "warning" : "default"}>
                         Due {fmtDate(i.deadline)}
-                      </Badge>
+                      </StatusBadge>
                     )}
                   </div>
                 </li>
@@ -403,9 +390,9 @@ export function UniversityDetailView({ id }: { id: string }) {
 
         {/* Requirements */}
         <ExpandableCard
-          icon={<FileCheck className="h-4 w-4 text-primary" aria-hidden />}
+          icon={<FileCheck className="h-4 w-4 text-amber-600" aria-hidden />}
           title={`Requirements (${uni.documentRequirements.length + uni.visaRequirements.length})`}
-          badge={<Badge tone="info">{uni.documentRequirements.length + uni.visaRequirements.length}</Badge>}
+          badge={<StatusBadge tone="info">{uni.documentRequirements.length + uni.visaRequirements.length}</StatusBadge>}
         >
           <div className="space-y-4">
             <div>
@@ -441,7 +428,7 @@ export function UniversityDetailView({ id }: { id: string }) {
 
         {/* Application Information */}
         <ExpandableCard
-          icon={<Bookmark className="h-4 w-4 text-primary" aria-hidden />}
+          icon={<Bookmark className="h-4 w-4 text-amber-600" aria-hidden />}
           title="Application Information"
         >
           <div className="space-y-3">
@@ -454,8 +441,8 @@ export function UniversityDetailView({ id }: { id: string }) {
                     : "—"
                 }
               />
-              <FactRow label="Courses available" value={String(uni.courses.length)} />
-              <FactRow label="Open intakes" value={String(uni.intakes.length)} />
+              <FactRow label="Courses available" value={<span className="tabular-nums">{String(uni.courses.length)}</span>} />
+              <FactRow label="Open intakes" value={<span className="tabular-nums">{String(uni.intakes.length)}</span>} />
               <FactRow label="Country currency" value={uni.country.currency ?? "—"} />
             </dl>
             <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">
@@ -474,19 +461,19 @@ export function UniversityDetailView({ id }: { id: string }) {
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         <Link
           href="/student/universities"
-          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary"
+          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-amber-500"
         >
           <ChevronLeft className="h-3.5 w-3.5" aria-hidden /> Back to list
         </Link>
         <Link
           href="/student/courses"
-          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary"
+          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-amber-500"
         >
           <GraduationCap className="h-3.5 w-3.5" aria-hidden /> Browse Courses
         </Link>
         <Link
           href="/student/application"
-          className="col-span-2 flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary sm:col-span-1"
+          className="col-span-2 flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-amber-500 sm:col-span-1"
         >
           My Application
         </Link>
@@ -517,7 +504,7 @@ function ExpandableCard({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-2 p-4 text-left focus-visible:outline-2 focus-visible:outline-primary"
+        className="flex w-full items-center justify-between gap-2 p-4 text-left focus-visible:outline-2 focus-visible:outline-amber-500"
       >
         <span className="flex items-center gap-2">
           {icon}
@@ -554,14 +541,14 @@ function CourseCard({ course }: { course: Course }) {
         onClick={() => hasDetails && setExpanded((v) => !v)}
         disabled={!hasDetails}
         aria-expanded={expanded}
-        className="flex w-full items-start justify-between gap-2 p-3 text-left focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-default"
+        className="flex w-full items-start justify-between gap-2 p-3 text-left focus-visible:outline-2 focus-visible:outline-amber-500 disabled:cursor-default"
       >
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium">{course.name}</p>
           <p className="text-xs text-muted-foreground">{course.degreeLevel}</p>
         </div>
         {course.tuitionFee != null && (
-          <span className="shrink-0 text-sm font-semibold">
+          <span className="shrink-0 text-sm font-semibold tabular-nums">
             {course.currency} {course.tuitionFee.toLocaleString()}
           </span>
         )}
@@ -577,7 +564,7 @@ function CourseCard({ course }: { course: Course }) {
           <dl className="grid grid-cols-2 gap-2">
             {course.duration && <FactRow label="Duration" value={course.duration} />}
             {course.applicationFee != null && (
-              <FactRow label="App. fee" value={`${course.currency} ${course.applicationFee.toLocaleString()}`} />
+              <FactRow label="App. fee" value={<span className="tabular-nums">{course.currency} {course.applicationFee.toLocaleString()}</span>} />
             )}
             {course.applicationDeadline && (
               <FactRow label="Deadline" value={fmtDate(course.applicationDeadline)} />
@@ -632,7 +619,7 @@ function RequirementItem({ req }: { req: Requirement }) {
       <span
         className={cn(
           "shrink-0 text-xs font-medium",
-          req.required ? "text-warning" : "text-muted-foreground",
+          req.required ? "text-amber-600" : "text-muted-foreground",
         )}
       >
         {req.required ? "Required" : "Optional"}

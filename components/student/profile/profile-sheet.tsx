@@ -133,12 +133,12 @@ export function Field({
     <div className="space-y-1.5">
       <label className="flex items-center gap-1 text-sm font-medium text-foreground">
         {label}
-        {required && <span className="text-destructive" aria-hidden>*</span>}
+        {required && <span className="text-red-600" aria-hidden>*</span>}
       </label>
       {children}
       {hint && !error && <p className="text-xs text-muted-foreground">{hint}</p>}
       {error && (
-        <p role="alert" className="text-xs text-destructive">
+        <p role="alert" className="text-xs text-red-600">
           {error}
         </p>
       )}

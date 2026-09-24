@@ -129,7 +129,7 @@ export function ProfilePhoto({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={displayedUrl} alt="Profile photo" className="h-full w-full object-cover" loading="lazy" />
         ) : (
-          <span className="grid h-full w-full place-items-center bg-primary/10 text-2xl font-bold text-primary">
+          <span className="grid h-full w-full place-items-center bg-amber-500/10 text-2xl font-bold text-amber-600">
             {initials}
           </span>
         )}
@@ -225,7 +225,7 @@ export function ProfileAvatar({
   return (
     <span
       className={cn(
-        "grid place-items-center rounded-full bg-primary/10 font-semibold text-primary",
+        "grid place-items-center rounded-full bg-amber-500/10 font-semibold text-amber-600",
         sizes[size]
       )}
     >

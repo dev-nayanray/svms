@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,12 +17,10 @@ import {
   Globe,
   GraduationCap,
   Info,
-  RefreshCw,
-  WifiOff,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
-import { Button, Badge } from "@/components/ui";
-import { MobilePage, MobileCard } from "@/components/student/ui";
+import { Button } from "@/components/ui";
+import { MobilePage, MobileCard, StatusBadge, StudentErrorState } from "@/components/student/ui";
 import { Skeleton } from "@/components/ui/overlays";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -112,31 +110,21 @@ export function CourseDetailView({ id }: { id: string }) {
   if (detailQ.isError || !detailQ.data) {
     return (
       <MobilePage>
-        <MobileCard className="py-8 text-center">
-          {!online ? (
-            <WifiOff className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden />
-          ) : (
-            <AlertTriangle className="mx-auto h-10 w-10 text-destructive" aria-hidden />
-          )}
-          <h2 className="mt-3 text-base font-semibold">
-            {!online ? "You're offline" : "Course not found"}
-          </h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            {!online
-              ? "Check your connection and try again."
-              : detailQ.error instanceof Error
-                ? detailQ.error.message
-                : "This course may have been archived or is no longer available."}
-          </p>
-          <div className="mt-4 flex justify-center gap-2">
-            <Button variant="outline" onClick={() => router.push("/student/courses")}>
-              <ChevronLeft className="h-4 w-4" aria-hidden /> Back to list
-            </Button>
-            <Button onClick={() => detailQ.refetch()} disabled={!online}>
-              <RefreshCw className="h-4 w-4" aria-hidden /> Retry
-            </Button>
-          </div>
-        </MobileCard>
+        <StudentErrorState
+          online={online}
+          title={!online ? "You're offline" : "Course not found"}
+          description={!online
+            ? "Check your connection and try again."
+            : detailQ.error instanceof Error
+              ? detailQ.error.message
+              : "This course may have been archived or is no longer available."}
+          onRetry={() => detailQ.refetch()}
+        />
+        <div className="mt-4 flex justify-center gap-2">
+          <Button variant="outline" onClick={() => router.push("/student/courses")}>
+            <ChevronLeft className="h-4 w-4" aria-hidden /> Back to list
+          </Button>
+        </div>
       </MobilePage>
     );
   }
@@ -188,7 +176,7 @@ export function CourseDetailView({ id }: { id: string }) {
       {/* Back link */}
       <Link
         href="/student/courses"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-amber-600"
       >
         <ChevronLeft className="h-3.5 w-3.5" aria-hidden /> Courses
       </Link>
@@ -205,19 +193,19 @@ export function CourseDetailView({ id }: { id: string }) {
               loading="lazy"
             />
           ) : (
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-primary/10 text-sm font-semibold text-primary" aria-hidden>
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-amber-500/10 text-sm font-semibold text-amber-600" aria-hidden>
               {universityInitials(course.university.name)}
             </span>
           )}
           <div className="min-w-0 flex-1">
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600">
               <GraduationCap className="h-3 w-3" aria-hidden />
               {degreeLabel}
             </span>
             <h1 className="mt-1 text-lg font-semibold leading-tight">{course.name}</h1>
             <Link
               href={`/student/universities/${course.university.id}`}
-              className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary"
+              className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-amber-600"
             >
               <Building2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
               {course.university.name}
@@ -276,7 +264,7 @@ export function CourseDetailView({ id }: { id: string }) {
       <div className="space-y-3">
         {/* Overview */}
         <ExpandableCard
-          icon={<Info className="h-4 w-4 text-primary" aria-hidden />}
+          icon={<Info className="h-4 w-4 text-amber-600" aria-hidden />}
           title="Overview"
           defaultOpen
         >
@@ -292,15 +280,15 @@ export function CourseDetailView({ id }: { id: string }) {
             {course.university.country.currency && (
               <FactRow label="Currency" value={course.university.country.currency} />
             )}
-            <FactRow label="Open intakes" value={String(course.intakes.length)} />
+            <FactRow label="Open intakes" value={<span className="tabular-nums">{String(course.intakes.length)}</span>} />
           </dl>
         </ExpandableCard>
 
         {/* Intakes */}
         <ExpandableCard
-          icon={<CalendarClock className="h-4 w-4 text-primary" aria-hidden />}
+          icon={<CalendarClock className="h-4 w-4 text-amber-600" aria-hidden />}
           title={`Intakes (${sortedIntakes.length})`}
-          badge={<Badge tone="info">{sortedIntakes.length}</Badge>}
+          badge={<StatusBadge tone="info">{sortedIntakes.length}</StatusBadge>}
         >
           {sortedIntakes.length === 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -327,7 +315,7 @@ export function CourseDetailView({ id }: { id: string }) {
 
         {/* Requirements — English + Academic */}
         <ExpandableCard
-          icon={<BookOpen className="h-4 w-4 text-primary" aria-hidden />}
+          icon={<BookOpen className="h-4 w-4 text-amber-600" aria-hidden />}
           title="Requirements"
         >
           <div className="space-y-4">
@@ -378,7 +366,7 @@ export function CourseDetailView({ id }: { id: string }) {
 
         {/* Application Information */}
         <ExpandableCard
-          icon={<FileCheck className="h-4 w-4 text-primary" aria-hidden />}
+          icon={<FileCheck className="h-4 w-4 text-amber-600" aria-hidden />}
           title="Application Information"
         >
           <div className="space-y-3">
@@ -417,19 +405,19 @@ export function CourseDetailView({ id }: { id: string }) {
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         <Link
           href="/student/courses"
-          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary"
+          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-amber-500"
         >
           <ChevronLeft className="h-3.5 w-3.5" aria-hidden /> Back to list
         </Link>
         <Link
           href="/student/universities"
-          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary"
+          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-amber-500"
         >
           <Building2 className="h-3.5 w-3.5" aria-hidden /> Universities
         </Link>
         <Link
           href="/student/application"
-          className="col-span-2 flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary sm:col-span-1"
+          className="col-span-2 flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-amber-500 sm:col-span-1"
         >
           My Application
         </Link>
@@ -460,7 +448,7 @@ function ExpandableCard({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-2 p-4 text-left focus-visible:outline-2 focus-visible:outline-primary"
+        className="flex w-full items-center justify-between gap-2 p-4 text-left focus-visible:outline-2 focus-visible:outline-amber-500"
       >
         <span className="flex items-center gap-2">
           {icon}
@@ -501,12 +489,12 @@ function IntakeCard({
 }) {
   const urgencyBadge = {
     urgent: (
-      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[11px] font-medium text-destructive">
+      <span className="inline-flex items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-[11px] font-medium text-red-600">
         <AlertTriangle className="h-3 w-3" aria-hidden /> ≤7 days
       </span>
     ),
     soon: (
-      <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[11px] font-medium text-warning">
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-600">
         <CalendarClock className="h-3 w-3" aria-hidden /> ≤30 days
       </span>
     ),
@@ -516,7 +504,7 @@ function IntakeCard({
       </span>
     ),
     none: (
-      <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[11px] font-medium text-success">
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-medium text-emerald-600">
         <CheckCircle2 className="h-3 w-3" aria-hidden /> Open
       </span>
     ),
@@ -550,8 +538,8 @@ function DeadlineBanner({
   urgency: IntakeUrgency;
 }) {
   const toneCls = {
-    urgent: "border-destructive/40 bg-destructive/10 text-destructive",
-    soon: "border-warning/40 bg-warning/10 text-warning",
+    urgent: "border-red-300/60 bg-red-500/10 text-red-600",
+    soon: "border-amber-300/60 bg-amber-500/10 text-amber-600",
     past: "border-border bg-muted/30 text-muted-foreground",
     normal: "border-border bg-muted/30 text-foreground",
     none: "border-border bg-muted/30 text-foreground",

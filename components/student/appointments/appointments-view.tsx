@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -291,8 +291,8 @@ function AppointmentHero({
   return (
     <MobileCard className={cn(
       "space-y-3 border-2",
-      tone === "warning" && "border-warning/40",
-      tone === "info" && "border-info/40",
+      tone === "warning" && "border-amber-300/60",
+      tone === "info" && "border-blue-300/60",
     )}>
       <div className="flex items-center justify-between gap-2">
         <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -364,14 +364,14 @@ function AppointmentCard({
   return (
     <MobileCard className={cn(
       "space-y-2",
-      tone === "success" && "border-success/30",
-      tone === "destructive" && "border-destructive/30",
+      tone === "success" && "border-emerald-300/60",
+      tone === "destructive" && "border-red-300/60",
       tone === "default" && "opacity-70",
     )}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5">
           {/* Mini date block */}
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-center text-primary">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-amber-500/10 text-center text-amber-600">
             <p className="text-[9px] font-medium uppercase leading-none">{format(date, "EEE")}</p>
             <p className="text-base font-bold leading-none">{format(date, "d")}</p>
           </div>
@@ -391,7 +391,7 @@ function AppointmentCard({
               </p>
             )}
             {appointment.cancelReason && (
-              <p className="mt-1 rounded bg-destructive/5 px-2 py-1 text-[11px] text-destructive">
+              <p className="mt-1 rounded bg-red-500/5 px-2 py-1 text-[11px] text-red-600">
                 Cancelled: {appointment.cancelReason}
               </p>
             )}
@@ -411,9 +411,9 @@ function AppointmentCard({
         </div>
       )}
       {isRequested && (
-        <div className="flex items-center gap-2 rounded-lg bg-info/5 border border-info/20 px-3 py-2">
-          <Clock3 className="h-3.5 w-3.5 shrink-0 text-info" aria-hidden />
-          <p className="min-w-0 flex-1 text-xs text-info">
+        <div className="flex items-center gap-2 rounded-lg bg-blue-500/5 border border-blue-500/20 px-3 py-2">
+          <Clock3 className="h-3.5 w-3.5 shrink-0 text-blue-600" aria-hidden />
+          <p className="min-w-0 flex-1 text-xs text-blue-600">
             Pending counselor approval. You can withdraw this request before they respond.
           </p>
           <Button size="sm" variant="outline" onClick={onCancel} className="shrink-0 text-destructive hover:bg-destructive/10">

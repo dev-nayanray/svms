@@ -38,18 +38,18 @@ import type { TodayAgenda as TodayAgendaData } from "@/lib/services/student-dash
 type Tone = TodayAgendaData["items"][number]["tone"];
 
 const TONE_ICON_BG: Record<Tone, string> = {
-  info: "bg-info/10 text-info",
-  warning: "bg-warning/10 text-warning",
-  destructive: "bg-destructive/10 text-destructive",
-  success: "bg-success/10 text-success",
+  info: "bg-blue-500/10 text-blue-600",
+  warning: "bg-amber-500/10 text-amber-600",
+  destructive: "bg-red-500/10 text-red-600",
+  success: "bg-emerald-500/10 text-emerald-600",
   default: "bg-muted text-muted-foreground",
 };
 
 const TONE_TIME_PILL: Record<Tone, string> = {
-  info: "bg-info/10 text-info",
-  warning: "bg-warning/10 text-warning",
-  destructive: "bg-destructive/10 text-destructive",
-  success: "bg-success/10 text-success",
+  info: "bg-blue-500/10 text-blue-600",
+  warning: "bg-amber-500/10 text-amber-600",
+  destructive: "bg-red-500/10 text-red-600",
+  success: "bg-emerald-500/10 text-emerald-600",
   default: "bg-muted text-muted-foreground",
 };
 

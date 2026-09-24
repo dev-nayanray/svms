@@ -189,7 +189,7 @@ export function RequestAppointmentSheet({
               <div className="space-y-1.5">
                 <Label htmlFor="preferred-at">
                   Preferred date &amp; time
-                  <span className="ml-1 text-destructive" aria-hidden>*</span>
+                  <span className="ml-1 text-red-600" aria-hidden>*</span>
                 </Label>
                 <Input
                   id="preferred-at"
@@ -215,9 +215,9 @@ export function RequestAppointmentSheet({
                       type="button"
                       onClick={() => onPurposePresetChange(p === "Other" ? "Other" : p)}
                       className={cn(
-                        "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-primary",
+                        "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-amber-500",
                         purposePreset === p
-                          ? "border-primary bg-primary/10 text-primary"
+                          ? "border-amber-500 bg-amber-500/10 text-amber-600"
                           : "border-border bg-card text-muted-foreground hover:text-foreground",
                       )}
                     >
@@ -231,7 +231,7 @@ export function RequestAppointmentSheet({
               <div className="space-y-1.5">
                 <Label htmlFor="purpose">
                   Purpose
-                  <span className="ml-1 text-destructive" aria-hidden>*</span>
+                  <span className="ml-1 text-red-600" aria-hidden>*</span>
                 </Label>
                 <Input
                   id="purpose"
@@ -282,7 +282,7 @@ export function RequestAppointmentSheet({
                   disabled={submitting}
                   rows={4}
                 />
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground tabular-nums">
                   {notes.length}/2000 characters
                 </p>
               </div>
@@ -291,7 +291,7 @@ export function RequestAppointmentSheet({
               {error && (
                 <div
                   role="alert"
-                  className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+                  className="flex items-start gap-2 rounded-lg border border-red-300/60 bg-red-50/40 p-3 text-sm text-red-600 dark:bg-red-950/10"
                 >
                   <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                   <span className="min-w-0 flex-1">{error}</span>

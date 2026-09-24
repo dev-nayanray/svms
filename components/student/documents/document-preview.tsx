@@ -175,7 +175,7 @@ export function DocumentPreview({
             )}
             {error && !loading && (
               <div className="flex h-full min-h-[300px] flex-col items-center justify-center gap-2 p-4 text-center">
-                <AlertTriangle className="h-8 w-8 text-destructive" aria-hidden />
+                <AlertTriangle className="h-8 w-8 text-red-600" aria-hidden />
                 <p className="text-sm font-medium">Couldn&apos;t load preview</p>
                 <p className="text-xs text-muted-foreground">{error}</p>
                 <Button size="sm" variant="outline" className="mt-2" onClick={handleDownload}>

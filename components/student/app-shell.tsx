@@ -147,7 +147,7 @@ export function StudentAppShell({
         className={cn(
           "sticky top-0 z-30 border-b backdrop-blur-xl supports-[backdrop-filter]:bg-card/80",
           isHome
-            ? "border-border/60 bg-gradient-to-r from-primary/5 via-card/80 to-info/5"
+            ? "border-border/60 bg-gradient-to-r from-amber-500/5 via-card/80 to-amber-500/5"
             : "border-border/60 bg-card/80",
         )}
       >
@@ -157,7 +157,7 @@ export function StudentAppShell({
           className={cn(
             "absolute inset-x-0 top-0 h-px bg-gradient-to-r opacity-60",
             isHome
-              ? "from-primary via-info to-primary"
+              ? "from-amber-400 via-amber-500 to-amber-400"
               : "from-transparent via-border to-transparent",
           )}
         />
@@ -169,7 +169,7 @@ export function StudentAppShell({
             <button
               onClick={() => router.back()}
               aria-label="Go back"
-              className="group grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary active:scale-95"
+              className="group grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-amber-500 active:scale-95"
             >
               <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
             </button>
@@ -177,7 +177,7 @@ export function StudentAppShell({
             <Link
               href="/student"
               aria-label="Home"
-              className="group flex items-center gap-2.5 rounded-xl transition-all focus-visible:outline-2 focus-visible:outline-primary active:scale-[0.98]"
+              className="group flex items-center gap-2.5 rounded-xl transition-all focus-visible:outline-2 focus-visible:outline-amber-500 active:scale-[0.98]"
             >
               {/* Logo icon — transparent PNG, no background container.
                   The new mark has its own gold gradient on transparent
@@ -214,7 +214,7 @@ export function StudentAppShell({
           <button
             onClick={openSearch}
             aria-label="Search (Cmd+K)"
-            className="group grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary active:scale-95"
+            className="group grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-amber-500 active:scale-95"
           >
             <Search className="h-5 w-5 transition-transform group-hover:scale-110" />
           </button>
@@ -228,7 +228,7 @@ export function StudentAppShell({
           <Link
             href="/student/notifications"
             aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
-            className="group relative grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary active:scale-95"
+            className="group relative grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-amber-500 active:scale-95"
           >
             <Bell className="h-5 w-5 transition-transform group-hover:rotate-6 group-hover:scale-105" />
             <NotificationBadge count={unread} />
@@ -238,17 +238,17 @@ export function StudentAppShell({
           <Link
             href="/student/profile"
             aria-label="Profile"
-            className="group relative grid h-10 w-10 place-items-center rounded-full transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:scale-95"
+            className="group relative grid h-10 w-10 place-items-center rounded-full transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 active:scale-95"
           >
             {profilePhotoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={profilePhotoUrl}
                 alt={userName}
-                className="h-8 w-8 rounded-full object-cover ring-2 ring-card transition-shadow group-hover:ring-primary/40"
+                className="h-8 w-8 rounded-full object-cover ring-2 ring-card transition-shadow group-hover:ring-amber-500/40"
               />
             ) : (
-              <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-primary/20 to-info/20 text-xs font-bold text-primary ring-2 ring-card transition-shadow group-hover:ring-primary/40">
+              <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-amber-500/20 to-amber-500/10 text-xs font-bold text-amber-600 ring-2 ring-card transition-shadow group-hover:ring-amber-500/40">
                 {initials || "S"}
               </span>
             )}
@@ -385,13 +385,13 @@ export function StudentAppShell({
                         className={cn(
                           "flex flex-col items-center gap-2 rounded-2xl border p-3 text-center transition-all hover:-translate-y-0.5 hover:shadow-sm",
                           active
-                            ? "border-primary/30 bg-primary/5 text-primary"
+                            ? "border-amber-300/60 bg-amber-50/40 dark:bg-amber-950/10 text-amber-600"
                             : "border-border bg-muted/30 text-foreground hover:bg-muted/50",
                         )}
                       >
                         <span className={cn(
                           "grid h-10 w-10 place-items-center rounded-xl",
-                          active ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
+                          active ? "bg-amber-500/15 text-amber-600" : "bg-muted text-muted-foreground",
                         )}>
                           <StudentNavIcon name={MORE_ICONS[item.href]} className="h-5 w-5" />
                         </span>
@@ -467,7 +467,7 @@ function DesktopNav({
         <button
           type="button"
           onClick={onSearchOpen}
-          className="group mb-2 flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-card/60 px-2.5 text-sm text-muted-foreground transition-all hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-2 focus-visible:outline-primary"
+          className="group mb-2 flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-card/60 px-2.5 text-sm text-muted-foreground transition-all hover:border-amber-300/60 hover:bg-amber-500/5 focus-visible:outline-2 focus-visible:outline-amber-500"
           aria-label="Search (Cmd+K)"
         >
           <Search className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />
@@ -482,7 +482,7 @@ function DesktopNav({
         {/* User card — avatar + name + live indicator */}
         <Link
           href="/student/profile"
-          className="group flex items-center gap-2.5 rounded-xl border border-border/60 bg-card/60 p-2 transition-all hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-2 focus-visible:outline-primary"
+          className="group flex items-center gap-2.5 rounded-xl border border-border/60 bg-card/60 p-2 transition-all hover:border-amber-300/60 hover:bg-amber-500/5 focus-visible:outline-2 focus-visible:outline-amber-500"
         >
           <span className="relative">
             {profilePhotoUrl ? (
@@ -490,10 +490,10 @@ function DesktopNav({
               <img
                 src={profilePhotoUrl}
                 alt={userName}
-                className="h-9 w-9 rounded-full object-cover ring-2 ring-card transition-shadow group-hover:ring-primary/40"
+                className="h-9 w-9 rounded-full object-cover ring-2 ring-card transition-shadow group-hover:ring-amber-500/40"
               />
             ) : (
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-primary/20 to-info/20 text-xs font-bold text-primary ring-2 ring-card transition-shadow group-hover:ring-primary/40">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-amber-500/20 to-amber-500/10 text-xs font-bold text-amber-600 ring-2 ring-card transition-shadow group-hover:ring-amber-500/40">
                 {initials || "S"}
               </span>
             )}
@@ -538,7 +538,7 @@ function DesktopNav({
               className={cn(
                 "group relative flex min-h-[40px] items-center gap-2.5 rounded-lg px-3 text-sm font-medium transition-all",
                 active
-                  ? "bg-gradient-to-r from-primary/15 to-info/10 font-semibold text-primary"
+                  ? "bg-gradient-to-r from-amber-500/15 to-amber-500/10 font-semibold text-amber-600"
                   : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
               )}
             >
@@ -546,7 +546,7 @@ function DesktopNav({
               {active && (
                 <span
                   aria-hidden
-                  className="absolute -left-2 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full bg-gradient-to-b from-primary to-info"
+                  className="absolute -left-2 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full bg-gradient-to-b from-amber-400 to-amber-600"
                 />
               )}
               <span className="relative shrink-0">

@@ -1,22 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
-  AlertTriangle,
   ArrowLeft,
   CalendarClock,
   ChevronLeft,
   CreditCard,
   Printer,
-  RefreshCw,
-  WifiOff,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
-import { Button, Badge } from "@/components/ui";
-import { MobilePage, MobileCard } from "@/components/student/ui";
+import { Button } from "@/components/ui";
+import { MobilePage, MobileCard, StatusBadge, StudentErrorState } from "@/components/student/ui";
 import { Skeleton } from "@/components/ui/overlays";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
@@ -107,29 +103,17 @@ export function InvoiceDetailView({ id }: { id: string }) {
   if (detailQ.isError || !detailQ.data?.invoice) {
     return (
       <MobilePage>
-        <MobileCard className="py-8 text-center">
-          {!online ? (
-            <WifiOff className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden />
-          ) : (
-            <AlertTriangle className="mx-auto h-10 w-10 text-destructive" aria-hidden />
-          )}
-          <h2 className="mt-3 text-base font-semibold">
-            {!online ? "You're offline" : "Invoice not found"}
-          </h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            {!online
-              ? "Check your connection and try again."
-              : "This invoice may not exist or you don't have access to it."}
-          </p>
-          <div className="mt-4 flex justify-center gap-2">
-            <Button variant="outline" onClick={() => router.push("/student/invoices")}>
-              <ArrowLeft className="h-4 w-4" aria-hidden /> Back to invoices
-            </Button>
-            <Button onClick={() => detailQ.refetch()} disabled={!online}>
-              <RefreshCw className="h-4 w-4" aria-hidden /> Retry
-            </Button>
-          </div>
-        </MobileCard>
+        <StudentErrorState
+          online={online}
+          title={!online ? "You're offline" : "Invoice not found"}
+          description={!online ? "Check your connection and try again." : "This invoice may not exist or you don't have access to it."}
+          onRetry={() => detailQ.refetch()}
+        />
+        <div className="mt-4 flex justify-center gap-2">
+          <Button variant="outline" onClick={() => router.push("/student/invoices")}>
+            <ArrowLeft className="h-4 w-4" aria-hidden /> Back to invoices
+          </Button>
+        </div>
       </MobilePage>
     );
   }
@@ -148,7 +132,7 @@ export function InvoiceDetailView({ id }: { id: string }) {
       <div className="print:hidden">
         <Link
           href="/student/invoices"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-amber-600"
         >
           <ChevronLeft className="h-3.5 w-3.5" aria-hidden /> Invoices
         </Link>
@@ -168,10 +152,10 @@ export function InvoiceDetailView({ id }: { id: string }) {
           </div>
           <div className={cn(
             "flex shrink-0 flex-col items-center gap-1 rounded-xl px-3 py-2",
-            tone === "success" && "bg-success/10 text-success",
-            tone === "warning" && "bg-warning/10 text-warning",
-            tone === "destructive" && "bg-destructive/10 text-destructive",
-            tone === "info" && "bg-info/10 text-info",
+            tone === "success" && "bg-emerald-500/10 text-emerald-600",
+            tone === "warning" && "bg-amber-500/10 text-amber-600",
+            tone === "destructive" && "bg-red-500/10 text-red-600",
+            tone === "info" && "bg-blue-500/10 text-blue-600",
             tone === "default" && "bg-muted text-muted-foreground",
           )}>
             <span className="text-xs font-semibold">{inv.statusLabel}</span>
@@ -218,11 +202,11 @@ export function InvoiceDetailView({ id }: { id: string }) {
             <div key={i} className="flex items-start justify-between gap-3 rounded-md border border-border p-2.5">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium">{item.description}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground tabular-nums">
                   Qty {item.quantity} × {fmtMoney(item.unitPrice)}
                 </p>
               </div>
-              <p className="shrink-0 text-sm font-semibold">{fmtMoney(item.lineTotal)}</p>
+              <p className="shrink-0 text-sm font-semibold tabular-nums">{fmtMoney(item.lineTotal)}</p>
             </div>
           ))}
         </div>
@@ -234,25 +218,25 @@ export function InvoiceDetailView({ id }: { id: string }) {
         <dl className="space-y-1.5 text-sm">
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Subtotal</dt>
-            <dd className="font-medium">{fmtMoney(inv.subtotal)}</dd>
+            <dd className="font-medium tabular-nums">{fmtMoney(inv.subtotal)}</dd>
           </div>
           {inv.discount > 0 && (
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Discount</dt>
-              <dd className="font-medium text-success">−{fmtMoney(inv.discount)}</dd>
+              <dd className="font-medium text-emerald-600 tabular-nums">−{fmtMoney(inv.discount)}</dd>
             </div>
           )}
           <div className="flex justify-between border-t border-border pt-1.5">
             <dt className="font-semibold">Total</dt>
-            <dd className="font-bold">{fmtMoney(inv.total)}</dd>
+            <dd className="font-bold tabular-nums">{fmtMoney(inv.total)}</dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Paid</dt>
-            <dd className="font-medium text-success">{fmtMoney(inv.paidAmount)}</dd>
+            <dd className="font-medium text-emerald-600 tabular-nums">{fmtMoney(inv.paidAmount)}</dd>
           </div>
           <div className="flex justify-between border-t border-border pt-1.5">
             <dt className="font-semibold">Balance Due</dt>
-            <dd className={cn("font-bold", balance > 0 ? "text-warning" : "text-success")}>
+            <dd className={cn("font-bold tabular-nums", balance > 0 ? "text-amber-600" : "text-emerald-600")}>
               {fmtMoney(balance)}
             </dd>
           </div>
@@ -263,7 +247,7 @@ export function InvoiceDetailView({ id }: { id: string }) {
           <div className="mt-2">
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Payment progress</span>
-              <span className="font-semibold">{progressPct}%</span>
+              <span className="font-semibold tabular-nums">{progressPct}%</span>
             </div>
             <div
               role="progressbar"
@@ -273,7 +257,7 @@ export function InvoiceDetailView({ id }: { id: string }) {
               className="mt-1 h-2 overflow-hidden rounded-full bg-muted"
             >
               <div
-                className="h-full rounded-full bg-success transition-[width] motion-reduce:transition-none"
+                className="h-full rounded-full bg-emerald-500 transition-[width] motion-reduce:transition-none"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
@@ -289,14 +273,14 @@ export function InvoiceDetailView({ id }: { id: string }) {
             {inv.payments.map((p) => (
               <li key={p.id} className="flex items-center justify-between gap-3 rounded-md border border-border p-2.5 text-sm">
                 <div className="min-w-0">
-                  <p className="font-medium">{fmtMoney(p.amount)}</p>
+                  <p className="font-medium tabular-nums">{fmtMoney(p.amount)}</p>
                   <p className="text-xs text-muted-foreground">
                     {p.paymentMethod}
                     {p.paymentDate && ` · ${fmtDate(p.paymentDate)}`}
                     {p.transactionReference && ` · Ref: ${p.transactionReference}`}
                   </p>
                 </div>
-                <Badge tone={PAYMENT_STATUS_TONE[p.status] ?? "default"}>{p.status}</Badge>
+                <StatusBadge tone={PAYMENT_STATUS_TONE[p.status] ?? "default"}>{p.status}</StatusBadge>
               </li>
             ))}
           </ul>

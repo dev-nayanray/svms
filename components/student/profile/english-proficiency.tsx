@@ -7,8 +7,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiFetch } from "@/lib/api-client";
 import { useToast } from "@/components/ui/toast";
-import { Button, Badge } from "@/components/ui";
-import { MobileCard } from "@/components/student/ui";
+import { Button } from "@/components/ui";
+import { MobileCard, StatusBadge } from "@/components/student/ui";
 import { ProfileSheet, Field } from "./profile-sheet";
 import { Input, Select } from "@/components/ui";
 import { englishProficiencyCreateSchema, englishProficiencyUpdateSchema } from "@/lib/validations";
@@ -179,7 +179,7 @@ export function EnglishProficiencySection({ profile }: { profile: ProfileView })
     <MobileCard className="space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Languages className="h-4 w-4 text-primary" aria-hidden />
+          <Languages className="h-4 w-4 text-amber-600" aria-hidden />
           <h2 className="text-sm font-semibold">English Proficiency</h2>
         </div>
         <Button size="sm" variant="outline" onClick={openCreate}>
@@ -200,7 +200,7 @@ export function EnglishProficiencySection({ profile }: { profile: ProfileView })
             >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <Badge tone="info">{rec.testType}</Badge>
+                  <StatusBadge tone="info">{rec.testType}</StatusBadge>
                   {rec.overallScore != null && (
                     <span className="text-sm font-semibold">{rec.overallScore}</span>
                   )}

@@ -14,7 +14,8 @@ import {
   Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Badge, Button } from "@/components/ui";
+import { Button } from "@/components/ui";
+import { StatusBadge } from "@/components/student/ui";
 import { formatFileSize } from "@/lib/constants/documents";
 import { format, parseISO } from "date-fns";
 
@@ -123,7 +124,7 @@ export function DocumentCard({
     <div
       className={cn(
         "rounded-xl border bg-card p-3 shadow-sm transition-colors",
-        isRejected ? "border-destructive/40" : isApproved ? "border-success/30" : "border-border",
+        isRejected ? "border-red-300/60" : isApproved ? "border-emerald-300/60" : "border-border",
       )}
     >
       {/* Header: name + status badge */}
@@ -132,7 +133,7 @@ export function DocumentCard({
           <span
             className={cn(
               "grid h-9 w-9 shrink-0 place-items-center rounded-md",
-              doc.previewable ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
+              doc.previewable ? "bg-amber-500/10 text-amber-600" : "bg-muted text-muted-foreground",
             )}
             aria-hidden
           >
@@ -145,9 +146,9 @@ export function DocumentCard({
             </p>
           </div>
         </div>
-        <Badge tone={STATUS_TONE[doc.status] ?? "default"}>
+        <StatusBadge tone={STATUS_TONE[doc.status] ?? "default"}>
           {STATUS_LABEL[doc.status] ?? doc.status}
-        </Badge>
+        </StatusBadge>
       </div>
 
       {/* Dates row */}
@@ -180,11 +181,11 @@ export function DocumentCard({
 
       {/* Rejection banner — only for REJECTED documents */}
       {isRejected && doc.reviewNote && (
-        <div className="mt-2.5 rounded-md border border-destructive/30 bg-destructive/5 p-2.5 text-xs">
+        <div className="mt-2.5 rounded-md border border-red-300/60 bg-red-50/40 p-2.5 text-xs dark:bg-red-950/10">
           <div className="flex items-start gap-2">
-            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" aria-hidden />
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-600" aria-hidden />
             <div className="min-w-0 flex-1">
-              <p className="font-semibold text-destructive">Rejected</p>
+              <p className="font-semibold text-red-600">Rejected</p>
               <p className="mt-0.5 whitespace-pre-wrap text-foreground">
                 <span className="text-muted-foreground">Reason:</span> {doc.reviewNote}
               </p>
@@ -195,9 +196,9 @@ export function DocumentCard({
 
       {/* Expired banner — only for EXPIRED documents */}
       {isExpired && (
-        <div className="mt-2.5 rounded-md border border-destructive/30 bg-destructive/5 p-2.5 text-xs">
+        <div className="mt-2.5 rounded-md border border-red-300/60 bg-red-50/40 p-2.5 text-xs dark:bg-red-950/10">
           <div className="flex items-start gap-2">
-            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" aria-hidden />
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-600" aria-hidden />
             <p className="text-foreground">
               This document has expired. Please upload a new version.
             </p>
@@ -207,9 +208,9 @@ export function DocumentCard({
 
       {/* REQUESTED banner — no file uploaded yet */}
       {isRequested && (
-        <div className="mt-2.5 rounded-md border border-warning/30 bg-warning/5 p-2.5 text-xs">
+        <div className="mt-2.5 rounded-md border border-amber-300/60 bg-amber-50/40 p-2.5 text-xs dark:bg-amber-950/10">
           <div className="flex items-start gap-2">
-            <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" aria-hidden />
+            <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" aria-hidden />
             <p className="text-foreground">
               This document is awaiting your upload.
             </p>

@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useQueries } from "@tanstack/react-query";
 import {
-  AlertTriangle,
   Building2,
   CalendarClock,
   Check,
@@ -17,11 +15,10 @@ import {
   Minus,
   Star,
   Stamp,
-  WifiOff,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { Button, Badge } from "@/components/ui";
-import { MobileCard } from "@/components/student/ui";
+import { MobileCard, StudentErrorState } from "@/components/student/ui";
 import { Skeleton } from "@/components/ui/overlays";
 import { cn } from "@/lib/utils";
 import {
@@ -138,24 +135,12 @@ export function UniversitiesCompareView({ ids }: { ids: string[] }) {
 
   if (allErrored) {
     return (
-      <MobileCard className="py-8 text-center">
-        {!online ? (
-          <WifiOff className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden />
-        ) : (
-          <AlertTriangle className="mx-auto h-10 w-10 text-destructive" aria-hidden />
-        )}
-        <h2 className="mt-3 text-base font-semibold">
-          {!online ? "You're offline" : "Couldn't load universities"}
-        </h2>
-        <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-          {!online
-            ? "Check your connection and try again."
-            : "Please try again in a moment."}
-        </p>
-        <Button onClick={() => queries.forEach((q) => q.refetch())} className="mt-4" disabled={!online}>
-          Retry
-        </Button>
-      </MobileCard>
+      <StudentErrorState
+        online={online}
+        title={!online ? "You're offline" : "Couldn't load universities"}
+        description={!online ? "Check your connection and try again." : "Please try again in a moment."}
+        onRetry={() => queries.forEach((q) => q.refetch())}
+      />
     );
   }
 
@@ -184,8 +169,8 @@ export function UniversitiesCompareView({ ids }: { ids: string[] }) {
 
       {/* Per-university error banner — if any university failed to load */}
       {universities.some((u) => u.error && !u.data) && (
-        <MobileCard className="border-warning/30 bg-warning/5">
-          <p className="text-sm font-medium text-warning">
+        <MobileCard className="border-amber-300/60 bg-amber-50/40 dark:bg-amber-950/10">
+          <p className="text-sm font-medium text-amber-600">
             {universities.filter((u) => u.error && !u.data).length} of {ids.length} universities couldn&rsquo;t load
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -265,7 +250,7 @@ function CompareMobileStack({
       />
       <CompareAttributeCard
         title="Country"
-        icon={<Globe className="h-4 w-4 text-info" aria-hidden />}
+        icon={<Globe className="h-4 w-4 text-blue-600" aria-hidden />}
         universities={universities}
         value={(u) => `${u.country.flag ?? ""} ${u.country.name}`.trim()}
       />
@@ -284,14 +269,14 @@ function CompareMobileStack({
       />
       <CompareAttributeCard
         title="Active intakes"
-        icon={<CalendarClock className="h-4 w-4 text-info" aria-hidden />}
+        icon={<CalendarClock className="h-4 w-4 text-blue-600" aria-hidden />}
         bestIsLowest={false}
         universities={universities}
         value={(u) => `${u.intakes.length} intake${u.intakes.length === 1 ? "" : "s"}`}
       />
       <CompareAttributeCard
         title="Document requirements"
-        icon={<FileCheck className="h-4 w-4 text-success" aria-hidden />}
+        icon={<FileCheck className="h-4 w-4 text-emerald-600" aria-hidden />}
         bestIsLowest={false}
         universities={universities}
         value={(u) =>
@@ -300,7 +285,7 @@ function CompareMobileStack({
       />
       <CompareAttributeCard
         title="Visa requirements"
-        icon={<Stamp className="h-4 w-4 text-warning" aria-hidden />}
+        icon={<Stamp className="h-4 w-4 text-amber-600" aria-hidden />}
         bestIsLowest={false}
         universities={universities}
         value={(u) => `${u.visaRequirements.length} item${u.visaRequirements.length === 1 ? "" : "s"}`}
@@ -309,7 +294,7 @@ function CompareMobileStack({
       {/* Tuition range — min/max across all courses */}
       <CompareAttributeCard
         title="Tuition range"
-        icon={<CreditCard className="h-4 w-4 text-success" aria-hidden />}
+        icon={<CreditCard className="h-4 w-4 text-emerald-600" aria-hidden />}
         bestIsLowest
         universities={universities}
         value={(u) => {
@@ -458,15 +443,15 @@ function CompareAttributeCard({
               <span
                 className={cn(
                   "shrink-0 text-sm font-bold tabular-nums",
-                  isBest && "text-success",
-                  isWorst && "text-destructive",
+                  isBest && "text-emerald-600",
+                  isWorst && "text-red-600",
                   !isBest && !isWorst && "text-foreground",
                 )}
               >
                 {val}
               </span>
-              {isBest && <Check className="h-3 w-3 text-success" aria-hidden />}
-              {isWorst && <Minus className="h-3 w-3 text-destructive" aria-hidden />}
+              {isBest && <Check className="h-3 w-3 text-emerald-600" aria-hidden />}
+              {isWorst && <Minus className="h-3 w-3 text-red-600" aria-hidden />}
             </li>
           );
         })}
@@ -521,7 +506,7 @@ function CompareDesktopGrid({
                     </div>
                   </div>
                 ) : (
-                  <span className="text-xs text-destructive">Failed</span>
+                  <span className="text-xs text-red-600">Failed</span>
                 )}
               </th>
             ))}
@@ -671,8 +656,8 @@ function CompareRow({
             <span
               className={cn(
                 "inline-flex items-center gap-1 text-sm font-semibold tabular-nums",
-                isBest && "text-success",
-                isWorst && "text-destructive",
+                isBest && "text-emerald-600",
+                isWorst && "text-red-600",
                 !isBest && !isWorst && "text-foreground",
               )}
             >

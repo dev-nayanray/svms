@@ -45,7 +45,7 @@ function VerticalPipeline({ stages }: { stages: StageMarker[] }) {
                 aria-hidden
                 className={cn(
                   "absolute left-[11px] top-6 h-[calc(100%-16px)] w-0.5",
-                  s.state === "completed" ? "bg-primary" : "bg-border",
+                  s.state === "completed" ? "bg-amber-500" : "bg-border",
                 )}
               />
             )}
@@ -107,7 +107,7 @@ function HorizontalPipeline({ stages }: { stages: StageMarker[] }) {
                   aria-hidden
                   className={cn(
                     "mt-3 h-0.5 w-8 shrink-0",
-                    s.state === "completed" ? "bg-primary" : "bg-border",
+                    s.state === "completed" ? "bg-amber-500" : "bg-border",
                   )}
                 />
               )}
@@ -135,8 +135,8 @@ function StageDot({
       className={cn(
         "relative grid shrink-0 place-items-center rounded-full border-2 text-[11px] font-medium",
         sizeClass,
-        state === "completed" && "border-primary bg-primary text-primary-foreground",
-        state === "current" && "border-primary bg-primary/15 text-primary",
+        state === "completed" && "border-amber-500 bg-amber-500 text-white",
+        state === "current" && "border-amber-500 bg-amber-500/15 text-amber-600",
         state === "upcoming" && "border-border bg-card text-muted-foreground",
         state === "skipped" && "border-border bg-muted text-muted-foreground/70",
       )}
@@ -165,8 +165,8 @@ export function ProgressBar({
         </span>
         <span
           className={cn(
-            "text-sm font-semibold",
-            isComplete ? "text-success" : "text-primary",
+            "text-sm font-semibold tabular-nums",
+            isComplete ? "text-emerald-600" : "text-amber-600",
           )}
         >
           {pct}%
@@ -183,7 +183,7 @@ export function ProgressBar({
         <div
           className={cn(
             "h-full rounded-full transition-[width] motion-reduce:transition-none",
-            isComplete ? "bg-success" : "bg-primary",
+            isComplete ? "bg-emerald-500" : "bg-amber-500",
           )}
           style={{ width: `${pct}%` }}
         />
