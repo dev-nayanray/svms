@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Euroscope Design Tokens — Visual Regression</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Mirror the app's CSS variables (from app/globals.css)
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            border: "hsl(var(--border))",
+            input: "hsl(var(--input))",
+            ring: "hsl(var(--ring))",
+            background: "hsl(var(--background))",
+            foreground: "hsl(var(--foreground))",
+            primary: {
+              DEFAULT: "hsl(var(--primary))",
+              foreground: "hsl(var(--primary-foreground))",
+              hover: "hsl(var(--primary-hover))",
+            },
+            secondary: {
+              DEFAULT: "hsl(var(--secondary))",
+              foreground: "hsl(var(--secondary-foreground))",
+            },
+            destructive: {
+              DEFAULT: "hsl(var(--destructive))",
+              foreground: "hsl(var(--destructive-foreground))",
+            },
+            muted: {
+              DEFAULT: "hsl(var(--muted))",
+              foreground: "hsl(var(--muted-foreground))",
+            },
+            accent: {
+              DEFAULT: "hsl(var(--accent))",
+              foreground: "hsl(var(--accent-foreground))",
+            },
+            card: {
+              DEFAULT: "hsl(var(--card))",
+              foreground: "hsl(var(--card-foreground))",
+            },
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 222.2 84% 4.9%;
+      --card: 0 0% 100%;
+      --card-foreground: 222.2 84% 4.9%;
+      --muted: 210 40% 96.1%;
+      --muted-foreground: 215.4 16.3% 46.9%;
+      --border: 214.3 31.8% 91.4%;
+      --primary: 222.2 47.4% 11.2%;
+      --primary-foreground: 210 40% 98%;
+      --primary-hover: 222.2 47.4% 5%;
+      --destructive: 0 84.2% 60.2%;
+      --destructive-foreground: 210 40% 98%;
+    }
+    body { font-family: ui-sans-serif, system-ui, sans-serif; }
+  </style>
+</head>
+<body class="bg-background text-foreground p-8">
+  <div class="max-w-4xl mx-auto space-y-8">
+
+    <header>
+      <h1 class="text-2xl font-bold tracking-tight">Euroscope Design Tokens</h1>
+      <p class="mt-1 text-sm text-muted-foreground">
+        Pure HTML rendering of the design system colors + components.
+        Used by Playwright for visual regression testing.
+      </p>
+    </header>
+
+    <!-- 1. STATUS COLORS -->
+    <section>
+      <h2 class="text-base font-semibold mb-3">1. Status Colors</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div class="rounded-lg border border-emerald-500/20 p-3 text-center">
+          <span class="grid h-10 w-10 place-items-center rounded-lg mx-auto bg-emerald-500/10 text-emerald-600">
+            <span class="text-xs font-bold">A</span>
+          </span>
+          <p class="mt-2 text-xs font-semibold">Success</p>
+        </div>
+        <div class="rounded-lg border border-amber-500/20 p-3 text-center">
+          <span class="grid h-10 w-10 place-items-center rounded-lg mx-auto bg-amber-500/10 text-amber-600">
+            <span class="text-xs font-bold">A</span>
+          </span>
+          <p class="mt-2 text-xs font-semibold">Warning</p>
+        </div>
+        <div class="rounded-lg border border-blue-500/20 p-3 text-center">
+          <span class="grid h-10 w-10 place-items-center rounded-lg mx-auto bg-blue-500/10 text-blue-600">
+            <span class="text-xs font-bold">A</span>
+          </span>
+          <p class="mt-2 text-xs font-semibold">Info</p>
+        </div>
+        <div class="rounded-lg border border-red-500/20 p-3 text-center">
+          <span class="grid h-10 w-10 place-items-center rounded-lg mx-auto bg-red-500/10 text-red-600">
+            <span class="text-xs font-bold">A</span>
+          </span>
+          <p class="mt-2 text-xs font-semibold">Destructive</p>
+        </div>
+        <div class="rounded-lg border border-border p-3 text-center">
+          <span class="grid h-10 w-10 place-items-center rounded-lg mx-auto bg-muted text-muted-foreground">
+            <span class="text-xs font-bold">A</span>
+          </span>
+          <p class="mt-2 text-xs font-semibold">Default</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. STATUS BADGES -->
+    <section>
+      <h2 class="text-base font-semibold mb-3">2. Status Badges</h2>
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 px-2 py-0.5 text-xs font-semibold">PAID</span>
+        <span class="inline-flex items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 text-amber-600 px-2 py-0.5 text-xs font-semibold">PENDING</span>
+        <span class="inline-flex items-center gap-1 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-600 px-2 py-0.5 text-xs font-semibold">IN PROGRESS</span>
+        <span class="inline-flex items-center gap-1 rounded-full border border-red-500/20 bg-red-500/10 text-red-600 px-2 py-0.5 text-xs font-semibold">OVERDUE</span>
+        <span class="inline-flex items-center gap-1 rounded-full border border-border bg-muted text-muted-foreground px-2 py-0.5 text-xs font-semibold">DRAFT</span>
+      </div>
+    </section>
+
+    <!-- 3. PRIMARY ACCENT (Dark Slate) -->
+    <section>
+      <h2 class="text-base font-semibold mb-3">3. Primary Accent (Dark Slate)</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="rounded-lg border border-primary/30 p-3 text-center">
+          <span class="grid h-10 w-10 place-items-center rounded-lg mx-auto bg-primary text-primary-foreground">
+            <span class="text-xs font-bold">A</span>
+          </span>
+          <p class="mt-2 text-xs font-semibold">Primary</p>
+        </div>
+        <div class="rounded-lg border border-primary/20 p-3 text-center">
+          <span class="grid h-10 w-10 place-items-center rounded-lg mx-auto bg-primary/10 text-primary">
+            <span class="text-xs font-bold">A</span>
+          </span>
+          <p class="mt-2 text-xs font-semibold">Primary /10</p>
+        </div>
+        <div class="rounded-lg border border-primary/20 p-3 text-center">
+          <span class="grid h-10 w-10 place-items-center rounded-lg mx-auto bg-primary/5 text-primary">
+            <span class="text-xs font-bold">A</span>
+          </span>
+          <p class="mt-2 text-xs font-semibold">Primary /5</p>
+        </div>
+        <div class="rounded-lg border border-border p-3 text-center">
+          <span class="grid h-10 w-10 place-items-center rounded-lg mx-auto bg-card text-primary">
+            <span class="text-xs font-bold">A</span>
+          </span>
+          <p class="mt-2 text-xs font-semibold">Text</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. CARDS -->
+    <section>
+      <h2 class="text-base font-semibold mb-3">4. Cards</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <p class="text-sm font-semibold">Default card</p>
+          <p class="mt-1 text-xs text-muted-foreground">Standard surface</p>
+        </div>
+        <div class="rounded-xl border border-primary/30 bg-primary/5 p-4">
+          <p class="text-sm font-semibold text-primary">Highlighted</p>
+          <p class="mt-1 text-xs text-muted-foreground">Callout</p>
+        </div>
+        <div class="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+          <p class="text-sm font-semibold text-emerald-600">Success</p>
+          <p class="mt-1 text-xs text-muted-foreground">Positive state</p>
+        </div>
+        <div class="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+          <p class="text-sm font-semibold text-amber-600">Warning</p>
+          <p class="mt-1 text-xs text-muted-foreground">Attention required</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. BUTTONS -->
+    <section>
+      <h2 class="text-base font-semibold mb-3">5. Buttons</h2>
+      <div class="flex flex-wrap items-center gap-3">
+        <button class="inline-flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary-hover">Primary</button>
+        <button class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted">Outline</button>
+        <button class="inline-flex items-center gap-1.5 rounded-lg bg-red-500 text-white px-4 py-2 text-sm font-medium hover:bg-red-600">Destructive</button>
+        <button class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card text-red-600 px-4 py-2 text-sm font-medium hover:bg-red-500/10">Outline Destructive</button>
+      </div>
+    </section>
+
+    <!-- 6. STUDENT PANEL AMBER ACCENT -->
+    <section>
+      <h2 class="text-base font-semibold mb-3">6. Student Panel — Amber Accent</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="rounded-lg border border-amber-300/60 p-3 text-center">
+          <span class="grid h-10 w-10 place-items-center rounded-lg mx-auto bg-gradient-to-br from-amber-500 to-amber-600 text-white">
+            <span class="text-xs font-bold">A</span>
+          </span>
+          <p class="mt-2 text-xs font-semibold">Amber CTA</p>
+        </div>
+        <div class="rounded-lg border border-amber-300/60 p-3 text-center">
+          <span class="grid h-10 w-10 place-items-center rounded-lg mx-auto bg-amber-500/10 text-amber-600">
+            <span class="text-xs font-bold">A</span>
+          </span>
+          <p class="mt-2 text-xs font-semibold">Amber /10</p>
+        </div>
+        <div class="rounded-lg border border-amber-300/60 p-3 text-center">
+          <span class="grid h-10 w-10 place-items-center rounded-lg mx-auto bg-amber-500/15 text-amber-600">
+            <span class="text-xs font-bold">A</span>
+          </span>
+          <p class="mt-2 text-xs font-semibold">Amber /15</p>
+        </div>
+        <div class="rounded-lg border border-amber-300/60 p-3 text-center">
+          <span class="grid h-10 w-10 place-items-center rounded-lg mx-auto bg-amber-500 text-white">
+            <span class="text-xs font-bold">A</span>
+          </span>
+          <p class="mt-2 text-xs font-semibold">Amber solid</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. PROGRESS BARS -->
+    <section>
+      <h2 class="text-base font-semibold mb-3">7. Progress Bars</h2>
+      <div class="space-y-2">
+        <div>
+          <div class="flex justify-between text-xs mb-1"><span class="text-muted-foreground">Success (emerald)</span><span class="font-semibold">100%</span></div>
+          <div class="h-2 rounded-full bg-muted overflow-hidden"><div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-600" style="width:100%"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs mb-1"><span class="text-muted-foreground">Warning (amber)</span><span class="font-semibold">68%</span></div>
+          <div class="h-2 rounded-full bg-muted overflow-hidden"><div class="h-full bg-gradient-to-r from-amber-400 to-amber-600" style="width:68%"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs mb-1"><span class="text-muted-foreground">Info (blue)</span><span class="font-semibold">42%</span></div>
+          <div class="h-2 rounded-full bg-muted overflow-hidden"><div class="h-full bg-gradient-to-r from-blue-400 to-blue-600" style="width:42%"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs mb-1"><span class="text-muted-foreground">Primary (slate)</span><span class="font-semibold">25%</span></div>
+          <div class="h-2 rounded-full bg-muted overflow-hidden"><div class="h-full bg-primary" style="width:25%"></div></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

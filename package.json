@@ -15,6 +15,9 @@
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "test": "vitest run",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots",
+    "test:visual:report": "playwright show-report",
     "postinstall": "prisma generate || echo 'prisma generate skipped (no schema access)'"
   },
   "dependencies": {
@@ -52,6 +55,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.12.0",
