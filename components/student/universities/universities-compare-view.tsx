@@ -17,8 +17,8 @@ import {
   Stamp,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
-import { Button, Badge } from "@/components/ui";
-import { MobileCard, StudentErrorState } from "@/components/student/ui";
+import { Button } from "@/components/ui";
+import { MobileCard, StudentErrorState, StatusBadge } from "@/components/student/ui";
 import { Skeleton } from "@/components/ui/overlays";
 import { cn } from "@/lib/utils";
 import {
@@ -365,7 +365,7 @@ function CompareUniversityHeaderMobile({ data }: { data: UniversityDetail }) {
         )}
       </div>
       {data.ranking != null && (
-        <Badge tone="info">#{data.ranking}</Badge>
+        <StatusBadge tone="info">#{data.ranking}</StatusBadge>
       )}
     </div>
   );

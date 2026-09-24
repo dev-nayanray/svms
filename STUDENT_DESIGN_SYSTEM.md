@@ -9,6 +9,10 @@ If you need a pattern that isn't here, add it to `components/student/ui.tsx`
 first, then use it. The goal is one shared visual language across every
 student-facing page.
 
+> **Live preview:** Every component in every state is rendered at
+> [`/student/design-preview`](/student/design-preview) — log in as a
+> student and visit that route to see the full system at a glance.
+
 ---
 
 ## 1. Where things live
