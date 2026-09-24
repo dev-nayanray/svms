@@ -197,7 +197,7 @@ export function MarketingNavbar({ navigation, headerConfig }: Props) {
               </Link>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
-                className="text-sm font-medium text-slate-600 transition-colors hover:text-destructive"
+                className="text-sm font-medium text-slate-600 transition-colors hover:text-red-600"
               >
                 Logout
               </button>
@@ -318,7 +318,7 @@ export function MarketingNavbar({ navigation, headerConfig }: Props) {
                   </Link>
                   <button
                     onClick={() => signOut({ callbackUrl: "/" })}
-                    className="rounded-lg border border-border px-4 py-3 text-center text-sm font-medium text-destructive hover:bg-destructive/10"
+                    className="rounded-lg border border-border px-4 py-3 text-center text-sm font-medium text-red-600 hover:bg-red-500/10"
                   >
                     Logout
                   </button>

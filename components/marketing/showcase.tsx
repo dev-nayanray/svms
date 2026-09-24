@@ -280,7 +280,7 @@ function StudentMockup() {
         </div>
         <div className="space-y-3">
           {[
-            { label: "Documents", value: "7 / 9", progress: "78%", color: "bg-success" },
+            { label: "Documents", value: "7 / 9", progress: "78%", color: "bg-emerald-500" },
             { label: "Visa Preparation", value: "In progress", progress: "40%", color: "bg-primary" },
             { label: "Tasks", value: "3 active", progress: "60%", color: "bg-accent" },
           ].map((item) => (
@@ -323,7 +323,7 @@ function EmployeeMockup() {
           {[
             { name: "Ayesha Rahman", stage: "Application Submitted", color: "bg-primary" },
             { name: "Tanvir Hossain", stage: "Conditional Offer", color: "bg-accent" },
-            { name: "Nusrat Jahan", stage: "Visa Submitted", color: "bg-success" },
+            { name: "Nusrat Jahan", stage: "Visa Submitted", color: "bg-emerald-500" },
           ].map((s) => (
             <div key={s.name} className="flex items-center justify-between rounded-md border border-border p-2.5">
               <div className="flex items-center gap-2">

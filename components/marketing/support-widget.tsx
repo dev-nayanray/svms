@@ -139,8 +139,8 @@ export function FloatingSupportWidget() {
           <div className="p-4">
             {submitted ? (
               <div className="flex flex-col items-center gap-3 py-8 text-center">
-                <span className="grid h-14 w-14 place-items-center rounded-full bg-success/10">
-                  <CheckCircle2 className="h-7 w-7 text-success" />
+                <span className="grid h-14 w-14 place-items-center rounded-full bg-emerald-500/10">
+                  <CheckCircle2 className="h-7 w-7 text-emerald-600" />
                 </span>
                 <div>
                   <p className="text-sm font-semibold">Message sent!</p>
@@ -159,7 +159,7 @@ export function FloatingSupportWidget() {
                     aria-invalid={!!errors.name}
                   />
                   {errors.name && (
-                    <p className="mt-1 text-xs text-destructive">{errors.name.message}</p>
+                    <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>
                   )}
                 </div>
                 <div>
@@ -171,7 +171,7 @@ export function FloatingSupportWidget() {
                     aria-invalid={!!errors.email}
                   />
                   {errors.email && (
-                    <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>
+                    <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
                   )}
                 </div>
                 <div>
@@ -183,7 +183,7 @@ export function FloatingSupportWidget() {
                     aria-invalid={!!errors.message}
                   />
                   {errors.message && (
-                    <p className="mt-1 text-xs text-destructive">{errors.message.message}</p>
+                    <p className="mt-1 text-xs text-red-600">{errors.message.message}</p>
                   )}
                 </div>
                 <button

@@ -38,7 +38,7 @@ export function ProblemSection({ items }: { items?: ContentItem[] }) {
             return (
               <MarketingReveal key={i} delay={i * 80}>
                 <div className="h-full rounded-2xl border border-border bg-card p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-                  <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive ring-1 ring-destructive/10">
+                  <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500/10 text-red-600 ring-1 ring-red-500/10">
                     <FaIcon icon={icon} className="h-6 w-6" aria-hidden />
                   </div>
                   <h3 className="font-display text-xl font-bold tracking-tight">{p.title}</h3>
@@ -95,7 +95,7 @@ export function SolutionSection() {
                 key={item}
                 className="flex items-start gap-3 rounded-xl border border-border bg-card p-4"
               >
-                <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
+                <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
                   <Check className="h-3 w-3" aria-hidden />
                 </span>
                 <p className="text-sm font-medium text-foreground">{item}</p>
