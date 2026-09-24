@@ -286,16 +286,21 @@ export function StudentAppShell({
           />
         </aside>
 
-        <main id="main-content" className="app-page-enter min-w-0 flex-1 px-4 py-4 md:p-6">{children}</main>
+        <main id="main-content" className="app-page-enter min-w-0 flex-1 px-4 py-4 md:p-6">
+          {children}
+        </main>
       </div>
 
-      {/* ── Mobile bottom navigation — premium tab bar ── */}
+      {/* ── Mobile bottom navigation — premium tab bar ──
+          Height bumped to 60px so each tab's touch target is ≥ 44px
+          (WCAG minimum). Top accent indicator widened to 32px for
+          better visibility at-a-glance. */}
       <nav
         aria-label="Primary"
         className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-card/90 backdrop-blur-xl supports-[backdrop-filter]:bg-card/85 md:hidden"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0px)" }}
       >
-        <ul className="mx-auto flex max-w-md items-stretch justify-around">
+        <ul className="mx-auto flex max-w-lg items-stretch justify-around">
           {STUDENT_TABS.map((tab) => {
             const active = isActivePath(pathname, tab.href);
             return (
@@ -304,7 +309,7 @@ export function StudentAppShell({
                   href={tab.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "relative flex min-h-[56px] flex-col items-center justify-center gap-1 px-1 py-2 text-[10px] font-semibold transition-all duration-200 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary",
+                    "relative flex min-h-[60px] flex-col items-center justify-center gap-1 px-1 py-2 text-[10px] font-semibold transition-all duration-200 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-amber-500",
                     active ? "text-amber-600" : "text-muted-foreground/70",
                   )}
                 >
@@ -317,7 +322,7 @@ export function StudentAppShell({
                   )}
                   <span className={cn(
                     "grid h-7 w-7 place-items-center rounded-lg transition-all duration-200",
-                    active ? "bg-amber-500/15 scale-105" : "",
+                    active ? "scale-110 bg-amber-500/15" : "",
                   )}>
                     <StudentNavIcon name={TAB_ICONS[tab.href]} className="h-[18px] w-[18px]" />
                   </span>
@@ -333,7 +338,7 @@ export function StudentAppShell({
               aria-haspopup="dialog"
               aria-expanded={moreOpen}
               className={cn(
-                "relative flex min-h-[56px] w-full flex-col items-center justify-center gap-1 px-1 py-2 text-[10px] font-semibold transition-all duration-200 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary",
+                "relative flex min-h-[60px] w-full flex-col items-center justify-center gap-1 px-1 py-2 text-[10px] font-semibold transition-all duration-200 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-amber-500",
                 isMoreActive ? "text-amber-600" : "text-muted-foreground/70",
               )}
             >
@@ -345,7 +350,7 @@ export function StudentAppShell({
               )}
               <span className={cn(
                 "grid h-7 w-7 place-items-center rounded-lg transition-all duration-200",
-                isMoreActive ? "bg-amber-500/15 scale-105" : "",
+                isMoreActive ? "scale-110 bg-amber-500/15" : "",
               )}>
                 <Grid3x3 className="h-[18px] w-[18px]" aria-hidden />
               </span>

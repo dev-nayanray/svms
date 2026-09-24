@@ -79,13 +79,13 @@ export function TodayAgenda({ data }: { data: TodayAgendaData }) {
         <div className="mb-2 flex items-center justify-between">
           <h2
             id="today-heading"
-            className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
           >
             Today · {formatTodayHeader(today)}
           </h2>
         </div>
-        <MobileCard className="flex items-center gap-3 border-success/30 bg-success/5">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-success/15 text-success">
+        <MobileCard className="flex items-center gap-3 border-emerald-200/60 bg-emerald-50/50 dark:bg-emerald-950/10">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-500/15 text-emerald-600">
             <Coffee className="h-5 w-5" aria-hidden />
           </span>
           <div className="min-w-0 flex-1">
@@ -96,7 +96,7 @@ export function TodayAgenda({ data }: { data: TodayAgendaData }) {
           </div>
           <Link
             href="/student/universities"
-            className="inline-flex min-h-[36px] shrink-0 items-center rounded-md bg-success/15 px-3 py-1.5 text-xs font-semibold text-success transition-colors hover:bg-success/25"
+            className="inline-flex min-h-[36px] shrink-0 items-center rounded-xl bg-emerald-500/15 px-3 py-1.5 text-xs font-semibold text-emerald-600 transition-colors hover:bg-emerald-500/25"
           >
             Explore →
           </Link>
@@ -111,11 +111,11 @@ export function TodayAgenda({ data }: { data: TodayAgendaData }) {
       <div className="mb-2 flex items-center justify-between">
         <h2
           id="today-heading"
-          className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+          className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
         >
           Today · {formatTodayHeader(today)}
         </h2>
-        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
+        <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-600">
           {itemCount} {itemCount === 1 ? "item" : "items"}
         </span>
       </div>
@@ -126,7 +126,7 @@ export function TodayAgenda({ data }: { data: TodayAgendaData }) {
             <li key={`${item.kind}-${item.id}`}>
               <Link
                 href={item.href}
-                className="flex items-start gap-3 p-3 transition-colors hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-primary"
+                className="flex items-start gap-3 p-3 transition-colors hover:bg-amber-50/30 focus-visible:outline-2 focus-visible:outline-amber-500 dark:hover:bg-amber-950/10"
               >
                 {/* ── Left rail: time pill + tone stripe ── */}
                 <div className="flex w-14 shrink-0 flex-col items-center gap-1.5 pt-0.5">
@@ -168,11 +168,11 @@ export function TodayAgenda({ data }: { data: TodayAgendaData }) {
 
                 {/* ── Right: status badge / kind tag ── */}
                 {item.tone === "destructive" ? (
-                  <span className="mt-0.5 shrink-0 rounded-md bg-destructive/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-destructive">
+                  <span className="mt-0.5 shrink-0 rounded-md bg-red-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-600">
                     {item.timeLabel === "Overdue" ? "Overdue" : "Urgent"}
                   </span>
                 ) : item.kind === "APPOINTMENT" && item.status === "CONFIRMED" ? (
-                  <span className="mt-0.5 shrink-0 inline-flex items-center gap-1 rounded-md bg-success/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-success">
+                  <span className="mt-0.5 shrink-0 inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-600">
                     <CheckCircle2 className="h-3 w-3" aria-hidden />
                     Confirmed
                   </span>

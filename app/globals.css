@@ -277,6 +277,37 @@ input, textarea, [contenteditable], select {
   }
 }
 
+/* ── Staggered list / section entrance ────────────────────
+   Apply `.stagger-children` to a parent; each direct child
+   gets a 50ms incremental fade-up delay (max 8 children).
+   Respects prefers-reduced-motion. */
+@keyframes studentStaggerIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.stagger-children > * {
+  animation: studentStaggerIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 350ms; }
+@media (prefers-reduced-motion: reduce) {
+  .stagger-children > * {
+    animation: none !important;
+  }
+}
+
 /* Prevent iOS input zoom — inputs must be ≥ 16px font */
 @media (max-width: 768px) {
   input, select, textarea {
