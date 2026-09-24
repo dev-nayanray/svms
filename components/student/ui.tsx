@@ -23,15 +23,13 @@ export function NotificationBadge({ count, className }: { count: number; classNa
     <span
       aria-label={`${count} unread notifications`}
       className={cn(
-        "absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-white ring-2 ring-card shadow-sm",
+        "absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-card shadow-sm",
         className
       )}
     >
-      {/* Subtle ping animation when there are unread notifications —
-          catches the eye without being distracting. */}
       <span
         aria-hidden
-        className="absolute inset-0 animate-ping rounded-full bg-destructive opacity-60 motion-reduce:hidden"
+        className="absolute inset-0 animate-ping rounded-full bg-red-500 opacity-60 motion-reduce:hidden"
       />
       <span className="relative">{count > 9 ? "9+" : count}</span>
     </span>
@@ -40,10 +38,10 @@ export function NotificationBadge({ count, className }: { count: number; classNa
 
 /** Mobile page container — generous spacing above bottom nav. */
 export function MobilePage({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("space-y-5 pb-28 md:pb-6", className)}>{children}</div>;
+  return <div className={cn("space-y-4 pb-28 md:pb-6", className)}>{children}</div>;
 }
 
-/** Premium card with hover lift + shadow. */
+/** Premium card — clean, subtle border, refined hover. */
 export function MobileCard({
   as = "div",
   href,
@@ -57,8 +55,8 @@ export function MobileCard({
   children: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>) {
   const classes = cn(
-    "rounded-2xl border border-border bg-card p-4 shadow-sm transition-all duration-200",
-    href && "hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99]",
+    "rounded-2xl border border-border/80 bg-card p-4 transition-all duration-200",
+    href && "hover:border-primary/20 hover:shadow-md active:scale-[0.98]",
     className,
   );
   if (as === "link" && href) {
@@ -85,14 +83,14 @@ export function ProgressCard({
 }) {
   const pct = Math.max(0, Math.min(100, Math.round(percent)));
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-border/80 bg-card">
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-sm font-bold tracking-tight">{title}</p>
             {subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>}
           </div>
-          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
+          <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-600">
             {pct}%
           </span>
         </div>
@@ -102,10 +100,10 @@ export function ProgressCard({
           aria-valuemin={0}
           aria-valuemax={100}
           aria-label={title}
-          className="mt-3 h-2.5 overflow-hidden rounded-full bg-muted"
+          className="mt-3 h-2 overflow-hidden rounded-full bg-muted"
         >
           <div
-            className="h-full rounded-full bg-gradient-to-r from-primary to-primary-hover transition-[width] motion-reduce:transition-none"
+            className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-600 transition-[width] motion-reduce:transition-none"
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -115,7 +113,7 @@ export function ProgressCard({
   );
 }
 
-/** Premium quick action tile with icon badge + hover. */
+/** Premium quick action tile — gold accent, refined hover. */
 export function QuickAction({
   href,
   icon,
@@ -130,13 +128,13 @@ export function QuickAction({
   return (
     <Link
       href={href}
-      className="group flex min-h-[80px] flex-col items-start gap-2.5 rounded-2xl border border-border bg-card p-3.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="group flex min-h-[76px] flex-col items-start gap-2 rounded-xl border border-border/80 bg-card p-3 transition-all duration-200 hover:border-amber-300/50 hover:bg-amber-50/30 hover:shadow-sm active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-amber-950/10"
     >
-      <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary transition-all duration-200 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
+      <span className="grid h-9 w-9 place-items-center rounded-lg bg-amber-500/10 text-amber-600 transition-all duration-200 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-white">
         {icon}
       </span>
-      <span className="text-sm font-semibold leading-tight">{label}</span>
-      {description && <span className="text-xs leading-tight text-muted-foreground">{description}</span>}
+      <span className="text-xs font-semibold leading-tight">{label}</span>
+      {description && <span className="text-[11px] leading-tight text-muted-foreground">{description}</span>}
     </Link>
   );
 }
@@ -156,7 +154,7 @@ export function Timeline({
               aria-hidden
               className={cn(
                 "absolute left-[10px] top-6 h-[calc(100%-20px)] w-0.5 rounded-full",
-                step.state === "done" ? "bg-primary" : "bg-border"
+                step.state === "done" ? "bg-amber-500" : "bg-border"
               )}
             />
           )}
@@ -164,8 +162,8 @@ export function Timeline({
             aria-hidden
             className={cn(
               "mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 text-[10px] font-bold transition-colors",
-              step.state === "done" && "border-primary bg-primary text-primary-foreground",
-              step.state === "current" && "border-primary bg-primary/15 text-primary ring-4 ring-primary/10",
+              step.state === "done" && "border-amber-500 bg-amber-500 text-white",
+              step.state === "current" && "border-amber-500 bg-amber-500/15 text-amber-600 ring-4 ring-amber-500/10",
               step.state === "pending" && "border-border bg-card text-muted-foreground"
             )}
           >
@@ -194,7 +192,7 @@ export function LoadingCards({ count = 3 }: { count?: number }) {
   return (
     <div className="space-y-3" aria-busy="true" aria-label="Loading">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <div key={i} className="rounded-2xl border border-border/80 bg-card p-4">
           <Skeleton className="h-4 w-2/3" />
           <Skeleton className="mt-3 h-3 w-1/2" />
         </div>

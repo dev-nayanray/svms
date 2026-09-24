@@ -289,10 +289,10 @@ export function StudentAppShell({
         <main id="main-content" className="app-page-enter min-w-0 flex-1 px-4 py-4 md:p-6">{children}</main>
       </div>
 
-      {/* ── Mobile bottom navigation ── */}
+      {/* ── Mobile bottom navigation — premium tab bar ── */}
       <nav
         aria-label="Primary"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur-lg supports-[backdrop-filter]:bg-card/90 md:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-card/90 backdrop-blur-xl supports-[backdrop-filter]:bg-card/85 md:hidden"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0px)" }}
       >
         <ul className="mx-auto flex max-w-md items-stretch justify-around">
@@ -304,37 +304,50 @@ export function StudentAppShell({
                   href={tab.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "relative flex min-h-[58px] flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-semibold transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary",
-                    active ? "text-primary" : "text-muted-foreground",
+                    "relative flex min-h-[56px] flex-col items-center justify-center gap-1 px-1 py-2 text-[10px] font-semibold transition-all duration-200 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary",
+                    active ? "text-amber-600" : "text-muted-foreground/70",
                   )}
                 >
+                  {/* Active indicator — top bar */}
+                  {active && (
+                    <span
+                      aria-hidden
+                      className="absolute top-0 h-0.5 w-8 rounded-full bg-amber-500"
+                    />
+                  )}
                   <span className={cn(
-                    "grid h-8 w-8 place-items-center rounded-xl transition-all duration-200",
-                    active ? "bg-primary/15 scale-105" : "",
+                    "grid h-7 w-7 place-items-center rounded-lg transition-all duration-200",
+                    active ? "bg-amber-500/15 scale-105" : "",
                   )}>
-                    <StudentNavIcon name={TAB_ICONS[tab.href]} className="h-5 w-5" />
+                    <StudentNavIcon name={TAB_ICONS[tab.href]} className="h-[18px] w-[18px]" />
                   </span>
                   {tab.label}
                 </Link>
               </li>
             );
           })}
-          {/* More button — consistent with other tabs */}
+          {/* More button */}
           <li className="flex-1">
             <button
               onClick={() => setMoreOpen(true)}
               aria-haspopup="dialog"
               aria-expanded={moreOpen}
               className={cn(
-                "relative flex min-h-[58px] w-full flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-semibold transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary",
-                isMoreActive ? "text-primary" : "text-muted-foreground",
+                "relative flex min-h-[56px] w-full flex-col items-center justify-center gap-1 px-1 py-2 text-[10px] font-semibold transition-all duration-200 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary",
+                isMoreActive ? "text-amber-600" : "text-muted-foreground/70",
               )}
             >
+              {isMoreActive && (
+                <span
+                  aria-hidden
+                  className="absolute top-0 h-0.5 w-8 rounded-full bg-amber-500"
+                />
+              )}
               <span className={cn(
-                "grid h-8 w-8 place-items-center rounded-xl transition-all duration-200",
-                isMoreActive ? "bg-primary/15 scale-105" : "",
+                "grid h-7 w-7 place-items-center rounded-lg transition-all duration-200",
+                isMoreActive ? "bg-amber-500/15 scale-105" : "",
               )}>
-                <Grid3x3 className="h-5 w-5" aria-hidden />
+                <Grid3x3 className="h-[18px] w-[18px]" aria-hidden />
               </span>
               More
             </button>
