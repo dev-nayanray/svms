@@ -1,22 +1,23 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
-  AlertTriangle, CalendarClock, ChevronDown, Clock, Compass,
-  History, MapPin, RefreshCw, Sparkles, WifiOff, CheckCircle2,
+  CalendarClock, ChevronDown, Clock, Compass,
+  History, MapPin, RefreshCw, Sparkles, CheckCircle2,
   Circle, CircleDot, ArrowRight,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
-import { Badge, Button } from "@/components/ui";
-import { MobilePage, MobileCard } from "@/components/student/ui";
+import { Button } from "@/components/ui";
+import { MobilePage, MobileCard, StudentEmptyState, StudentErrorState, StatusBadge, FilterChip } from "@/components/student/ui";
 import { Skeleton } from "@/components/ui/overlays";
 import { ApplicationSelector, type ApplicationOption } from "./application-selector";
 import { ProgressBar } from "./pipeline-progress";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
+import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 
 type StageMarker = {
   key: string;
@@ -95,14 +96,12 @@ export function TimelineView() {
   if (listQ.isError && !listQ.data) {
     return (
       <MobilePage>
-        <MobileCard className="py-8 text-center">
-          {!online ? <WifiOff className="mx-auto h-10 w-10 text-muted-foreground" /> : <AlertTriangle className="mx-auto h-10 w-10 text-destructive" />}
-          <h2 className="mt-3 text-base font-semibold">{!online ? "You're offline" : "Couldn't load your applications"}</h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            {!online ? "Check your connection and try again." : listQ.error instanceof Error ? listQ.error.message : "Please try again in a moment."}
-          </p>
-          <Button onClick={() => listQ.refetch()} className="mt-4" disabled={!online}><RefreshCw className="h-4 w-4" /> Retry</Button>
-        </MobileCard>
+        <StudentErrorState
+          online={online}
+          title={!online ? "You're offline" : "Couldn't load your applications"}
+          description={!online ? "Check your connection and try again." : listQ.error instanceof Error ? listQ.error.message : "Please try again in a moment."}
+          onRetry={() => listQ.refetch()}
+        />
       </MobilePage>
     );
   }
@@ -110,12 +109,12 @@ export function TimelineView() {
   if (apps.length === 0) {
     return (
       <MobilePage>
-        <MobileCard className="py-8 text-center">
-          <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary"><Compass className="h-6 w-6" /></span>
-          <h2 className="mt-3 text-base font-semibold">No applications yet</h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">Browse universities to start an application. Once you have one, the timeline will appear here.</p>
-          <Button onClick={() => router.push("/student/universities")} className="mt-4"><Compass className="h-4 w-4" /> Browse Universities</Button>
-        </MobileCard>
+        <StudentEmptyState
+          icon={<Compass className="h-5 w-5" aria-hidden />}
+          title="No applications yet"
+          description="Browse universities to start an application. Once you have one, the timeline will appear here."
+          action={<Button onClick={() => router.push("/student/universities")}><Compass className="h-4 w-4" aria-hidden /> Browse Universities</Button>}
+        />
       </MobilePage>
     );
   }
@@ -146,11 +145,10 @@ function TimelineDetail({ id, view, onViewChange }: { id: string; view: "latest"
 
   if (detailQ.isError || !detailQ.data?.data) {
     return (
-      <MobileCard className="py-6 text-center">
-        <AlertTriangle className="mx-auto h-8 w-8 text-destructive" />
-        <p className="mt-2 text-sm text-muted-foreground">{detailQ.error instanceof Error ? detailQ.error.message : "Couldn't load this timeline."}</p>
-        <Button size="sm" variant="outline" className="mt-3" onClick={() => detailQ.refetch()}><RefreshCw className="h-3.5 w-3.5" /> Retry</Button>
-      </MobileCard>
+      <StudentErrorState
+        description={detailQ.error instanceof Error ? detailQ.error.message : "Couldn't load this timeline."}
+        onRetry={() => detailQ.refetch()}
+      />
     );
   }
 
@@ -172,7 +170,7 @@ function TimelineDetail({ id, view, onViewChange }: { id: string; view: "latest"
             </h1>
             {app.university?.name && <p className="truncate text-sm text-muted-foreground">{app.university.name}{app.course?.name ? ` · ${app.course.name}` : ""}</p>}
           </div>
-          <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">{app.stageLabel}</span>
+          <span className="shrink-0 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-600 tabular-nums">{app.stageLabel}</span>
         </div>
         <ProgressBar percent={data.progress.percent} isComplete={data.progress.isComplete} label="Pipeline Progress" />
         <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -184,14 +182,14 @@ function TimelineDetail({ id, view, onViewChange }: { id: string; view: "latest"
       {/* ── Current stage callout ── */}
       <div className={cn(
         "overflow-hidden rounded-2xl border p-4 shadow-sm",
-        current.isComplete ? "border-success/30 bg-success/5" : "border-primary/30 bg-primary/5",
+        current.isComplete ? "border-emerald-200/60 bg-emerald-50/40 dark:bg-emerald-950/10" : "border-amber-300/60 bg-amber-50/40 dark:bg-amber-950/10",
       )}>
         <div className="flex items-start gap-3">
           <span className={cn(
             "grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-white shadow-md",
-            current.isComplete ? "bg-success" : "bg-primary",
+            current.isComplete ? "bg-emerald-500" : "bg-amber-500",
           )}>
-            {current.isComplete ? <CheckCircle2 className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
+            {current.isComplete ? <CheckCircle2 className="h-6 w-6" aria-hidden /> : <Sparkles className="h-6 w-6" aria-hidden />}
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">{current.isComplete ? "Completed" : "Current Stage"}</p>
@@ -213,9 +211,9 @@ function TimelineDetail({ id, view, onViewChange }: { id: string; view: "latest"
       {/* ── Pipeline stepper ── */}
       <MobileCard className="space-y-4">
         <div className="flex items-center gap-2">
-          <History className="h-4 w-4 text-primary" />
+          <History className="h-4 w-4 text-amber-600" aria-hidden />
           <h2 className="text-sm font-bold">Pipeline</h2>
-          <span className="ml-auto text-xs font-semibold text-muted-foreground">{data.progress.percent}%</span>
+          <span className="ml-auto text-xs font-semibold text-muted-foreground tabular-nums">{data.progress.percent}%</span>
         </div>
         <PipelineStepper stages={data.stages} />
       </MobileCard>
@@ -223,24 +221,25 @@ function TimelineDetail({ id, view, onViewChange }: { id: string; view: "latest"
       {/* ── Activity History header ── */}
       <div className="flex items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 text-sm font-bold">
-          <Clock className="h-4 w-4 text-primary" />
+          <Clock className="h-4 w-4 text-amber-600" aria-hidden />
           Activity History
-          <Badge tone="default">{data.timelineCount}</Badge>
+          <StatusBadge>{data.timelineCount}</StatusBadge>
         </h2>
         {hasMore && (
-          <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-0.5 text-xs">
-            <ToggleButton active={view === "latest"} onClick={() => onViewChange("latest")}>Latest</ToggleButton>
-            <ToggleButton active={view === "all"} onClick={() => onViewChange("all")}>All</ToggleButton>
+          <div className="flex items-center gap-1.5">
+            <FilterChip active={view === "latest"} onClick={() => onViewChange("latest")}>Latest</FilterChip>
+            <FilterChip active={view === "all"} onClick={() => onViewChange("all")}>All</FilterChip>
           </div>
         )}
       </div>
 
       {/* ── Timeline list ── */}
       {items.length === 0 ? (
-        <MobileCard className="py-6 text-center">
-          <Clock className="mx-auto h-8 w-8 text-muted-foreground" />
-          <p className="mt-2 text-sm text-muted-foreground">No activity recorded yet. Check back after your counselor updates your application.</p>
-        </MobileCard>
+        <StudentEmptyState
+          icon={<Clock className="h-5 w-5" aria-hidden />}
+          title="No activity yet"
+          description="Check back after your counselor updates your application."
+        />
       ) : (
         <TimelineList items={items} currentStageKey={app.stageKey} />
       )}
@@ -267,15 +266,6 @@ function TimelineDetail({ id, view, onViewChange }: { id: string; view: "latest"
   );
 }
 
-function ToggleButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button type="button" onClick={onClick} aria-pressed={active}
-      className={cn("rounded-lg px-2.5 py-1 font-semibold transition-colors", active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>
-      {children}
-    </button>
-  );
-}
-
 // ── Premium Pipeline Stepper ──
 
 function PipelineStepper({ stages }: { stages: StageMarker[] }) {
@@ -295,7 +285,7 @@ function PipelineStepper({ stages }: { stages: StageMarker[] }) {
                 aria-hidden
                 className={cn(
                   "absolute left-[15px] top-8 h-[calc(100%-16px)] w-0.5 rounded-full",
-                  isCompleted ? "bg-primary" : "bg-border",
+                  isCompleted ? "bg-amber-500" : "bg-border",
                 )}
               />
             )}
@@ -305,20 +295,20 @@ function PipelineStepper({ stages }: { stages: StageMarker[] }) {
               aria-hidden
               className={cn(
                 "relative z-10 grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 transition-all duration-300",
-                isCompleted && "border-primary bg-primary text-primary-foreground shadow-sm",
-                isCurrent && "border-primary bg-primary/10 text-primary ring-4 ring-primary/15 scale-110",
+                isCompleted && "border-amber-500 bg-amber-500 text-white shadow-sm",
+                isCurrent && "border-amber-500 bg-amber-500/10 text-amber-600 ring-4 ring-amber-500/15 scale-110",
                 !isCompleted && !isCurrent && !isSkipped && "border-border bg-card text-muted-foreground",
                 isSkipped && "border-border bg-muted text-muted-foreground/50",
               )}
             >
               {isCompleted ? (
-                <CheckCircle2 className="h-4 w-4" />
+                <CheckCircle2 className="h-4 w-4" aria-hidden />
               ) : isCurrent ? (
-                <CircleDot className="h-4 w-4" />
+                <CircleDot className="h-4 w-4" aria-hidden />
               ) : isSkipped ? (
                 <span className="text-[10px]">—</span>
               ) : (
-                <span className="text-[10px] font-bold">{i + 1}</span>
+                <span className="text-[10px] font-bold tabular-nums">{i + 1}</span>
               )}
             </div>
 
@@ -333,16 +323,16 @@ function PipelineStepper({ stages }: { stages: StageMarker[] }) {
               )}>
                 {s.name}
                 {isCurrent && (
-                  <span className="ml-2 inline-flex items-center rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary-foreground">
+                  <span className="ml-2 inline-flex items-center rounded-full bg-amber-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
                     Now
                   </span>
                 )}
               </p>
               {isCurrent && (
-                <p className="mt-0.5 text-[11px] text-primary/70">In progress</p>
+                <p className="mt-0.5 text-[11px] text-amber-600/70">In progress</p>
               )}
               {isCompleted && (
-                <p className="mt-0.5 text-[11px] text-success">✓ Completed</p>
+                <p className="mt-0.5 text-[11px] text-emerald-600">✓ Completed</p>
               )}
             </div>
           </div>
@@ -383,14 +373,14 @@ function TimelineList({ items, currentStageKey }: { items: TimelineItem[]; curre
               className={cn(
                 "absolute left-0 top-2 z-10 grid h-8 w-8 place-items-center rounded-full border-2 ring-4 ring-background transition-all duration-300",
                 isCurrent
-                  ? "border-primary bg-primary text-primary-foreground scale-110 shadow-md"
+                  ? "border-amber-500 bg-amber-500 text-white scale-110 shadow-md"
                   : "border-border bg-card text-muted-foreground",
               )}
             >
               {isCurrent ? (
-                <CircleDot className="h-4 w-4" />
+                <CircleDot className="h-4 w-4" aria-hidden />
               ) : (
-                <Circle className="h-3 w-3" />
+                <Circle className="h-3 w-3" aria-hidden />
               )}
             </div>
 
@@ -400,25 +390,25 @@ function TimelineList({ items, currentStageKey }: { items: TimelineItem[]; curre
               onClick={() => toggle(item.id)}
               aria-expanded={isExpanded}
               className={cn(
-                "w-full rounded-2xl border p-4 text-left transition-all duration-200 focus-visible:outline-2 focus-visible:outline-primary",
+                "w-full rounded-2xl border p-4 text-left transition-all duration-200 focus-visible:outline-2 focus-visible:outline-amber-500",
                 isCurrent
-                  ? "border-primary/40 bg-primary/5 shadow-sm hover:shadow-md"
+                  ? "border-amber-300/60 bg-amber-50/40 shadow-sm hover:shadow-md dark:bg-amber-950/10"
                   : "border-border bg-card shadow-sm hover:-translate-y-0.5 hover:shadow-md",
               )}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    {isCurrent && <span className="rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary-foreground">Current</span>}
+                    {isCurrent && <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">Current</span>}
                     <p className="text-sm font-bold tracking-tight">{item.toLabel}</p>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">{item.description}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                     <span className="inline-flex items-center gap-1">
-                      <CalendarClock className="h-3 w-3" /> {fmtDate(item.createdAt)}
+                      <CalendarClock className="h-3 w-3" aria-hidden /> {fmtDate(item.createdAt)}
                     </span>
                     <span className="inline-flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> {fmtTime(item.createdAt)}
+                      <Clock className="h-3 w-3" aria-hidden /> {fmtTime(item.createdAt)}
                     </span>
                     {item.changedByName && <span>· by {item.changedByName}</span>}
                   </div>
@@ -476,14 +466,3 @@ function fmtTime(d: Date | string): string {
   try { return format(typeof d === "string" ? parseISO(d) : d, "h:mm a"); } catch { return "—"; }
 }
 
-function useOnlineStatus() {
-  const [online, setOnline] = useState(true);
-  useEffect(() => {
-    const update = () => setOnline(navigator.onLine);
-    update();
-    window.addEventListener("online", update);
-    window.addEventListener("offline", update);
-    return () => { window.removeEventListener("online", update); window.removeEventListener("offline", update); };
-  }, []);
-  return online;
-}

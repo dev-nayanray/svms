@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
-  AlertTriangle,
   CalendarClock,
   CheckCircle2,
   ChevronDown,
@@ -17,15 +16,15 @@ import {
   Globe,
   RefreshCw,
   Stamp,
-  WifiOff,
   XCircle,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
-import { Button, Badge } from "@/components/ui";
-import { MobilePage, MobileCard } from "@/components/student/ui";
+import { Button } from "@/components/ui";
+import { MobilePage, MobileCard, StudentEmptyState, StudentErrorState, StatusBadge } from "@/components/student/ui";
 import { Skeleton } from "@/components/ui/overlays";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
+import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 
 // ── Types (mirror the API response shape) ──────────────────────────
 
@@ -159,26 +158,16 @@ export function VisaView() {
   if (listQ.isError && !listQ.data) {
     return (
       <MobilePage>
-        <MobileCard className="py-8 text-center">
-          {!online ? (
-            <WifiOff className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden />
-          ) : (
-            <AlertTriangle className="mx-auto h-10 w-10 text-destructive" aria-hidden />
-          )}
-          <h2 className="mt-3 text-base font-semibold">
-            {!online ? "You're offline" : "Couldn't load your visa applications"}
-          </h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            {!online
-              ? "Check your connection and try again."
-              : listQ.error instanceof Error
-                ? listQ.error.message
-                : "Please try again in a moment."}
-          </p>
-          <Button onClick={() => listQ.refetch()} className="mt-4" disabled={!online}>
-            <RefreshCw className="h-4 w-4" aria-hidden /> Retry
-          </Button>
-        </MobileCard>
+        <StudentErrorState
+          online={online}
+          title={!online ? "You're offline" : "Couldn't load your visa applications"}
+          description={!online
+            ? "Check your connection and try again."
+            : listQ.error instanceof Error
+              ? listQ.error.message
+              : "Please try again in a moment."}
+          onRetry={() => listQ.refetch()}
+        />
       </MobilePage>
     );
   }
@@ -187,19 +176,12 @@ export function VisaView() {
   if (visas.length === 0) {
     return (
       <MobilePage>
-        <MobileCard className="py-8 text-center">
-          <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
-            <Stamp className="h-6 w-6" aria-hidden />
-          </span>
-          <h2 className="mt-3 text-base font-semibold">No visa applications yet</h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            Visa tracking begins once your application reaches the visa preparation stage.
-            Check your application status or contact your counselor.
-          </p>
-          <Button onClick={() => router.push("/student/application")} className="mt-4">
-            <Compass className="h-4 w-4" aria-hidden /> View Application
-          </Button>
-        </MobileCard>
+        <StudentEmptyState
+          icon={<Stamp className="h-5 w-5" aria-hidden />}
+          title="No visa applications yet"
+          description="Visa tracking begins once your application reaches the visa preparation stage. Check your application status or contact your counselor."
+          action={<Button onClick={() => router.push("/student/application")}><Compass className="h-4 w-4" aria-hidden /> View Application</Button>}
+        />
       </MobilePage>
     );
   }
@@ -252,7 +234,7 @@ function VisaSelector({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2 text-left transition-colors hover:bg-muted/50 focus-visible:outline-2 focus-visible:outline-primary"
+        className="flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2 text-left transition-colors hover:bg-muted/50 focus-visible:outline-2 focus-visible:outline-amber-500"
       >
         <span className="flex min-w-0 items-center gap-2">
           {selected?.application.country.flag && (
@@ -282,8 +264,8 @@ function VisaSelector({
                     type="button"
                     onClick={() => { onSelect(v.id); setOpen(false); }}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors",
-                      v.id === selectedId ? "bg-primary/10 ring-1 ring-primary" : "hover:bg-muted",
+                      "flex w-full items-center gap-3 rounded-xl p-3 text-left transition-colors",
+                      v.id === selectedId ? "bg-amber-500/10 ring-1 ring-amber-500" : "hover:bg-muted",
                     )}
                   >
                     <span className="text-base" aria-hidden>{v.application.country.flag}</span>
@@ -293,7 +275,7 @@ function VisaSelector({
                         {v.application.applicationNumber} · {v.stageLabel}
                       </span>
                     </span>
-                    <Badge tone={STATUS_TONE[v.stage] ?? "default"}>{v.stageLabel}</Badge>
+                    <StatusBadge tone={STATUS_TONE[v.stage] ?? "default"}>{v.stageLabel}</StatusBadge>
                   </button>
                 </li>
               ))}
@@ -330,15 +312,10 @@ function VisaDetail({ id, countryId }: { id: string; countryId?: string }) {
 
   if (detailQ.isError || !detailQ.data?.visa) {
     return (
-      <MobileCard className="py-6 text-center">
-        <AlertTriangle className="mx-auto h-8 w-8 text-destructive" aria-hidden />
-        <p className="mt-2 text-sm text-muted-foreground">
-          {detailQ.error instanceof Error ? detailQ.error.message : "Couldn't load this visa."}
-        </p>
-        <Button size="sm" variant="outline" className="mt-3" onClick={() => detailQ.refetch()}>
-          <RefreshCw className="h-3.5 w-3.5" aria-hidden /> Retry
-        </Button>
-      </MobileCard>
+      <StudentErrorState
+        description={detailQ.error instanceof Error ? detailQ.error.message : "Couldn't load this visa."}
+        onRetry={() => detailQ.refetch()}
+      />
     );
   }
 
@@ -351,10 +328,10 @@ function VisaDetail({ id, countryId }: { id: string; countryId?: string }) {
       {/* Visa status card — prominent visualization */}
       <MobileCard className={cn(
         "space-y-3 border-2",
-        tone === "success" && "border-success/40",
-        tone === "destructive" && "border-destructive/40",
-        tone === "warning" && "border-warning/40",
-        tone === "info" && "border-info/40",
+        tone === "success" && "border-emerald-300/60",
+        tone === "destructive" && "border-red-300/60",
+        tone === "warning" && "border-amber-300/60",
+        tone === "info" && "border-blue-300/60",
         tone === "default" && "border-border",
       )}>
         <div className="flex items-start justify-between gap-3">
@@ -362,7 +339,7 @@ function VisaDetail({ id, countryId }: { id: string; countryId?: string }) {
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Visa Application
             </p>
-            <h1 className="mt-1 text-lg font-semibold">
+            <h1 className="mt-1 text-lg font-semibold tabular-nums">
               {visa.application.country.flag ? `${visa.application.country.flag} ` : ""}
               {visa.application.country.name}
             </h1>
@@ -375,10 +352,10 @@ function VisaDetail({ id, countryId }: { id: string; countryId?: string }) {
           </div>
           <div className={cn(
             "flex shrink-0 flex-col items-center gap-1 rounded-xl px-3 py-2",
-            tone === "success" && "bg-success/10 text-success",
-            tone === "destructive" && "bg-destructive/10 text-destructive",
-            tone === "warning" && "bg-warning/10 text-warning",
-            tone === "info" && "bg-info/10 text-info",
+            tone === "success" && "bg-emerald-500/10 text-emerald-600",
+            tone === "destructive" && "bg-red-500/10 text-red-600",
+            tone === "warning" && "bg-amber-500/10 text-amber-600",
+            tone === "info" && "bg-blue-500/10 text-blue-600",
             tone === "default" && "bg-muted text-muted-foreground",
           )}>
             {statusIcon(visa.stage)}
@@ -390,7 +367,7 @@ function VisaDetail({ id, countryId }: { id: string; countryId?: string }) {
       {/* Visa pipeline timeline */}
       <MobileCard className="space-y-3">
         <h2 className="flex items-center gap-2 text-sm font-semibold">
-          <Stamp className="h-4 w-4 text-primary" aria-hidden />
+          <Stamp className="h-4 w-4 text-amber-600" aria-hidden />
           Visa Timeline
         </h2>
         <PipelineTimeline stages={visa.pipeline} />
@@ -428,12 +405,12 @@ function VisaDetail({ id, countryId }: { id: string; countryId?: string }) {
       {requirements.length > 0 && (
         <MobileCard className="space-y-3">
           <h2 className="flex items-center gap-2 text-sm font-semibold">
-            <FileCheck className="h-4 w-4 text-primary" aria-hidden />
+            <FileCheck className="h-4 w-4 text-amber-600" aria-hidden />
             Visa Requirements ({requirements.length})
           </h2>
           <ul className="space-y-2">
             {requirements.map((req) => (
-              <li key={req.id} className="flex items-start justify-between gap-3 rounded-lg border border-border p-3">
+              <li key={req.id} className="flex items-start justify-between gap-3 rounded-xl border border-border p-3">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">{req.name}</p>
                   {req.description && (
@@ -442,7 +419,7 @@ function VisaDetail({ id, countryId }: { id: string; countryId?: string }) {
                 </div>
                 <span className={cn(
                   "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium",
-                  req.required ? "bg-warning/10 text-warning" : "bg-muted text-muted-foreground",
+                  req.required ? "bg-amber-500/10 text-amber-600" : "bg-muted text-muted-foreground",
                 )}>
                   {req.required ? "Required" : "Optional"}
                 </span>
@@ -456,13 +433,13 @@ function VisaDetail({ id, countryId }: { id: string; countryId?: string }) {
       {visa.timeline.length > 0 && (
         <MobileCard className="space-y-3">
           <h2 className="flex items-center gap-2 text-sm font-semibold">
-            <Clock className="h-4 w-4 text-primary" aria-hidden />
+            <Clock className="h-4 w-4 text-amber-600" aria-hidden />
             Activity History
           </h2>
           <ol className="relative space-y-3 border-l-2 border-border pl-4">
             {visa.timeline.slice(0, 8).map((h) => (
               <li key={h.id} className="relative">
-                <span aria-hidden className="absolute -left-[18px] top-1 grid h-3 w-3 place-items-center rounded-full border-2 border-primary bg-card ring-2 ring-card" />
+                <span aria-hidden className="absolute -left-[18px] top-1 grid h-3 w-3 place-items-center rounded-full border-2 border-amber-500 bg-card ring-2 ring-card" />
                 <p className="text-sm font-medium">
                   {h.fromStage ? `${h.fromLabel} → ${h.toLabel}` : h.toLabel}
                 </p>
@@ -478,19 +455,19 @@ function VisaDetail({ id, countryId }: { id: string; countryId?: string }) {
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         <Link
           href="/student/application"
-          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary"
+          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-amber-500"
         >
           <ChevronLeft className="h-3.5 w-3.5" aria-hidden /> Application
         </Link>
         <Link
           href="/student/documents"
-          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary"
+          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-amber-500"
         >
           <FileText className="h-3.5 w-3.5" aria-hidden /> Documents
         </Link>
         <Link
           href="/student/messages"
-          className="col-span-2 flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary sm:col-span-1"
+          className="col-span-2 flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-amber-500 sm:col-span-1"
         >
           <Globe className="h-3.5 w-3.5" aria-hidden /> Message Counselor
         </Link>
@@ -513,7 +490,7 @@ function PipelineTimeline({ stages }: { stages: PipelineStage[] }) {
                 aria-hidden
                 className={cn(
                   "absolute left-[11px] top-6 h-[calc(100%-16px)] w-0.5",
-                  s.state === "completed" ? "bg-primary" : "bg-border",
+                  s.state === "completed" ? "bg-amber-500" : "bg-border",
                 )}
               />
             )}
@@ -521,8 +498,8 @@ function PipelineTimeline({ stages }: { stages: PipelineStage[] }) {
               aria-hidden
               className={cn(
                 "relative grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 text-[10px] font-medium",
-                s.state === "completed" && "border-primary bg-primary text-primary-foreground",
-                s.state === "current" && "border-primary bg-primary/15 text-primary",
+                s.state === "completed" && "border-amber-500 bg-amber-500 text-white",
+                s.state === "current" && "border-amber-500 bg-amber-500/15 text-amber-600",
                 s.state === "upcoming" && "border-border bg-card text-muted-foreground",
               )}
             >
@@ -537,7 +514,7 @@ function PipelineTimeline({ stages }: { stages: PipelineStage[] }) {
               )}>
                 {s.label}
                 {s.state === "current" && (
-                  <span className="ml-1.5 rounded bg-primary px-1.5 py-0 text-[9px] font-bold uppercase text-primary-foreground">
+                  <span className="ml-1.5 rounded bg-amber-500 px-1.5 py-0 text-[9px] font-bold uppercase text-white">
                     Now
                   </span>
                 )}
@@ -565,14 +542,14 @@ function DateCard({
 }) {
   const toneCls = {
     default: "border-border bg-card",
-    info: "border-info/30 bg-info/5",
-    warning: "border-warning/30 bg-warning/5",
-    success: "border-success/30 bg-success/5",
-    destructive: "border-destructive/30 bg-destructive/5",
+    info: "border-blue-300/60 bg-blue-50/40 dark:bg-blue-950/10",
+    warning: "border-amber-300/60 bg-amber-50/40 dark:bg-amber-950/10",
+    success: "border-emerald-200/60 bg-emerald-50/40 dark:bg-emerald-950/10",
+    destructive: "border-red-300/60 bg-red-50/40 dark:bg-red-950/10",
   }[tone];
 
   return (
-    <div className={cn("rounded-lg border p-3", toneCls)}>
+    <div className={cn("rounded-xl border p-3", toneCls)}>
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         {icon}
         {label}
@@ -600,7 +577,7 @@ function VisaSkeleton({ showHeader = true }: { showHeader?: boolean }) {
       <Skeleton className="h-32 w-full rounded-xl" />
       <div className="grid grid-cols-2 gap-2">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-16 rounded-lg" />
+          <Skeleton key={i} className="h-16 rounded-xl" />
         ))}
       </div>
     </div>
@@ -625,17 +602,3 @@ function fmtDateTime(d: string): string {
   }
 }
 
-function useOnlineStatus() {
-  const [online, setOnline] = useState(true);
-  useEffect(() => {
-    const update = () => setOnline(navigator.onLine);
-    update();
-    window.addEventListener("online", update);
-    window.addEventListener("offline", update);
-    return () => {
-      window.removeEventListener("online", update);
-      window.removeEventListener("offline", update);
-    };
-  }, []);
-  return online;
-}

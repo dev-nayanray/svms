@@ -93,3 +93,33 @@ Stage Summary:
 - All 3 user-reported issues fixed: email config now reads from DB, maintenance mode now redirects public users, dashboard already dynamic
 - Bonus: fixed 2 pre-existing permission metadata test failures by registering the 18 new permissions in the metadata file
 - TypeScript clean, ESLint clean, all system tests pass
+
+---
+Task ID: 2-a
+Agent: general-purpose (refactor-views)
+Task: Apply unified UI components to remaining student view files
+
+Work Log:
+- Read shared UI module `components/student/ui.tsx` to confirm available components (`StudentEmptyState`, `StudentErrorState`, `StatusBadge`, `FilterChip`, `MobilePage`, `MobileCard`, `PageHeader`, `StudentStatCard`, `LoadingCards`, `ProgressCard`, `Timeline`, `QuickAction`, `NotificationBadge`, `StudentSection`, `STUDENT_TOKENS`).
+- Refactored `components/student/settings/settings-view.tsx` — replaced 1 error state with `<StudentErrorState>`, removed `AlertTriangle`, migrated `bg-primary/10 text-primary`, `border-destructive/30 bg-destructive/5`, `text-warning`, `text-destructive`, `bg-primary text-primary-foreground` switch track, and `focus-visible:outline-primary` to the amber/emerald/red token palette; converted `rounded-lg` theme tiles to `rounded-xl`; removed unused `useEffect` import.
+- Refactored `components/student/application/timeline-view.tsx` — replaced 2 error states (top-level offline + inner detail load) and 2 empty states (no applications + no activity) with `<StudentErrorState>` / `<StudentEmptyState>`; removed `AlertTriangle`, `WifiOff`, `Badge`, and the now-unused `ToggleButton` component; replaced the Latest/All segmented control with two `<FilterChip>`s; replaced `<Badge tone="default">{count}</Badge>` with `<StatusBadge>`; migrated the pipeline stepper and timeline-list dot/border colors from `bg-primary`/`border-primary`/`text-success` to amber-500/emerald-600; added `tabular-nums` to percent and stage-number spans; removed unused `useEffect` import.
+- Refactored `components/student/visa/visa-view.tsx` — replaced 2 error states (top-level + inner detail) and 1 empty state with the unified components; removed `AlertTriangle`, `WifiOff`, `Badge`; replaced the `<Badge tone>` selector option with `<StatusBadge tone>`; migrated the dynamic tone-based border/background classes on the status card and the `DateCard` component (`border-info/30 bg-info/5` → `border-blue-300/60 bg-blue-50/40 dark:bg-blue-950/10`, etc.); migrated pipeline-timeline colors, activity-timeline dots, and the requirements "Required/Optional" pill from `bg-warning/10 text-warning` to amber-500; removed unused `useEffect` import.
+- Refactored `components/student/support/support-view.tsx` — replaced 1 FAQ error state and 2 empty states (no FAQ + no tickets) with the unified components; removed `AlertTriangle`, `Badge`; replaced the FAQ category pill buttons (All + 7 categories) with `<FilterChip>`; converted 4 `<Badge tone>` usages to `<StatusBadge>`; migrated the tab-switcher active state, ticket response box, attachment link, and `text-warning` offline indicator to amber/emerald tokens; converted `rounded-lg` skeletons to `rounded-xl`; added `tabular-nums` to the active-tickets count badge.
+- Refactored `components/student/messages/chat-view.tsx` — replaced the 1 error state with `<StudentErrorState>`; removed `AlertTriangle`, `MobileCard` (no longer needed), and the unused `Button` import; migrated the message-bubble sender background, send button, attach button, back button, and counselor avatar from `bg-primary`/`text-primary`/`bg-primary/15`/`text-primary-foreground` to amber gradient + white; migrated the offline composer banner and `text-success` "✓ Sent" indicator to amber-600 / emerald-600.
+- Refactored `components/student/profile/profile-view.tsx` — replaced the 1 error state with `<StudentErrorState>`; removed `AlertTriangle`, `Badge`, and unused `useEffect`; replaced the completion-percent `<Badge tone>` with `<StatusBadge tone>` (added `tabular-nums`); migrated the profile-completion progress bar (`bg-warning`/`bg-success`), the missing-field chips (`bg-warning/10 text-warning`), the section-header icons (`text-primary`), the "Edit" button (`text-primary hover:bg-primary/10`), and the offline indicator (`text-warning`) to amber/emerald tokens; converted `rounded-lg` completion container to `rounded-xl`.
+- After each file: ran `npx tsc --noEmit` (passed cleanly every time) and verified no remaining `bg-primary/text-primary/border-primary/bg-success/text-success/bg-warning/text-warning/bg-destructive/text-destructive/bg-info/text-info/outline-primary` references via ripgrep.
+- Final lint: ran `npx eslint` against all 6 files — passed with 0 errors and 0 warnings.
+- Final type check: `npx tsc --noEmit` — passed with no output.
+
+Stage Summary:
+- 6 view files refactored: settings, timeline, visa, support, chat, profile.
+- Total diff: 221 insertions + 384 deletions = ~605 lines changed across the 6 files (net −163 lines thanks to unified state components).
+- 8 ad-hoc error/empty cards replaced with `<StudentErrorState>` / `<StudentEmptyState>`.
+- 6 `<Badge tone>` usages replaced with `<StatusBadge tone>`.
+- 9 ad-hoc filter/tab buttons replaced with `<FilterChip>` (timeline Latest/All toggle, support FAQ category chips).
+- Removed unused imports: `AlertTriangle`, `Badge`, `useEffect` (settings/timeline/visa/profile), `WifiOff` (timeline/visa), `Button` (chat), `MobileCard` (chat).
+- Removed dead `ToggleButton` helper component from timeline-view after converting to `FilterChip`.
+- All color tones migrated to the unified amber/emerald/red/blue palette; `tabular-nums` added to numeric displays; `rounded-lg` tiles upgraded to `rounded-xl` where appropriate.
+- `npx tsc --noEmit` passes; `npx eslint <6 files>` passes with no errors or warnings.
+- No behavior changes — all event handlers, conditional rendering, and accessibility attributes preserved.
+- Did NOT commit; parent agent will verify and commit.

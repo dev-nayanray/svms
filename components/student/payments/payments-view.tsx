@@ -26,6 +26,7 @@ import {
 import { Skeleton } from "@/components/ui/overlays";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
+import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -483,17 +484,3 @@ function fmtDate(d: string): string {
   }
 }
 
-function useOnlineStatus() {
-  const [online, setOnline] = useState(true);
-  useEffect(() => {
-    const update = () => setOnline(navigator.onLine);
-    update();
-    window.addEventListener("online", update);
-    window.addEventListener("offline", update);
-    return () => {
-      window.removeEventListener("online", update);
-      window.removeEventListener("offline", update);
-    };
-  }, []);
-  return online;
-}

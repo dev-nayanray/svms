@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AlertTriangle,
   ArrowLeft,
   Check,
   CheckCheck,
@@ -15,12 +14,12 @@ import {
   WifiOff,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
-import { Button } from "@/components/ui";
-import { MobileCard } from "@/components/student/ui";
+import { StudentErrorState } from "@/components/student/ui";
 import { Skeleton } from "@/components/ui/overlays";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { format, parseISO, isSameDay } from "date-fns";
+import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -121,15 +120,10 @@ export function ChatView({ conversationId }: { conversationId: string }) {
       <div className="flex h-[calc(100dvh-3.5rem-2rem)] md:h-[calc(100dvh-3.5rem-3rem)] flex-col">
         <ChatHeader name="" initials="" onBack={() => router.push("/student/messages")} />
         <div className="flex flex-1 items-center justify-center p-4">
-          <MobileCard className="py-6 text-center">
-            <AlertTriangle className="mx-auto h-8 w-8 text-destructive" aria-hidden />
-            <p className="mt-2 text-sm text-muted-foreground">
-              {detailQ.error instanceof Error ? detailQ.error.message : "Conversation not found."}
-            </p>
-            <Button size="sm" variant="outline" className="mt-3" onClick={() => detailQ.refetch()}>
-              <RefreshCw className="h-3.5 w-3.5" aria-hidden /> Retry
-            </Button>
-          </MobileCard>
+          <StudentErrorState
+            description={detailQ.error instanceof Error ? detailQ.error.message : "Conversation not found."}
+            onRetry={() => detailQ.refetch()}
+          />
         </div>
       </div>
     );
@@ -232,7 +226,7 @@ export function ChatView({ conversationId }: { conversationId: string }) {
       <div className="flex-1 overflow-y-auto px-3 py-4">
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-            <span className="grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-amber-500/10 text-amber-600">
               <UserRound className="h-6 w-6" aria-hidden />
             </span>
             <p className="text-sm font-medium">Start the conversation</p>
@@ -264,14 +258,14 @@ export function ChatView({ conversationId }: { conversationId: string }) {
       {/* Composer */}
       <div className="border-t border-border bg-card px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {!online && (
-          <div className="mb-1 flex items-center justify-center gap-1 text-[11px] text-warning">
+          <div className="mb-1 flex items-center justify-center gap-1 text-[11px] text-amber-600">
             <WifiOff className="h-3 w-3" aria-hidden /> Offline — messages will be queued
           </div>
         )}
         <div className="flex items-end gap-2">
           <button
             type="button"
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-amber-500"
             aria-label="Attach file (coming soon)"
             disabled
           >
@@ -293,9 +287,9 @@ export function ChatView({ conversationId }: { conversationId: string }) {
             disabled={!canSend}
             aria-label="Send message"
             className={cn(
-              "grid h-10 w-10 shrink-0 place-items-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-primary",
+              "grid h-10 w-10 shrink-0 place-items-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-amber-500",
               canSend
-                ? "bg-primary text-primary-foreground hover:bg-primary-hover"
+                ? "bg-gradient-to-br from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700"
                 : "bg-muted text-muted-foreground/50",
             )}
           >
@@ -327,11 +321,11 @@ function ChatHeader({
       <button
         onClick={onBack}
         aria-label="Back to messages"
-        className="grid h-11 w-11 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary"
+        className="grid h-11 w-11 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-amber-500"
       >
         <ArrowLeft className="h-5 w-5" aria-hidden />
       </button>
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-amber-500/15 text-sm font-semibold text-amber-600">
         {initials || <UserRound className="h-4 w-4" aria-hidden />}
       </span>
       <div className="min-w-0 flex-1">
@@ -354,7 +348,7 @@ function MessageBubble({ message, justSent }: { message: ChatMessage; justSent?:
       <div className={cn(
         "max-w-[80%] rounded-2xl px-3 py-2 text-sm",
         isMine
-          ? "rounded-br-sm bg-primary text-primary-foreground"
+          ? "rounded-br-sm bg-gradient-to-br from-amber-500 to-amber-600 text-white"
           : "rounded-bl-sm border border-border bg-card text-foreground",
       )}>
         <p className="whitespace-pre-wrap break-words">{message.body}</p>
@@ -365,7 +359,7 @@ function MessageBubble({ message, justSent }: { message: ChatMessage; justSent?:
             rel="noopener noreferrer"
             className={cn(
               "mt-1 inline-flex items-center gap-1 text-xs underline",
-              isMine ? "text-primary-foreground/80" : "text-primary",
+              isMine ? "text-white/80" : "text-amber-600",
             )}
           >
             <Paperclip className="h-3 w-3" aria-hidden /> Attachment
@@ -373,10 +367,10 @@ function MessageBubble({ message, justSent }: { message: ChatMessage; justSent?:
         )}
         <div className={cn(
           "mt-0.5 flex items-center gap-1 text-[10px]",
-          isMine ? "text-primary-foreground/60" : "text-muted-foreground",
+          isMine ? "text-white/60" : "text-muted-foreground",
         )}>
           <span>{time}</span>
-          {justSent && <span className="text-success">✓ Sent</span>}
+          {justSent && <span className="text-emerald-600">✓ Sent</span>}
           {isMine && isRead && <CheckCheck className="h-3 w-3" aria-hidden />}
           {isMine && !isRead && !justSent && <Check className="h-3 w-3" aria-hidden />}
         </div>
@@ -401,17 +395,3 @@ function formatDateSeparator(dateStr: string): string {
   }
 }
 
-function useOnlineStatus() {
-  const [online, setOnline] = useState(true);
-  useEffect(() => {
-    const update = () => setOnline(navigator.onLine);
-    update();
-    window.addEventListener("online", update);
-    window.addEventListener("offline", update);
-    return () => {
-      window.removeEventListener("online", update);
-      window.removeEventListener("offline", update);
-    };
-  }, []);
-  return online;
-}
