@@ -254,6 +254,9 @@ export function ProfileView() {
         </div>
       </MobileCard>
 
+      {/* Quick Links — secondary navigation (AI Assistant, Documents, etc.) */}
+      <QuickLinks />
+
       {/* Section cards */}
       <PersonalSection
         profile={profile}
@@ -938,3 +941,64 @@ function fmtDate(d?: string | null): string {
 // We need the Input/Select imports — already imported at the top.
 
 /** Hook that subscribes to online/offline events. */
+
+// ── Quick Links component ─────────────────────────────────────────
+
+import Link from "next/link";
+import {
+  Sparkles,
+  FileText,
+  BookOpen,
+  Stamp,
+  CheckSquare,
+  CreditCard,
+  Receipt,
+  CalendarClock,
+  MessageSquare,
+  LifeBuoy,
+  Settings,
+  Palette,
+} from "lucide-react";
+import { STUDENT_MORE } from "@/config/student-nav";
+
+const QUICK_LINK_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  Sparkles,
+  FileText,
+  BookOpen,
+  Stamp,
+  CheckSquare,
+  CreditCard,
+  Receipt,
+  CalendarClock,
+  MessageSquare,
+  LifeBuoy,
+  Settings,
+  Palette,
+};
+
+function QuickLinks() {
+  return (
+    <section aria-labelledby="quick-links-heading">
+      <h3 id="quick-links-heading" className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        Quick links
+      </h3>
+      <div className="grid grid-cols-3 gap-2">
+        {STUDENT_MORE.map((item) => {
+          const Icon = QUICK_LINK_ICONS[item.icon] ?? Sparkles;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex min-h-[72px] flex-col items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-card p-2 text-center transition-all hover:border-amber-300/60 hover:bg-amber-50/30 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 dark:hover:bg-amber-950/10"
+            >
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-amber-500/10 text-amber-600">
+                <Icon className="h-4 w-4" aria-hidden />
+              </span>
+              <span className="text-[11px] font-medium leading-tight">{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
