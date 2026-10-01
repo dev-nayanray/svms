@@ -25,10 +25,12 @@ export const studentUpdateSchema = studentCreateSchema
   });
 
 export const LEAD_STATUSES_Z = z.enum([
-  "NEW", "CONTACTED", "COUNSELING", "QUALIFIED", "CONVERTED", "LOST",
+  "NEW", "PENDING_REVIEW", "APPROVED", "ASSIGNED", "CONTACTED", "FOLLOW_UP",
+  "QUALIFIED", "CONVERTED", "REJECTED", "LOST", "COUNSELING",
 ]);
 export const LEAD_SOURCES_Z = z.enum([
-  "WEBSITE", "FACEBOOK", "WHATSAPP", "REFERRAL", "WALK_IN", "CAMPAIGN", "AGENT", "OTHER",
+  "WEBSITE", "TELEGRAM", "META", "FACEBOOK", "WHATSAPP", "REFERRAL",
+  "WALK_IN", "CAMPAIGN", "AGENT", "OTHER",
 ]);
 
 export const leadSchema = z.object({
@@ -39,7 +41,13 @@ export const leadSchema = z.object({
   preferredIntake: z.string().optional(),
   educationLevel: z.string().optional(),
   englishScore: z.string().optional(),
+  interestedProgram: z.string().optional(),
+  location: z.string().optional(),
   source: LEAD_SOURCES_Z.optional(),
+  sourcePlatformId: z.string().optional(),
+  sourceConversationId: z.string().optional(),
+  sourceMessageId: z.string().optional(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
   assignedEmployeeId: z.string().optional(),
   status: LEAD_STATUSES_Z.optional(),
   notes: z.string().optional(),

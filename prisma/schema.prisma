@@ -168,20 +168,71 @@ model Lead {
   preferredIntake    String?
   educationLevel     String?
   englishScore       String?
+  // Extended fields for lead management system
+  interestedProgram  String? // e.g. "CSE", "Business", "MBA"
+  location           String? // city/country of the lead
+  priority           String    @default("MEDIUM") // LOW | MEDIUM | HIGH | URGENT
+  // External platform tracking (Telegram, Meta, etc.)
+  source             String? // WEBSITE | TELEGRAM | META | FACEBOOK | WHATSAPP | REFERRAL | WALK_IN | CAMPAIGN | AGENT | OTHER
+  sourcePlatformId   String? // external user ID on the source platform
+  sourceConversationId String? // external conversation/chat ID
+  sourceMessageId    String? // last message ID from the source
+  // Lifecycle timestamps
   assignedEmployeeId String?   @db.ObjectId
   employee           Employee? @relation(fields: [assignedEmployeeId], references: [id])
-  status             String    @default("NEW") // NEW | CONTACTED | COUNSELING | QUALIFIED | CONVERTED | LOST
-  source             String? // WEBSITE | FACEBOOK | WHATSAPP | REFERRAL | WALK_IN | CAMPAIGN | AGENT | OTHER
+  status             String    @default("NEW") // NEW | PENDING_REVIEW | APPROVED | ASSIGNED | CONTACTED | FOLLOW_UP | QUALIFIED | CONVERTED | REJECTED | LOST
   notes              String?
   convertedStudentId String?   @db.ObjectId
+  approvedAt         DateTime?
+  approvedById       String?   @db.ObjectId
+  assignedAt         DateTime?
+  convertedAt        DateTime?
+  lastContactedAt    DateTime?
+  nextFollowUpAt     DateTime?
   archivedAt         DateTime?
   deletedAt          DateTime?
   deletedBy          String?   @db.ObjectId
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
+  // Activity timeline — one-to-many relation
+  activities         LeadActivity[]
+
   @@index([status])
   @@index([assignedEmployeeId])
+  @@index([source])
+  @@index([sourcePlatformId])
+  @@index([sourceConversationId])
+  @@index([priority])
+  @@index([nextFollowUpAt])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────
+// Lead Activity Timeline
+// ─────────────────────────────────────────────
+
+model LeadActivity {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  leadId      String   @db.ObjectId
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  // Type of activity: CREATED | STATUS_CHANGED | APPROVED | REJECTED | ASSIGNED |
+  //                    CONTACTED | NOTE_ADDED | FOLLOW_UP_SCHEDULED | CONVERTED |
+  //                    DUPLICATE_DETECTED | COUNSELOR_NOTIFIED
+  type        String
+  description String
+  // Optional old/new value for status changes
+  oldValue    String?
+  newValue    String?
+  // Actor (admin/employee who performed the action). Null for system/automated actions.
+  actorId     String?  @db.ObjectId
+  actorName   String? // denormalized for quick display
+  // Metadata (JSON) — additional context like source, counselor name, etc.
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([leadId, createdAt])
+  @@index([type])
 }
 
 model AcademicRecord {
