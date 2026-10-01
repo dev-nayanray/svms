@@ -39,12 +39,19 @@ export function notFound(what: string): ToolError {
   };
 }
 
-/** Construct an INTERNAL error from a caught exception. */
-export function internalError(toolName: string, err: unknown): ToolError {
-  const message = err instanceof Error ? err.message : "Unknown error";
+/**
+ * Construct an INTERNAL error from a caught exception.
+ *
+ * SECURITY: Does NOT include the raw error message in the response —
+ * database errors can contain connection strings, hostnames, or
+ * stack traces that should never reach the student or the LLM.
+ * The raw error is logged server-side (by the registry), but the
+ * ToolError message is always generic + safe.
+ */
+export function internalError(toolName: string, _err: unknown): ToolError {
   return {
     code: "INTERNAL",
-    message: `Tool ${toolName} failed: ${message}`,
+    message: `${toolName} encountered an error. Please try again later.`,
     retryable: false,
   };
 }

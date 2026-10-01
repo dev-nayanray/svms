@@ -222,7 +222,10 @@ export class ToolRegistry {
         ok: false,
         error: {
           code: "INTERNAL",
-          message: `Tool ${toolName} failed: ${message}`,
+          // SECURITY: Don't expose the raw error message — it could
+          // contain connection strings, hostnames, or stack traces.
+          // The raw error is logged above (server-side only).
+          message: `${toolName} encountered an error. Please try again later.`,
           retryable: false,
         },
       };

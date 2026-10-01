@@ -208,7 +208,9 @@ describe("ToolRegistry", () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error.code).toBe("INTERNAL");
-    expect(result.error.message).toContain("Something broke");
+    // Error message must NOT include the raw exception text (security)
+    expect(result.error.message).toContain("testError");
+    expect(result.error.message).not.toContain("Something broke");
   });
 
   it("passes through tool-returned errors without wrapping", async () => {

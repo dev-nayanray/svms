@@ -123,7 +123,9 @@ describe("getStudentProfile", () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error.code).toBe("INTERNAL");
-    expect(result.error.message).toContain("Connection failed");
+    expect(result.error.message).toContain("getStudentProfile");
+    // Error message must NOT include the raw DB error (no connection strings leaked)
+    expect(result.error.message).not.toContain("Connection failed");
   });
 
   // ── Unauthorized access (ADMIN / EMPLOYEE roles) ───────────────
