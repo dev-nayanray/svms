@@ -26,6 +26,7 @@ export const STUDENT_TABS = [
  * Not in the bottom nav to keep it simple (5 tabs max).
  */
 export const STUDENT_MORE = [
+  { href: "/student/assistant", label: "AI Assistant", icon: "Sparkles" },
   { href: "/student/documents", label: "Documents", icon: "FileText" },
   { href: "/student/courses", label: "Courses", icon: "BookOpen" },
   { href: "/student/visa", label: "Visa", icon: "Stamp" },

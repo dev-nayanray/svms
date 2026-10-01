@@ -8,6 +8,7 @@ import {
   Clock,
   AlertTriangle,
   MessageSquare,
+  Sparkles,
 } from "lucide-react";
 import { requireStudentProfile } from "@/lib/student/guard";
 import { Badge } from "@/components/ui";
@@ -129,6 +130,12 @@ export default async function StudentDashboard() {
           Quick actions
         </h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <QuickAction
+            href="/student/assistant"
+            icon={<Sparkles className="h-4 w-4" aria-hidden />}
+            label="AI Assistant"
+            description="Ask anything"
+          />
           <QuickAction
             href="/student/documents"
             icon={<FileUp className="h-4 w-4" aria-hidden />}

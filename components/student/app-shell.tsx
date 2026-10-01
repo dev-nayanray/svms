@@ -46,6 +46,8 @@ const PAGE_TITLES: Record<string, string> = {
   "/student/appointments": "Appointments",
   "/student/support": "Support",
   "/student/settings": "Settings",
+  "/student/design-preview": "Design System",
+  "/student/assistant": "AI Assistant",
 };
 
 function pageTitle(pathname: string): string {
