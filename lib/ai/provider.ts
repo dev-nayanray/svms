@@ -496,7 +496,7 @@ class GeminiProvider implements AiProvider {
 let _provider: AiProvider | null = null;
 
 /**
- * Get the singleton AI provider instance.
+ * Get the singleton AI provider instance (sync — reads from env vars only).
  *
  * Reads from env:
  *  - AI_PROVIDER_API_KEY (required)
@@ -526,6 +526,43 @@ export function getAiProvider(): AiProvider {
 
   _provider = new OpenAiCompatibleProvider();
   return _provider;
+}
+
+/**
+ * Get the AI provider instance from the DB-configured provider (if available).
+ *
+ * This is the ASYNC version that checks the AiProvider table first.
+ * If a DB provider is enabled + has an API key, it takes precedence
+ * over the env vars. Falls back to getAiProvider() (env-based) if:
+ *  - No DB provider is configured
+ *  - DB is unreachable
+ *  - DB provider has no API key
+ *
+ * This is used by the student assistant + Telegram bot so they use
+ * the admin-configured provider from the AI Control Center.
+ */
+export async function getAiProviderAsync(): Promise<AiProvider> {
+  // Check DB for a configured provider
+  try {
+    const { prisma } = await import("@/lib/db");
+    const dbProvider = await prisma.aiProvider.findFirst({
+      where: { enabled: true, apiKeyEncrypted: { not: null } },
+      orderBy: [{ priority: "asc" }],
+    });
+
+    if (dbProvider && dbProvider.apiKeyEncrypted && dbProvider.defaultModel) {
+      // Set env vars so the sync factory picks them up
+      process.env.AI_PROVIDER_API_KEY = dbProvider.apiKeyEncrypted;
+      process.env.AI_PROVIDER_BASE_URL = dbProvider.baseUrl ?? "https://api.openai.com/v1";
+      process.env.AI_PROVIDER_MODEL = dbProvider.defaultModel;
+      // Reset the cached provider so it re-initializes with new env vars
+      _provider = null;
+    }
+  } catch {
+    // DB unavailable — fall through to env vars
+  }
+
+  return getAiProvider();
 }
 
 /** Reset the singleton (for tests). */

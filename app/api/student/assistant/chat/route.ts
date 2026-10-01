@@ -44,7 +44,7 @@ import { fail, handleApiError } from "@/lib/api";
 import { studentApiGuard } from "@/lib/student/guard";
 import { buildStudentContext } from "@/lib/ai/context";
 import { runAgent } from "@/lib/ai/agent";
-import { getAiProvider } from "@/lib/ai/provider";
+import { getAiProviderAsync } from "@/lib/ai/provider";
 import { createStudentToolRegistry } from "@/lib/ai/tools";
 import {
   createConversation,
@@ -247,7 +247,7 @@ export async function POST(req: NextRequest) {
       }, 15_000);
 
       try {
-        const provider = getAiProvider();
+        const provider = await getAiProviderAsync();
         const registry = createStudentToolRegistry();
 
         let assistantText = "";
@@ -323,11 +323,42 @@ export async function POST(req: NextRequest) {
           toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
         });
       } catch (err) {
+        // Determine the error type for a user-friendly message
+        const errMsg = err instanceof Error ? err.message : String(err);
+        let errorCode = "INTERNAL";
+        let error_message = "An unexpected error occurred. Please try again.";
+
+        // Gemini region restriction
+        if (errMsg.includes("location is not supported") || errMsg.includes("REGION_NOT_SUPPORTED")) {
+          errorCode = "AI_PROVIDER_UNAVAILABLE";
+          error_message = "The AI service is not available in this region. Please contact support.";
+        }
+        // Invalid API key
+        else if (errMsg.includes("INVALID_API_KEY") || errMsg.includes("401") || errMsg.includes("Invalid API key")) {
+          errorCode = "AI_CONFIG_ERROR";
+          error_message = "The AI service is not properly configured. Please contact support.";
+        }
+        // Rate limited
+        else if (errMsg.includes("RATE_LIMITED") || errMsg.includes("429")) {
+          errorCode = "RATE_LIMITED";
+          error_message = "You're sending messages too quickly. Please wait a moment and try again.";
+        }
+        // Network error
+        else if (errMsg.includes("NETWORK_ERROR") || errMsg.includes("fetch")) {
+          errorCode = "NETWORK_ERROR";
+          error_message = "Could not reach the AI service. Please check your connection and try again.";
+        }
+        // MISSING_API_KEY
+        else if (errMsg.includes("MISSING_API_KEY") || errMsg.includes("AI_PROVIDER_API_KEY")) {
+          errorCode = "AI_NOT_CONFIGURED";
+          error_message = "The AI assistant is not configured yet. Please contact support.";
+        }
+
         send({
           type: "error",
           error: {
-            code: "INTERNAL",
-            message: "An unexpected error occurred. Please try again.",
+            code: errorCode,
+            message: error_message,
           },
         });
 
