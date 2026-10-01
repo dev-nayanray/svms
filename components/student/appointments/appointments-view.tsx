@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AlertTriangle,
   CalendarClock,
   CheckCircle2,
   Clock3,
@@ -17,13 +16,21 @@ import {
   XCircle,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
-import { Button, Badge } from "@/components/ui";
-import { MobilePage, MobileCard } from "@/components/student/ui";
+import { Button } from "@/components/ui";
+import {
+  MobilePage,
+  MobileCard,
+  StudentEmptyState,
+  StudentErrorState,
+  FilterChip,
+  StatusBadge,
+} from "@/components/student/ui";
 import { Skeleton } from "@/components/ui/overlays";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { RequestAppointmentSheet } from "./request-appointment-sheet";
+import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -102,19 +109,12 @@ export function AppointmentsView() {
   if (listQ.isError && !listQ.data) {
     return (
       <MobilePage>
-        <MobileCard className="py-8 text-center">
-          {!online ? (
-            <WifiOff className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden />
-          ) : (
-            <AlertTriangle className="mx-auto h-10 w-10 text-destructive" aria-hidden />
-          )}
-          <h2 className="mt-3 text-base font-semibold">
-            {!online ? "You're offline" : "Couldn't load your appointments"}
-          </h2>
-          <Button onClick={() => listQ.refetch()} className="mt-4" disabled={!online}>
-            <RefreshCw className="h-4 w-4" aria-hidden /> Retry
-          </Button>
-        </MobileCard>
+        <StudentErrorState
+          online={online}
+          title={!online ? "You're offline" : "Couldn't load your appointments"}
+          description={!online ? "Check your connection and try again." : "Please try again in a moment."}
+          onRetry={() => listQ.refetch()}
+        />
       </MobilePage>
     );
   }
@@ -204,45 +204,38 @@ export function AppointmentsView() {
       <div className="overflow-x-auto pb-1">
         <div className="flex min-w-max gap-1.5">
           {FILTERS.map((f) => (
-            <button
+            <FilterChip
               key={f.value}
-              type="button"
+              active={filter === f.value}
               onClick={() => setFilter(f.value)}
-              aria-pressed={filter === f.value}
-              className={cn(
-                "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-primary",
-                filter === f.value
-                  ? "bg-primary text-primary-foreground"
-                  : "border border-border bg-card text-muted-foreground hover:text-foreground",
-              )}
             >
               {f.label}
-            </button>
+            </FilterChip>
           ))}
         </div>
       </div>
 
       {/* Appointment list */}
       {appointments.length === 0 ? (
-        <MobileCard className="py-8 text-center">
-          <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
-            {filter === "requested"
-              ? <Clock3 className="h-6 w-6" aria-hidden />
-              : <CalendarClock className="h-6 w-6" aria-hidden />}
-          </span>
-          <h2 className="mt-3 text-base font-semibold">
-            {filter === "upcoming" && "No upcoming appointments"}
-            {filter === "requested" && "No pending requests"}
-            {filter === "past" && "No past appointments"}
-            {filter === "cancelled" && "No cancelled appointments"}
-            {filter === "all" && "No appointments yet"}
-          </h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            {filter === "requested"
+        <StudentEmptyState
+          icon={
+            filter === "requested"
+              ? <Clock3 className="h-5 w-5" aria-hidden />
+              : <CalendarClock className="h-5 w-5" aria-hidden />
+          }
+          title={
+            filter === "upcoming" ? "No upcoming appointments"
+            : filter === "requested" ? "No pending requests"
+            : filter === "past" ? "No past appointments"
+            : filter === "cancelled" ? "No cancelled appointments"
+            : "No appointments yet"
+          }
+          description={
+            filter === "requested"
               ? "Tap \u201cRequest appointment\u201d above to propose a time with your counselor."
-              : "Your counselor will schedule appointments as your application progresses."}
-          </p>
-        </MobileCard>
+              : "Your counselor will schedule appointments as your application progresses."
+          }
+        />
       ) : (
         <div className="space-y-2">
           {appointments.map((a) => (
@@ -258,13 +251,13 @@ export function AppointmentsView() {
 
       {/* CTA row */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        <Link href="/student/messages" className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted">
+        <Link href="/student/messages" className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-amber-500">
           Message Counselor
         </Link>
-        <Link href="/student/application" className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted">
+        <Link href="/student/application" className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-amber-500">
           My Application
         </Link>
-        <Link href="/student/tasks" className="col-span-2 flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted sm:col-span-1">
+        <Link href="/student/tasks" className="col-span-2 flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-amber-500 sm:col-span-1">
           My Tasks
         </Link>
       </div>
@@ -272,7 +265,7 @@ export function AppointmentsView() {
       {/* Refresh + offline */}
       <div className="flex items-center justify-between gap-2 pt-1 text-xs text-muted-foreground">
         <span>{listQ.isFetching ? "Refreshing…" : "Auto-refreshes every 60s"}</span>
-        {!online && <span className="flex items-center gap-1 text-warning"><WifiOff className="h-3 w-3" aria-hidden /> Offline</span>}
+        {!online && <span className="flex items-center gap-1 text-amber-600"><WifiOff className="h-3 w-3" aria-hidden /> Offline</span>}
         <Button size="sm" variant="ghost" onClick={() => listQ.refetch()} disabled={listQ.isFetching} aria-label="Refresh list">
           <RefreshCw className={cn("h-3.5 w-3.5", listQ.isFetching && "animate-spin")} aria-hidden />
         </Button>
@@ -298,15 +291,15 @@ function AppointmentHero({
   return (
     <MobileCard className={cn(
       "space-y-3 border-2",
-      tone === "warning" && "border-warning/40",
-      tone === "info" && "border-info/40",
+      tone === "warning" && "border-amber-300/60",
+      tone === "info" && "border-blue-300/60",
     )}>
       <div className="flex items-center justify-between gap-2">
         <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           <CalendarClock className="h-3.5 w-3.5" aria-hidden />
           Next Appointment
         </p>
-        <Badge tone={tone}>{appointment.statusLabel}</Badge>
+        <StatusBadge tone={tone}>{appointment.statusLabel}</StatusBadge>
       </div>
 
       <div className="flex items-center gap-3">
@@ -371,14 +364,14 @@ function AppointmentCard({
   return (
     <MobileCard className={cn(
       "space-y-2",
-      tone === "success" && "border-success/30",
-      tone === "destructive" && "border-destructive/30",
+      tone === "success" && "border-emerald-300/60",
+      tone === "destructive" && "border-red-300/60",
       tone === "default" && "opacity-70",
     )}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5">
           {/* Mini date block */}
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-center text-primary">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-amber-500/10 text-center text-amber-600">
             <p className="text-[9px] font-medium uppercase leading-none">{format(date, "EEE")}</p>
             <p className="text-base font-bold leading-none">{format(date, "d")}</p>
           </div>
@@ -398,13 +391,13 @@ function AppointmentCard({
               </p>
             )}
             {appointment.cancelReason && (
-              <p className="mt-1 rounded bg-destructive/5 px-2 py-1 text-[11px] text-destructive">
+              <p className="mt-1 rounded bg-red-500/5 px-2 py-1 text-[11px] text-red-600">
                 Cancelled: {appointment.cancelReason}
               </p>
             )}
           </div>
         </div>
-        <Badge tone={tone}>{appointment.statusLabel}</Badge>
+        <StatusBadge tone={tone}>{appointment.statusLabel}</StatusBadge>
       </div>
 
       {isUpcoming && appointment.status === "SCHEDULED" && (
@@ -418,9 +411,9 @@ function AppointmentCard({
         </div>
       )}
       {isRequested && (
-        <div className="flex items-center gap-2 rounded-lg bg-info/5 border border-info/20 px-3 py-2">
-          <Clock3 className="h-3.5 w-3.5 shrink-0 text-info" aria-hidden />
-          <p className="min-w-0 flex-1 text-xs text-info">
+        <div className="flex items-center gap-2 rounded-lg bg-blue-500/5 border border-blue-500/20 px-3 py-2">
+          <Clock3 className="h-3.5 w-3.5 shrink-0 text-blue-600" aria-hidden />
+          <p className="min-w-0 flex-1 text-xs text-blue-600">
             Pending counselor approval. You can withdraw this request before they respond.
           </p>
           <Button size="sm" variant="outline" onClick={onCancel} className="shrink-0 text-destructive hover:bg-destructive/10">
@@ -450,17 +443,3 @@ function AppointmentsSkeleton() {
 
 // ── Helpers ───────────────────────────────────────────────────────
 
-function useOnlineStatus() {
-  const [online, setOnline] = useState(true);
-  useEffect(() => {
-    const update = () => setOnline(navigator.onLine);
-    update();
-    window.addEventListener("online", update);
-    window.addEventListener("offline", update);
-    return () => {
-      window.removeEventListener("online", update);
-      window.removeEventListener("offline", update);
-    };
-  }, []);
-  return online;
-}

@@ -19,7 +19,7 @@ export async function GET(_req: NextRequest) {
   try {
     const g = await guard("system.config.read");
     if (g.error) return g.error;
-    const [config, env] = await Promise.all([getAllConfig(), Promise.resolve(checkEnvironment())]);
+    const [config, env] = await Promise.all([getAllConfig(), checkEnvironment()]);
     return ok({ config, env });
   } catch (err) {
     return handleApiError(err);

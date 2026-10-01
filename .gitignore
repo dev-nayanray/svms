@@ -55,3 +55,10 @@ next-env.d.ts
 private-uploads/
 
 .env
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+

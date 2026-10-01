@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import { StatusBadge } from "@/components/student/ui";
 import {
   AlertTriangle,
   ArrowRight,
@@ -262,7 +263,7 @@ function SectionCard({
     <Card>
       <CardHeader className="flex-row items-center justify-between gap-2">
         <CardTitle className="flex items-center gap-2">
-          <span className="text-primary" aria-hidden>
+          <span className="text-amber-600" aria-hidden>
             {icon}
           </span>
           {title}
@@ -320,7 +321,7 @@ export function OverviewCard({ app }: { app: AppView }) {
     <SectionCard
       icon={<MapPin className="h-4 w-4" aria-hidden />}
       title="Overview"
-      badge={<Badge tone={app.status === "ACTIVE" ? "info" : "default"}>{app.status}</Badge>}
+      badge={<StatusBadge tone={app.status === "ACTIVE" ? "info" : "default"}>{app.status}</StatusBadge>}
     >
       <dl className="divide-y divide-border">
         <DetailRow label="Application #" value={<span className="font-mono">{app.applicationNumber}</span>} />
@@ -331,7 +332,7 @@ export function OverviewCard({ app }: { app: AppView }) {
           </span>
         } />
         <DetailRow label="Current Stage" value={app.stageLabel} />
-        <DetailRow label="Priority" value={<Badge tone={priorityTone(app.priority)}>{app.priority}</Badge>} />
+        <DetailRow label="Priority" value={<StatusBadge tone={priorityTone(app.priority)}>{app.priority}</StatusBadge>} />
         <DetailRow label="Last Updated" value={fmtDateTime(app.lastUpdated)} />
         <DetailRow label="Created" value={fmtDate(app.createdAt)} />
       </dl>
@@ -418,7 +419,7 @@ export function StatusCard({ app }: { app: AppView }) {
     <SectionCard icon={<IdCard className="h-4 w-4" aria-hidden />} title="Application Status">
       <div className="space-y-2">
         <DetailRow label="Current Stage" value={app.stageLabel} />
-        <DetailRow label="Status" value={<Badge tone={statusTone(app.status)}>{app.status}</Badge>} />
+        <DetailRow label="Status" value={<StatusBadge tone={statusTone(app.status)}>{app.status}</StatusBadge>} />
         <DetailRow label="Submission Date" value={fmtDate(app.submissionDate)} />
         <DetailRow label="Decision Date" value={fmtDate(app.decisionDate)} />
       </div>
@@ -445,7 +446,7 @@ export function DatesCard({ app }: { app: AppView }) {
           // "interesting" in either direction).
           const toneCls =
             d.kind === "visa" || d.kind === "payment"
-              ? "border-info/30 bg-info/5"
+              ? "border-blue-300/60 bg-blue-50/40 dark:bg-blue-950/10"
               : "border-border bg-card";
           return (
             <li
@@ -496,7 +497,7 @@ export function CounselorCard({ app }: { app: AppView }) {
         <DetailRow
           label="Email"
           value={
-            <a href={`mailto:${app.counselor.email}`} className="text-primary hover:underline">
+            <a href={`mailto:${app.counselor.email}`} className="text-amber-600 hover:underline">
               {app.counselor.email}
             </a>
           }
@@ -512,7 +513,7 @@ export function DocumentsCard({ app }: { app: AppView }) {
     <SectionCard
       icon={<FileText className="h-4 w-4" aria-hidden />}
       title="Documents"
-      badge={<Badge tone="info">{counts.required}</Badge>}
+      badge={<StatusBadge tone="info">{counts.required}</StatusBadge>}
       action={
         <NavButton href="/student/documents">
           Manage
@@ -538,11 +539,11 @@ export function DocumentsCard({ app }: { app: AppView }) {
                 <p className="truncate text-sm font-medium">{d.name}</p>
                 <p className="truncate text-xs text-muted-foreground">{d.fileName}</p>
               </div>
-              <Badge tone={statusTone(d.status)}>{d.status}</Badge>
+              <StatusBadge tone={statusTone(d.status)}>{d.status}</StatusBadge>
             </li>
           ))}
           {app.documents.items.length > 5 && (
-            <li className="pt-1 text-center text-xs text-muted-foreground">
+            <li className="tabular-nums pt-1 text-center text-xs text-muted-foreground">
               +{app.documents.items.length - 5} more documents
             </li>
           )}
@@ -554,14 +555,14 @@ export function DocumentsCard({ app }: { app: AppView }) {
 
 function DocCountTile({ label, value, tone }: { label: string; value: number; tone: "success" | "warning" | "info" | "destructive" }) {
   const cls = {
-    success: "bg-success/10 text-success",
-    warning: "bg-warning/10 text-warning",
-    info: "bg-info/10 text-info",
-    destructive: "bg-destructive/10 text-destructive",
+    success: "bg-emerald-500/10 text-emerald-600",
+    warning: "bg-amber-500/10 text-amber-600",
+    info: "bg-blue-500/10 text-blue-600",
+    destructive: "bg-red-500/10 text-red-600",
   }[tone];
   return (
     <div className={cn("rounded-md p-2 text-center", cls)}>
-      <p className="text-lg font-semibold leading-none">{value}</p>
+      <p className="text-lg font-semibold leading-none tabular-nums">{value}</p>
       <p className="mt-0.5 text-[10px] uppercase tracking-wide">{label}</p>
     </div>
   );
@@ -579,7 +580,7 @@ export function TasksCard({ app }: { app: AppView }) {
     <SectionCard
       icon={<ClipboardList className="h-4 w-4" aria-hidden />}
       title="Tasks"
-      badge={<Badge tone={app.tasks.open > 0 ? "warning" : "success"}>{app.tasks.open} open</Badge>}
+      badge={<StatusBadge tone={app.tasks.open > 0 ? "warning" : "success"}>{app.tasks.open} open</StatusBadge>}
       action={
         <NavButton href="/student/tasks">
           View All
@@ -599,13 +600,13 @@ export function TasksCard({ app }: { app: AppView }) {
               )}
             </div>
             <div className="flex items-center gap-1.5">
-              <Badge tone={priorityTone(t.priority)}>{t.priority}</Badge>
-              <Badge tone={statusTone(t.status)}>{t.status}</Badge>
+              <StatusBadge tone={priorityTone(t.priority)}>{t.priority}</StatusBadge>
+              <StatusBadge tone={statusTone(t.status)}>{t.status}</StatusBadge>
             </div>
           </li>
         ))}
         {app.tasks.items.length > 5 && (
-          <li className="pt-1 text-center text-xs text-muted-foreground">
+          <li className="tabular-nums pt-1 text-center text-xs text-muted-foreground">
             +{app.tasks.items.length - 5} more tasks
           </li>
         )}
@@ -620,7 +621,7 @@ export function PaymentsCard({ app }: { app: AppView }) {
     <SectionCard
       icon={<CreditCard className="h-4 w-4" aria-hidden />}
       title="Payments"
-      badge={totals.due > 0 ? <Badge tone="warning">{totals.due.toLocaleString()} due</Badge> : <Badge tone="success">Paid</Badge>}
+      badge={totals.due > 0 ? <StatusBadge tone="warning">{totals.due.toLocaleString()} due</StatusBadge> : <StatusBadge tone="success">Paid</StatusBadge>}
       action={
         <NavButton href="/student/payments">
           View
@@ -633,9 +634,9 @@ export function PaymentsCard({ app }: { app: AppView }) {
         <PaymentTile label="Due" value={totals.due.toLocaleString()} tone={totals.due > 0 ? "warning" : "default"} />
       </div>
       {app.payments.nextOpenInvoice && (
-        <div className="mb-2 rounded-md border border-warning/30 bg-warning/5 p-2 text-xs">
-          <p className="font-medium text-warning">Next payment due</p>
-          <p className="text-muted-foreground">
+        <div className="mb-2 rounded-md border border-amber-300/60 bg-amber-50/40 p-2 text-xs dark:bg-amber-950/10">
+          <p className="font-medium text-amber-600">Next payment due</p>
+          <p className="tabular-nums text-muted-foreground">
             {app.payments.nextOpenInvoice.invoiceNumber} — {app.payments.nextOpenInvoice.dueAmount.toLocaleString()} due {fmtDate(app.payments.nextOpenInvoice.dueDate)}
           </p>
         </div>
@@ -650,14 +651,14 @@ export function PaymentsCard({ app }: { app: AppView }) {
               className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
             >
               <div className="min-w-0">
-                <p className="text-sm font-medium">
+                <p className="tabular-nums text-sm font-medium">
                   {p.currency} {p.amount.toLocaleString()}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {p.paymentMethod} · {fmtDate(p.paymentDate)}
                 </p>
               </div>
-              <Badge tone={statusTone(p.status)}>{p.status}</Badge>
+              <StatusBadge tone={statusTone(p.status)}>{p.status}</StatusBadge>
             </li>
           ))}
         </ul>
@@ -669,12 +670,12 @@ export function PaymentsCard({ app }: { app: AppView }) {
 function PaymentTile({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "success" | "warning" }) {
   const cls = {
     default: "bg-muted text-foreground",
-    success: "bg-success/10 text-success",
-    warning: "bg-warning/10 text-warning",
+    success: "bg-emerald-500/10 text-emerald-600",
+    warning: "bg-amber-500/10 text-amber-600",
   }[tone];
   return (
     <div className={cn("rounded-md p-2", cls)}>
-      <p className="text-sm font-semibold leading-none">{value}</p>
+      <p className="tabular-nums text-sm font-semibold leading-none">{value}</p>
       <p className="mt-0.5 text-[10px] uppercase tracking-wide opacity-80">{label}</p>
     </div>
   );
@@ -694,7 +695,7 @@ export function VisaCard({ app }: { app: AppView }) {
     <SectionCard
       icon={<Stamp className="h-4 w-4" aria-hidden />}
       title="Visa"
-      badge={<Badge tone={statusTone(app.visa.stage)}>{app.visa.stageLabel}</Badge>}
+      badge={<StatusBadge tone={statusTone(app.visa.stage)}>{app.visa.stageLabel}</StatusBadge>}
       action={
         <NavButton href="/student/visa">
           Details
@@ -727,7 +728,7 @@ export function TimelineCard({ app }: { app: AppView }) {
           <li key={h.id} className="relative">
             <span
               aria-hidden
-              className="absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-card"
+              className="absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-card"
             />
             <p className="text-sm font-medium">
               {h.fromStage ? `${h.fromLabel} → ${h.toLabel}` : h.toLabel}

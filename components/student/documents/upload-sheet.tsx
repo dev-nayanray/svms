@@ -234,15 +234,15 @@ export function UploadSheet({
                 if (f) handleFileSelected(f);
               }}
               className={cn(
-                "flex min-h-[120px] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 text-center transition-colors focus-visible:outline-2 focus-visible:outline-primary",
-                dragOver ? "border-primary bg-primary/5" : "border-border bg-muted/30 hover:bg-muted/60",
+                "flex min-h-[120px] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 text-center transition-colors focus-visible:outline-2 focus-visible:outline-amber-500",
+                dragOver ? "border-amber-500 bg-amber-500/5" : "border-border bg-muted/30 hover:bg-muted/60",
               )}
             >
               {selectedFile ? (
                 <>
-                  <FileText className="h-8 w-8 text-primary" aria-hidden />
+                  <FileText className="h-8 w-8 text-amber-600" aria-hidden />
                   <p className="text-sm font-medium">{selectedFile.name}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground tabular-nums">
                     {(selectedFile.size / 1024 / 1024).toFixed(2)} MB · {selectedFile.type}
                   </p>
                   <button
@@ -252,7 +252,7 @@ export function UploadSheet({
                       setSelectedFile(null);
                       if (inputRef.current) inputRef.current.value = "";
                     }}
-                    className="mt-1 text-xs text-destructive hover:underline"
+                    className="mt-1 text-xs text-red-600 hover:underline"
                   >
                     Remove file
                   </button>
@@ -302,7 +302,7 @@ export function UploadSheet({
               <div className="mt-4 space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-medium">Uploading…</span>
-                  <span className="text-muted-foreground">{progress}%</span>
+                  <span className="text-muted-foreground tabular-nums">{progress}%</span>
                 </div>
                 <div
                   role="progressbar"
@@ -313,7 +313,7 @@ export function UploadSheet({
                   className="h-2 overflow-hidden rounded-full bg-muted"
                 >
                   <div
-                    className="h-full rounded-full bg-primary transition-[width] motion-reduce:transition-none"
+                    className="h-full rounded-full bg-amber-500 transition-[width] motion-reduce:transition-none"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -322,8 +322,8 @@ export function UploadSheet({
 
             {/* Replace-mode hint */}
             {isReplace && (
-              <div className="mt-4 flex items-start gap-2 rounded-md border border-info/30 bg-info/5 p-2.5 text-xs text-foreground">
-                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-info" aria-hidden />
+              <div className="mt-4 flex items-start gap-2 rounded-md border border-blue-300/60 bg-blue-50/40 p-2.5 text-xs text-foreground dark:bg-blue-950/10">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600" aria-hidden />
                 <p>
                   The current version will be preserved in the document&apos;s history.
                   The new upload starts as <strong>UPLOADED</strong> and needs review again.
@@ -375,7 +375,7 @@ export function UploadSheet({
 export function UploadSuccessInline({ visible }: { visible: boolean }) {
   if (!visible) return null;
   return (
-    <div className="flex items-center gap-1.5 rounded-md border border-success/30 bg-success/10 px-2 py-1 text-xs text-success">
+    <div className="flex items-center gap-1.5 rounded-md border border-emerald-300/60 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-600">
       <CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> Uploaded
     </div>
   );

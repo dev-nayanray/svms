@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AlertTriangle,
   CalendarClock,
   ChevronDown,
   CreditCard,
@@ -21,12 +20,13 @@ import {
   X,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
-import { Button, Badge, Input, Select, Textarea } from "@/components/ui";
-import { MobilePage, MobileCard } from "@/components/student/ui";
+import { Button, Input, Select, Textarea } from "@/components/ui";
+import { MobilePage, MobileCard, StudentEmptyState, StudentErrorState, StatusBadge, FilterChip } from "@/components/student/ui";
 import { Skeleton } from "@/components/ui/overlays";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInHours, differenceInDays } from "date-fns";
+import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -123,9 +123,9 @@ export function SupportView() {
           <Link
             key={card.label}
             href={card.href}
-            className="flex flex-col items-start gap-2 rounded-xl border border-border bg-card p-3 transition-colors hover:bg-muted/30 focus-visible:outline-2 focus-visible:outline-primary"
+            className="flex flex-col items-start gap-2 rounded-xl border border-border bg-card p-3 transition-colors hover:bg-muted/30 focus-visible:outline-2 focus-visible:outline-amber-500"
           >
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">
+            <span className="grid h-9 w-9 place-items-center rounded-lg bg-amber-500/10 text-amber-600">
               {card.icon}
             </span>
             <div>
@@ -137,14 +137,14 @@ export function SupportView() {
       </div>
 
       {/* Tab switcher */}
-      <div className="flex items-center gap-1.5 rounded-lg border border-border bg-card p-1">
+      <div className="flex items-center gap-1.5 rounded-xl border border-border bg-card p-1">
         <button
           type="button"
           onClick={() => setActiveTab("faq")}
           aria-pressed={activeTab === "faq"}
           className={cn(
             "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-            activeTab === "faq" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+            activeTab === "faq" ? "bg-gradient-to-br from-amber-500 to-amber-600 text-white" : "text-muted-foreground hover:text-foreground",
           )}
         >
           <HelpCircle className="mr-1 inline h-3.5 w-3.5" aria-hidden />
@@ -156,13 +156,13 @@ export function SupportView() {
           aria-pressed={activeTab === "tickets"}
           className={cn(
             "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-            activeTab === "tickets" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+            activeTab === "tickets" ? "bg-gradient-to-br from-amber-500 to-amber-600 text-white" : "text-muted-foreground hover:text-foreground",
           )}
         >
           <LifeBuoy className="mr-1 inline h-3.5 w-3.5" aria-hidden />
           My Tickets
           {tickets.filter((t) => t.status === "OPEN" || t.status === "IN_PROGRESS").length > 0 && (
-            <span className="ml-1 rounded-full bg-destructive px-1 text-[10px] font-bold text-white">
+            <span className="ml-1 rounded-full bg-red-500 px-1 text-[10px] font-bold text-white tabular-nums">
               {tickets.filter((t) => t.status === "OPEN" || t.status === "IN_PROGRESS").length}
             </span>
           )}
@@ -196,28 +196,13 @@ export function SupportView() {
             </div>
             <div className="overflow-x-auto pb-1">
               <div className="flex min-w-max gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setFaqCategory("")}
-                  className={cn(
-                    "shrink-0 rounded-full px-3 py-1 text-xs font-medium",
-                    !faqCategory ? "bg-primary text-primary-foreground" : "border border-border bg-card text-muted-foreground",
-                  )}
-                >
+                <FilterChip active={!faqCategory} onClick={() => setFaqCategory("")}>
                   All
-                </button>
+                </FilterChip>
                 {CATEGORIES.map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => setFaqCategory(cat)}
-                    className={cn(
-                      "shrink-0 rounded-full px-3 py-1 text-xs font-medium",
-                      faqCategory === cat ? "bg-primary text-primary-foreground" : "border border-border bg-card text-muted-foreground",
-                    )}
-                  >
+                  <FilterChip key={cat} active={faqCategory === cat} onClick={() => setFaqCategory(cat)}>
                     {cat}
-                  </button>
+                  </FilterChip>
                 ))}
               </div>
             </div>
@@ -226,21 +211,17 @@ export function SupportView() {
           {/* FAQ cards */}
           {faqQ.isLoading && <FAQSkeleton />}
           {faqQ.isError && (
-            <MobileCard className="py-6 text-center">
-              <AlertTriangle className="mx-auto h-8 w-8 text-destructive" aria-hidden />
-              <p className="mt-2 text-sm text-muted-foreground">Couldn&apos;t load FAQ.</p>
-              <Button size="sm" variant="outline" className="mt-3" onClick={() => faqQ.refetch()}>
-                <RefreshCw className="h-3.5 w-3.5" aria-hidden /> Retry
-              </Button>
-            </MobileCard>
+            <StudentErrorState
+              title="Couldn't load FAQ"
+              onRetry={() => faqQ.refetch()}
+            />
           )}
           {faqItems.length === 0 && !faqQ.isLoading && (
-            <MobileCard className="py-6 text-center">
-              <HelpCircle className="mx-auto h-8 w-8 text-muted-foreground" aria-hidden />
-              <p className="mt-2 text-sm text-muted-foreground">
-                {search || faqCategory ? "No FAQ matches your search." : "No FAQ available."}
-              </p>
-            </MobileCard>
+            <StudentEmptyState
+              icon={<HelpCircle className="h-5 w-5" aria-hidden />}
+              title="No FAQ found"
+              description={search || faqCategory ? "No FAQ matches your search." : "No FAQ available."}
+            />
           )}
           {faqItems.length > 0 && (
             <div className="space-y-2">
@@ -265,24 +246,18 @@ export function SupportView() {
           {ticketsQ.isLoading && (
             <div className="space-y-2">
               {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full rounded-lg" />
+                <Skeleton key={i} className="h-16 w-full rounded-xl" />
               ))}
             </div>
           )}
 
           {tickets.length === 0 && !ticketsQ.isLoading && (
-            <MobileCard className="py-8 text-center">
-              <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
-                <LifeBuoy className="h-6 w-6" aria-hidden />
-              </span>
-              <h2 className="mt-3 text-base font-semibold">No support requests</h2>
-              <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-                Need help? Submit a support request and our team will get back to you.
-              </p>
-              <Button onClick={() => setShowForm(true)} className="mt-4">
-                <Plus className="h-4 w-4" aria-hidden /> Submit Request
-              </Button>
-            </MobileCard>
+            <StudentEmptyState
+              icon={<LifeBuoy className="h-5 w-5" aria-hidden />}
+              title="No support requests"
+              description="Need help? Submit a support request and our team will get back to you."
+              action={<Button onClick={() => setShowForm(true)}><Plus className="h-4 w-4" aria-hidden /> Submit Request</Button>}
+            />
           )}
 
           {tickets.length > 0 && (
@@ -314,7 +289,7 @@ export function SupportView() {
             : ticketsQ.isFetching ? "Refreshing…" : "Tickets loaded"}
         </span>
         {!online && (
-          <span className="flex items-center gap-1 text-warning">
+          <span className="flex items-center gap-1 text-amber-600">
             <WifiOff className="h-3 w-3" aria-hidden /> Offline
           </span>
         )}
@@ -341,10 +316,10 @@ function FAQCard({ item }: { item: FAQItem }) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-start justify-between gap-3 p-3 text-left focus-visible:outline-2 focus-visible:outline-primary"
+        className="flex w-full items-start justify-between gap-3 p-3 text-left focus-visible:outline-2 focus-visible:outline-amber-500"
       >
         <div className="min-w-0 flex-1">
-          <Badge tone="info" className="mb-1.5 text-[10px]">{item.category}</Badge>
+          <StatusBadge tone="info" className="mb-1.5 text-[10px]">{item.category}</StatusBadge>
           <p className="text-sm font-semibold">{item.question}</p>
         </div>
         <ChevronDown className={cn("mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} aria-hidden />
@@ -365,17 +340,17 @@ function TicketCard({ ticket }: { ticket: SupportRequest }) {
   const tone = STATUS_TONE[ticket.status] ?? "default";
 
   return (
-    <MobileCard className={cn("overflow-hidden p-0", tone === "success" && "border-success/30")}>
+    <MobileCard className={cn("overflow-hidden p-0", tone === "success" && "border-emerald-200/60")}>
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        className="flex w-full items-start justify-between gap-3 p-3 text-left focus-visible:outline-2 focus-visible:outline-primary"
+        className="flex w-full items-start justify-between gap-3 p-3 text-left focus-visible:outline-2 focus-visible:outline-amber-500"
       >
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <Badge tone="info" className="text-[10px]">{ticket.category}</Badge>
-            <Badge tone={tone}>{ticket.statusLabel}</Badge>
+            <StatusBadge tone="info" className="text-[10px]">{ticket.category}</StatusBadge>
+            <StatusBadge tone={tone}>{ticket.statusLabel}</StatusBadge>
           </div>
           <p className="mt-1 truncate text-sm font-semibold">{ticket.subject}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
@@ -391,14 +366,14 @@ function TicketCard({ ticket }: { ticket: SupportRequest }) {
           {ticket.attachmentUrl && (
             <div className="mt-3 rounded-md border border-border p-2">
               <p className="text-xs font-medium">Attachment</p>
-              <a href={ticket.attachmentUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+              <a href={ticket.attachmentUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-amber-600 hover:underline">
                 {ticket.attachmentName || "Download"}
               </a>
             </div>
           )}
           {ticket.response && (
-            <div className="mt-3 rounded-md border border-success/30 bg-success/5 p-2">
-              <p className="text-xs font-semibold text-success">Support Response</p>
+            <div className="mt-3 rounded-md border border-emerald-200/60 bg-emerald-50/40 p-2 dark:bg-emerald-950/10">
+              <p className="text-xs font-semibold text-emerald-600">Support Response</p>
               <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{ticket.response}</p>
               {ticket.respondedAt && (
                 <p className="mt-1 text-[11px] text-muted-foreground">{format(parseISO(ticket.respondedAt), "MMM d, yyyy")}</p>
@@ -521,7 +496,7 @@ function FAQSkeleton() {
   return (
     <div className="space-y-2">
       {Array.from({ length: 4 }).map((_, i) => (
-        <Skeleton key={i} className="h-16 w-full rounded-lg" />
+        <Skeleton key={i} className="h-16 w-full rounded-xl" />
       ))}
     </div>
   );
@@ -544,17 +519,3 @@ function fmtRelative(dateStr: string): string {
   }
 }
 
-function useOnlineStatus() {
-  const [online, setOnline] = useState(true);
-  useEffect(() => {
-    const update = () => setOnline(navigator.onLine);
-    update();
-    window.addEventListener("online", update);
-    window.addEventListener("offline", update);
-    return () => {
-      window.removeEventListener("online", update);
-      window.removeEventListener("offline", update);
-    };
-  }, []);
-  return online;
-}

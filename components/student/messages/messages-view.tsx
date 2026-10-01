@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
-  AlertTriangle,
   ChevronRight,
   MessageSquare,
   RefreshCw,
@@ -15,10 +14,15 @@ import {
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { Button, Input } from "@/components/ui";
-import { MobilePage, MobileCard } from "@/components/student/ui";
+import {
+  MobilePage,
+  StudentEmptyState,
+  StudentErrorState,
+} from "@/components/student/ui";
 import { Skeleton } from "@/components/ui/overlays";
 import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInMinutes, differenceInHours, differenceInDays } from "date-fns";
+import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -63,22 +67,12 @@ export function MessagesView() {
   if (listQ.isError && !listQ.data) {
     return (
       <MobilePage>
-        <MobileCard className="py-8 text-center">
-          {!online ? (
-            <WifiOff className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden />
-          ) : (
-            <AlertTriangle className="mx-auto h-10 w-10 text-destructive" aria-hidden />
-          )}
-          <h2 className="mt-3 text-base font-semibold">
-            {!online ? "You're offline" : "Couldn't load your messages"}
-          </h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            {!online ? "Check your connection and try again." : "Please try again in a moment."}
-          </p>
-          <Button onClick={() => listQ.refetch()} className="mt-4" disabled={!online}>
-            <RefreshCw className="h-4 w-4" aria-hidden /> Retry
-          </Button>
-        </MobileCard>
+        <StudentErrorState
+          online={online}
+          title={!online ? "You're offline" : "Couldn't load your messages"}
+          description={!online ? "Check your connection and try again." : "Please try again in a moment."}
+          onRetry={() => listQ.refetch()}
+        />
       </MobilePage>
     );
   }
@@ -121,26 +115,22 @@ export function MessagesView() {
         <p className="text-xs text-muted-foreground">
           {conversations.length} conversation{conversations.length === 1 ? "" : "s"}
           {totalUnread > 0 && (
-            <span className="ml-1 font-medium text-primary">· {totalUnread} unread</span>
+            <span className="ml-1 font-medium text-amber-600">· {totalUnread} unread</span>
           )}
         </p>
       )}
 
       {/* Conversation list */}
       {filtered.length === 0 ? (
-        <MobileCard className="py-8 text-center">
-          <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
-            <MessageSquare className="h-6 w-6" aria-hidden />
-          </span>
-          <h2 className="mt-3 text-base font-semibold">
-            {search ? "No matching conversations" : "No conversations yet"}
-          </h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            {search
+        <StudentEmptyState
+          icon={<MessageSquare className="h-5 w-5" aria-hidden />}
+          title={search ? "No matching conversations" : "No conversations yet"}
+          description={
+            search
               ? "Try a different search term."
-              : "Your counselor will start a conversation when there's an update on your application."}
-          </p>
-        </MobileCard>
+              : "Your counselor will start a conversation when there's an update on your application."
+          }
+        />
       ) : (
         <div className="space-y-1">
           {filtered.map((c) => (
@@ -153,7 +143,7 @@ export function MessagesView() {
       <div className="flex items-center justify-between gap-2 pt-1 text-xs text-muted-foreground">
         <span>{listQ.isFetching ? "Refreshing…" : "Auto-refreshes every 30s"}</span>
         {!online && (
-          <span className="flex items-center gap-1 text-warning">
+          <span className="flex items-center gap-1 text-amber-600">
             <WifiOff className="h-3 w-3" aria-hidden /> Offline
           </span>
         )}
@@ -172,20 +162,20 @@ function ConversationCard({ conversation }: { conversation: Conversation }) {
   return (
     <Link
       href={`/student/messages/${conversation.id}`}
-      className="block focus-visible:outline-2 focus-visible:outline-primary"
+      className="block focus-visible:outline-2 focus-visible:outline-amber-500"
     >
       <div className={cn(
-        "flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/30",
-        hasUnread ? "border-primary/30 bg-primary/5" : "border-border bg-card",
+        "flex items-center gap-3 rounded-2xl border p-3 transition-all hover:bg-muted/30 active:scale-[0.99]",
+        hasUnread ? "border-amber-300/60 bg-amber-50/40 dark:bg-amber-950/10" : "border-border/60 bg-card",
       )}>
         {/* Avatar */}
         <span className={cn(
           "relative grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-semibold",
-          hasUnread ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
+          hasUnread ? "bg-amber-500/15 text-amber-600" : "bg-muted text-muted-foreground",
         )}>
           {conversation.counselorInitials || <UserRound className="h-5 w-5" aria-hidden />}
           {hasUnread && (
-            <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold text-white">
+            <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-card">
               {conversation.unreadCount > 9 ? "9+" : conversation.unreadCount}
             </span>
           )}
@@ -255,17 +245,3 @@ function fmtRelative(dateStr: string): string {
   }
 }
 
-function useOnlineStatus() {
-  const [online, setOnline] = useState(true);
-  useEffect(() => {
-    const update = () => setOnline(navigator.onLine);
-    update();
-    window.addEventListener("online", update);
-    window.addEventListener("offline", update);
-    return () => {
-      window.removeEventListener("online", update);
-      window.removeEventListener("offline", update);
-    };
-  }, []);
-  return online;
-}

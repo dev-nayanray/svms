@@ -172,7 +172,7 @@ export function FormDialog({
             <div key={f.name} className="space-y-1">
               <Label htmlFor={`f-${f.name}`}>
                 {f.label}
-                {f.required && <span className="text-destructive"> *</span>}
+                {f.required && <span className="text-red-600"> *</span>}
               </Label>
               {f.type === "select" ? (
                 <Select
@@ -207,7 +207,7 @@ export function FormDialog({
                 />
               )}
               {fieldErrors[f.name] && (
-                <p className="text-xs text-destructive">{fieldErrors[f.name]}</p>
+                <p className="text-xs text-red-600">{fieldErrors[f.name]}</p>
               )}
             </div>
           ))}

@@ -337,8 +337,8 @@ export function BulkUploadSheet({
                 if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
               }}
               className={cn(
-                "flex min-h-[100px] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed p-4 text-center transition-colors focus-visible:outline-2 focus-visible:outline-primary",
-                dragOver ? "border-primary bg-primary/5" : "border-border bg-muted/30 hover:bg-muted/60",
+                "flex min-h-[100px] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed p-4 text-center transition-colors focus-visible:outline-2 focus-visible:outline-amber-500",
+                dragOver ? "border-amber-500 bg-amber-500/5" : "border-border bg-muted/30 hover:bg-muted/60",
               )}
             >
               <Upload className="h-7 w-7 text-muted-foreground" aria-hidden />
@@ -369,11 +369,11 @@ export function BulkUploadSheet({
             {totalCount > 0 && (
               <div className="mt-4 space-y-2">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{totalCount} file{totalCount === 1 ? "" : "s"}</span>
-                  <span>
-                    {doneCount > 0 && <span className="text-success">{doneCount} done</span>}
+                  <span className="tabular-nums">{totalCount} file{totalCount === 1 ? "" : "s"}</span>
+                  <span className="tabular-nums">
+                    {doneCount > 0 && <span className="text-emerald-600">{doneCount} done</span>}
                     {doneCount > 0 && errorCount > 0 && " · "}
-                    {errorCount > 0 && <span className="text-destructive">{errorCount} failed</span>}
+                    {errorCount > 0 && <span className="text-red-600">{errorCount} failed</span>}
                     {queuedCount > 0 && (doneCount > 0 || errorCount > 0) && " · "}
                     {queuedCount > 0 && <span>{queuedCount} queued</span>}
                   </span>
@@ -480,9 +480,9 @@ function FileRow({
     <div
       className={cn(
         "rounded-lg border p-3 transition-colors",
-        item.status === "done" && "border-success/40 bg-success/5",
-        item.status === "error" && "border-destructive/40 bg-destructive/5",
-        item.status === "uploading" && "border-info/40 bg-info/5",
+        item.status === "done" && "border-emerald-300/60 bg-emerald-50/40 dark:bg-emerald-950/10",
+        item.status === "error" && "border-red-300/60 bg-red-50/40 dark:bg-red-950/10",
+        item.status === "uploading" && "border-blue-300/60 bg-blue-50/40 dark:bg-blue-950/10",
         item.status === "queued" && "border-border bg-card",
       )}
     >
@@ -491,9 +491,9 @@ function FileRow({
         <span
           className={cn(
             "grid h-9 w-9 shrink-0 place-items-center rounded-md",
-            item.status === "done" && "bg-success/15 text-success",
-            item.status === "error" && "bg-destructive/15 text-destructive",
-            item.status === "uploading" && "bg-info/15 text-info",
+            item.status === "done" && "bg-emerald-500/15 text-emerald-600",
+            item.status === "error" && "bg-red-500/15 text-red-600",
+            item.status === "uploading" && "bg-blue-500/15 text-blue-600",
             item.status === "queued" && "bg-muted text-muted-foreground",
           )}
           aria-hidden
@@ -519,8 +519,8 @@ function FileRow({
             className="h-8 text-sm"
           />
           <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-            <span className="truncate">{item.file.name} · {(item.file.size / 1024 / 1024).toFixed(2)} MB</span>
-            <span className="shrink-0">
+            <span className="truncate tabular-nums">{item.file.name} · {(item.file.size / 1024 / 1024).toFixed(2)} MB</span>
+            <span className="shrink-0 tabular-nums">
               {item.status === "queued" && "Queued"}
               {item.status === "uploading" && `${item.progress}%`}
               {item.status === "done" && "Uploaded"}
@@ -569,7 +569,7 @@ function FileRow({
           className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"
         >
           <div
-            className="h-full rounded-full bg-info transition-[width] motion-reduce:transition-none"
+            className="h-full rounded-full bg-blue-500 transition-[width] motion-reduce:transition-none"
             style={{ width: `${item.progress}%` }}
           />
         </div>

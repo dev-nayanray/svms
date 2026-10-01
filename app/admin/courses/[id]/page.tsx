@@ -245,18 +245,18 @@ export default async function CourseDetailPage({
                         <td className="px-4 py-2.5">{i.deadline ? formatDate(i.deadline) : "—"}</td>
                         <td className="px-4 py-2.5">
                           {urgency === "urgent" && (
-                            <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive">
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600">
                               <AlertTriangle className="h-3 w-3" aria-hidden /> ≤7 days
                             </span>
                           )}
                           {urgency === "soon" && (
-                            <span className="inline-flex items-center gap-1 text-xs font-medium text-warning">
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
                               <CalendarClock className="h-3 w-3" aria-hidden /> ≤30 days
                             </span>
                           )}
                           {urgency === "normal" && <span className="text-xs text-muted-foreground">Open</span>}
                           {urgency === "past" && <span className="text-xs text-muted-foreground">Closed</span>}
-                          {urgency === "none" && <span className="text-xs text-success">No deadline</span>}
+                          {urgency === "none" && <span className="text-xs text-emerald-600">No deadline</span>}
                         </td>
                         <td className="px-4 py-2.5 text-muted-foreground">{i._count.applications}</td>
                       </tr>
@@ -377,9 +377,9 @@ function ApplicationDeadlineBanner({
   });
   const tone =
     urgency === "urgent"
-      ? "border-destructive/40 bg-destructive/10 text-destructive"
+      ? "border-red-300/60 bg-red-500/10 text-red-600"
       : urgency === "soon"
-        ? "border-warning/40 bg-warning/10 text-warning"
+        ? "border-amber-300/60 bg-amber-500/10 text-amber-600"
         : urgency === "past"
           ? "border-border bg-muted/30 text-muted-foreground"
           : "border-border bg-muted/30 text-foreground";

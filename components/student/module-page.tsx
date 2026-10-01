@@ -19,7 +19,7 @@ export function ModulePage({
   return (
     <MobilePage>
       <MobileCard className="py-8 text-center">
-        <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+        <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-amber-500/10 text-sm font-bold text-amber-600">
           {module}
         </span>
         <h2 className="mt-3 text-lg font-semibold">{title}</h2>

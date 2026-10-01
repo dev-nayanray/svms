@@ -16,9 +16,9 @@ import { apiFetch } from "@/lib/api-client";
 
 const PRIORITIES = [
   { value: "LOW", label: "Low", tone: "bg-muted text-muted-foreground" },
-  { value: "MEDIUM", label: "Medium", tone: "bg-info/15 text-info" },
-  { value: "HIGH", label: "High", tone: "bg-warning/15 text-warning" },
-  { value: "URGENT", label: "Urgent", tone: "bg-destructive/15 text-destructive" },
+  { value: "MEDIUM", label: "Medium", tone: "bg-blue-500/15 text-blue-600" },
+  { value: "HIGH", label: "High", tone: "bg-amber-500/15 text-amber-600" },
+  { value: "URGENT", label: "Urgent", tone: "bg-red-500/15 text-red-600" },
 ] as const;
 
 const TITLE_SUGGESTIONS = [
@@ -174,7 +174,7 @@ export function CreateTaskSheet({
               <div className="space-y-1.5">
                 <Label htmlFor="task-title">
                   Title
-                  <span className="ml-1 text-destructive" aria-hidden>*</span>
+                  <span className="ml-1 text-red-600" aria-hidden>*</span>
                 </Label>
                 <Input
                   id="task-title"
@@ -186,7 +186,7 @@ export function CreateTaskSheet({
                   disabled={submitting}
                   autoFocus
                 />
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground tabular-nums">
                   {title.length}/200 characters
                 </p>
               </div>
@@ -201,9 +201,9 @@ export function CreateTaskSheet({
                       type="button"
                       onClick={() => applySuggestion(s)}
                       className={cn(
-                        "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-primary",
+                        "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-amber-500",
                         title === s
-                          ? "border-primary bg-primary/10 text-primary"
+                          ? "border-amber-500 bg-amber-500/10 text-amber-600"
                           : "border-border bg-card text-muted-foreground hover:text-foreground",
                       )}
                     >
@@ -224,14 +224,14 @@ export function CreateTaskSheet({
                       onClick={() => setPriority(p.value)}
                       aria-pressed={priority === p.value}
                       className={cn(
-                        "flex min-h-[36px] items-center justify-center rounded-md px-2 py-1.5 text-xs font-semibold transition-all focus-visible:outline-2 focus-visible:outline-primary",
+                        "flex min-h-[36px] items-center justify-center rounded-md px-2 py-1.5 text-xs font-semibold transition-all focus-visible:outline-2 focus-visible:outline-amber-500",
                         priority === p.value
                           ? cn(p.tone, "ring-2 ring-offset-1 ring-offset-card")
                           : "border border-border bg-card text-muted-foreground hover:bg-muted",
                         priority === p.value && p.value === "LOW" && "ring-muted-foreground/40",
-                        priority === p.value && p.value === "MEDIUM" && "ring-info/40",
-                        priority === p.value && p.value === "HIGH" && "ring-warning/40",
-                        priority === p.value && p.value === "URGENT" && "ring-destructive/40",
+                        priority === p.value && p.value === "MEDIUM" && "ring-blue-500/40",
+                        priority === p.value && p.value === "HIGH" && "ring-amber-500/40",
+                        priority === p.value && p.value === "URGENT" && "ring-red-500/40",
                       )}
                     >
                       {p.label}
@@ -272,7 +272,7 @@ export function CreateTaskSheet({
                   disabled={submitting}
                   rows={4}
                 />
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground tabular-nums">
                   {description.length}/2000 characters
                 </p>
               </div>
@@ -281,7 +281,7 @@ export function CreateTaskSheet({
               {error && (
                 <div
                   role="alert"
-                  className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+                  className="flex items-start gap-2 rounded-lg border border-red-300/60 bg-red-50/40 p-3 text-sm text-red-600 dark:bg-red-950/10"
                 >
                   <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                   <span className="min-w-0 flex-1">{error}</span>

@@ -165,7 +165,7 @@ export function GlobalSearchOverlay({
         >
           {/* ── Search input row ── */}
           <div className="flex items-center gap-2 border-b border-border p-3">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-amber-500/10 text-amber-600">
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
               ) : (
@@ -263,7 +263,7 @@ function SearchGroup({
         <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {label}
         </h3>
-        <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground">
+        <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-muted-foreground">
           {count}
         </span>
       </div>
@@ -273,9 +273,9 @@ function SearchGroup({
             <button
               type="button"
               onClick={() => onResultClick(item.href)}
-              className="group flex w-full items-center gap-3 rounded-lg border border-transparent p-2 text-left transition-all hover:border-border hover:bg-muted/50 focus-visible:outline-2 focus-visible:outline-primary"
+              className="group flex w-full items-center gap-3 rounded-lg border border-transparent p-2 text-left transition-all hover:border-border hover:bg-muted/50 focus-visible:outline-2 focus-visible:outline-amber-500"
             >
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground transition-colors group-hover:bg-amber-500/10 group-hover:text-amber-600">
                 <ResultIcon name={item.icon} className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">
@@ -297,7 +297,7 @@ function SearchGroup({
 function EmptyHintState() {
   return (
     <div className="py-8 text-center">
-      <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
+      <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-amber-500/10 text-amber-600">
         <Search className="h-6 w-6" aria-hidden />
       </span>
       <h2 className="mt-3 text-sm font-semibold">Start typing to search</h2>

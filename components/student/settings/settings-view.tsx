@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AlertTriangle,
   Bell,
   ChevronDown,
   Globe,
@@ -22,10 +21,11 @@ import {
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { Button, Input } from "@/components/ui";
-import { MobilePage, MobileCard } from "@/components/student/ui";
+import { MobilePage, MobileCard, StudentErrorState } from "@/components/student/ui";
 import { Skeleton } from "@/components/ui/overlays";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
+import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -80,19 +80,11 @@ export function SettingsView() {
   if (settingsQ.isError && !settingsQ.data) {
     return (
       <MobilePage>
-        <MobileCard className="py-8 text-center">
-          {!online ? (
-            <WifiOff className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden />
-          ) : (
-            <AlertTriangle className="mx-auto h-10 w-10 text-destructive" aria-hidden />
-          )}
-          <h2 className="mt-3 text-base font-semibold">
-            {!online ? "You're offline" : "Couldn't load settings"}
-          </h2>
-          <Button onClick={() => settingsQ.refetch()} className="mt-4" disabled={!online}>
-            <RefreshCw className="h-4 w-4" aria-hidden /> Retry
-          </Button>
-        </MobileCard>
+        <StudentErrorState
+          online={online}
+          title={!online ? "You're offline" : "Couldn't load settings"}
+          onRetry={() => settingsQ.refetch()}
+        />
       </MobilePage>
     );
   }
@@ -145,7 +137,7 @@ export function SettingsView() {
     <MobilePage>
       {/* Profile summary */}
       <MobileCard className="flex items-center gap-3">
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-amber-500/10 text-sm font-semibold text-amber-600 tabular-nums">
           {account.firstName.charAt(0)}{account.lastName.charAt(0)}
         </span>
         <div className="min-w-0 flex-1">
@@ -158,7 +150,7 @@ export function SettingsView() {
       </MobileCard>
 
       {/* Account section */}
-      <SettingsSection icon={<User className="h-4 w-4 text-primary" />} title="Account">
+      <SettingsSection icon={<User className="h-4 w-4 text-amber-600" />} title="Account">
         <dl className="space-y-2 text-sm">
           <Row label="Email" value={account.email} />
           <Row label="Phone" value={account.phone || "—"} />
@@ -173,7 +165,7 @@ export function SettingsView() {
       </SettingsSection>
 
       {/* Notifications section */}
-      <SettingsSection icon={<Bell className="h-4 w-4 text-primary" />} title="Notifications" defaultOpen>
+      <SettingsSection icon={<Bell className="h-4 w-4 text-amber-600" />} title="Notifications" defaultOpen>
         <p className="mb-3 text-xs text-muted-foreground">
           Choose which notifications you want to receive. These control push notifications — you&apos;ll still see all updates in the notification center.
         </p>
@@ -217,7 +209,7 @@ export function SettingsView() {
       </SettingsSection>
 
       {/* Security section */}
-      <SettingsSection icon={<Shield className="h-4 w-4 text-primary" />} title="Security">
+      <SettingsSection icon={<Shield className="h-4 w-4 text-amber-600" />} title="Security">
         <PasswordForm onSaved={() => toast({ title: "Password changed", variant: "success" })} />
         <div className="mt-3 rounded-md border border-border p-3 text-xs text-muted-foreground">
           <p className="font-medium text-foreground">Active Sessions</p>
@@ -226,7 +218,7 @@ export function SettingsView() {
       </SettingsSection>
 
       {/* Appearance section */}
-      <SettingsSection icon={<Palette className="h-4 w-4 text-primary" />} title="Appearance" defaultOpen>
+      <SettingsSection icon={<Palette className="h-4 w-4 text-amber-600" />} title="Appearance" defaultOpen>
         <p className="mb-3 text-xs text-muted-foreground">Choose how the app looks.</p>
         <div className="grid grid-cols-3 gap-2">
           <ThemeOption
@@ -251,7 +243,7 @@ export function SettingsView() {
       </SettingsSection>
 
       {/* Language section */}
-      <SettingsSection icon={<Languages className="h-4 w-4 text-primary" />} title="Language">
+      <SettingsSection icon={<Languages className="h-4 w-4 text-amber-600" />} title="Language">
         <p className="mb-3 text-xs text-muted-foreground">
           Select your preferred language. Full translations coming soon.
         </p>
@@ -272,7 +264,7 @@ export function SettingsView() {
       </SettingsSection>
 
       {/* Help section */}
-      <SettingsSection icon={<HelpCircle className="h-4 w-4 text-primary" />} title="Help & Support">
+      <SettingsSection icon={<HelpCircle className="h-4 w-4 text-amber-600" />} title="Help & Support">
         <div className="space-y-2">
           <Link href="/student/support" className="block">
             <Button size="sm" variant="outline" className="w-full justify-start">
@@ -292,7 +284,7 @@ export function SettingsView() {
         <button
           type="button"
           onClick={() => setShowLogoutConfirm(true)}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 focus-visible:outline-2 focus-visible:outline-destructive"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-300/60 bg-red-50/40 px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-500/10 focus-visible:outline-2 focus-visible:outline-red-500 dark:bg-red-950/10"
         >
           <LogOut className="h-4 w-4" aria-hidden />
           Log Out
@@ -335,7 +327,7 @@ export function SettingsView() {
       <div className="flex items-center justify-between gap-2 pt-1 text-xs text-muted-foreground">
         <span>{settingsQ.isFetching ? "Refreshing…" : "Settings loaded"}</span>
         {!online && (
-          <span className="flex items-center gap-1 text-warning">
+          <span className="flex items-center gap-1 text-amber-600">
             <WifiOff className="h-3 w-3" aria-hidden /> Offline
           </span>
         )}
@@ -367,7 +359,7 @@ function SettingsSection({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-2 p-3 text-left focus-visible:outline-2 focus-visible:outline-primary"
+        className="flex w-full items-center justify-between gap-2 p-3 text-left focus-visible:outline-2 focus-visible:outline-amber-500"
       >
         <span className="flex items-center gap-2">
           {icon}
@@ -407,8 +399,8 @@ function ToggleRow({
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className={cn(
-          "relative h-6 w-11 shrink-0 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-primary",
-          checked ? "bg-primary" : "bg-muted",
+          "relative h-6 w-11 shrink-0 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-amber-500",
+          checked ? "bg-amber-500" : "bg-muted",
         )}
       >
         <span
@@ -439,9 +431,9 @@ function ThemeOption({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "flex flex-col items-center gap-1.5 rounded-lg border p-3 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-primary",
+        "flex flex-col items-center gap-1.5 rounded-xl border p-3 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-amber-500",
         active
-          ? "border-primary bg-primary/10 text-primary"
+          ? "border-amber-500 bg-amber-500/10 text-amber-600"
           : "border-border bg-card text-muted-foreground hover:text-foreground",
       )}
     >
@@ -496,7 +488,7 @@ function PasswordForm({ onSaved }: { onSaved: () => void }) {
         <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} disabled={submitting} aria-label="Confirm new password" />
       </div>
       {next && confirm && next !== confirm && (
-        <p className="text-xs text-destructive">Passwords don&apos;t match</p>
+        <p className="text-xs text-red-600">Passwords don&apos;t match</p>
       )}
       <Button size="sm" onClick={handleSubmit} disabled={!canSubmit} className="w-full">
         {submitting ? "Changing…" : "Change Password"}
@@ -512,7 +504,7 @@ function SettingsSkeleton() {
     <div className="space-y-3" aria-busy="true" aria-label="Loading settings">
       <Skeleton className="h-16 w-full rounded-xl" />
       {Array.from({ length: 4 }).map((_, i) => (
-        <Skeleton key={i} className="h-14 w-full rounded-lg" />
+        <Skeleton key={i} className="h-14 w-full rounded-xl" />
       ))}
     </div>
   );
@@ -520,17 +512,3 @@ function SettingsSkeleton() {
 
 // ── Helpers ───────────────────────────────────────────────────────
 
-function useOnlineStatus() {
-  const [online, setOnline] = useState(true);
-  useEffect(() => {
-    const update = () => setOnline(navigator.onLine);
-    update();
-    window.addEventListener("online", update);
-    window.addEventListener("offline", update);
-    return () => {
-      window.removeEventListener("online", update);
-      window.removeEventListener("offline", update);
-    };
-  }, []);
-  return online;
-}

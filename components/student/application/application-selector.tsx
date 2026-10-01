@@ -4,7 +4,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useEffect, useState } from "react";
 import { ChevronDown, MapPin, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui";
+import { StatusBadge } from "@/components/student/ui";
 
 /**
  * Multi-application selector for the My Application screen.
@@ -61,7 +61,7 @@ export function ApplicationSelector({
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2 text-left transition-colors hover:bg-muted/50 focus-visible:outline-2 focus-visible:outline-primary"
+        className="flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2 text-left transition-colors hover:bg-muted/50 focus-visible:outline-2 focus-visible:outline-amber-500"
       >
         <span className="flex min-w-0 items-center gap-2">
           {selected?.countryFlag && (
@@ -80,9 +80,9 @@ export function ApplicationSelector({
         </span>
         <span className="flex items-center gap-2">
           {selected && (
-            <Badge tone={selected.percent === 100 ? "success" : "info"}>
+            <StatusBadge tone={selected.percent === 100 ? "success" : "info"}>
               {selected.percent}%
-            </Badge>
+            </StatusBadge>
           )}
           <ChevronDown
             className={cn(
@@ -131,8 +131,8 @@ export function ApplicationSelector({
                         }}
                         aria-pressed={isSelected}
                         className={cn(
-                          "flex w-full items-start gap-3 rounded-lg p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-primary",
-                          isSelected ? "bg-primary/10 ring-1 ring-primary" : "hover:bg-muted",
+                          "flex w-full items-start gap-3 rounded-lg p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-amber-500",
+                          isSelected ? "bg-amber-500/10 ring-1 ring-amber-500" : "hover:bg-muted",
                         )}
                       >
                         <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-md bg-muted text-base" aria-hidden>
@@ -143,9 +143,9 @@ export function ApplicationSelector({
                             <span className="truncate text-sm font-semibold">
                               {opt.countryName}
                             </span>
-                            <Badge tone={opt.percent === 100 ? "success" : "info"}>
+                            <StatusBadge tone={opt.percent === 100 ? "success" : "info"}>
                               {opt.percent}%
-                            </Badge>
+                            </StatusBadge>
                           </span>
                           {opt.universityName && (
                             <span className="block truncate text-xs text-muted-foreground">

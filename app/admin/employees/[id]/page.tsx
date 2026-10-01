@@ -104,7 +104,7 @@ export default async function EmployeeProfilePage({ params }: { params: Promise<
           <Card key={label}>
             <CardContent className="p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-              <p className={`mt-1 text-2xl font-semibold ${label === "Overdue Tasks" && typeof value === "number" && value > 0 ? "text-destructive" : ""}`}>
+              <p className={`mt-1 text-2xl font-semibold tabular-nums ${label === "Overdue Tasks" && typeof value === "number" && value > 0 ? "text-red-600" : ""}`}>
                 {value}
               </p>
             </CardContent>
@@ -226,7 +226,7 @@ function Row({ label, value, tone }: { label: string; value: React.ReactNode; to
   return (
     <div className="flex justify-between gap-4">
       <span className="shrink-0 text-muted-foreground">{label}</span>
-      <span className={`min-w-0 truncate text-right font-medium ${tone === "danger" ? "text-destructive" : ""}`}>{value}</span>
+      <span className={`min-w-0 truncate text-right font-medium tabular-nums ${tone === "danger" ? "text-red-600" : ""}`}>{value}</span>
     </div>
   );
 }

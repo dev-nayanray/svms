@@ -9,9 +9,9 @@ import {
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
-      {/* ── Left panel — branding + content (hidden on mobile) ── */}
+      {/* ── Left panel — branding + content (tablet landscape and up) ── */}
       <div
-        className="relative hidden w-1/2 flex-col justify-between overflow-hidden p-10 text-white xl:flex"
+        className="relative hidden w-1/2 flex-col justify-between overflow-hidden p-10 text-white lg:flex"
         style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)" }}
       >
         {/* Decorative pattern */}
@@ -160,25 +160,46 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </div>
 
       {/* ── Right panel — form ── */}
-      <div className="flex w-full items-center justify-center p-4 lg:w-1/2">
+      <div className="flex w-full flex-col items-center justify-center bg-background p-4 sm:p-6 lg:w-1/2">
         <div className="w-full max-w-md">
-          {/* Mobile logo (hidden on desktop — desktop shows it on left panel) */}
-          <Link href="/" className="mb-6 flex items-center justify-center gap-2.5 lg:hidden">
-            <span className="relative h-10 w-10 overflow-hidden rounded-lg">
-              <Image
-                src="/euroscope-mark.png"
-                alt="Euroscope"
-                fill
-                sizes="40px"
-                className="object-contain"
-                priority
-              />
-            </span>
-            <span className="text-xl font-bold tracking-tight">Euroscope</span>
-          </Link>
-          <Card>
+          {/* Mobile brand banner — phones don't see the left panel, so
+              give them a compact branded strip instead of a bare card. */}
+          <div
+            className="relative mb-5 overflow-hidden rounded-2xl px-5 py-4 text-white lg:hidden"
+            style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)" }}
+          >
+            <div
+              className="absolute -right-8 -top-10 h-28 w-28 rounded-full opacity-20 blur-2xl"
+              style={{ backgroundColor: "#d4af37" }}
+              aria-hidden
+            />
+            <Link href="/" className="relative flex items-center gap-3">
+              <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-white/10">
+                <Image
+                  src="/euroscope-mark.png"
+                  alt="Euroscope"
+                  fill
+                  sizes="44px"
+                  className="object-contain p-1"
+                  priority
+                />
+              </span>
+              <span className="flex flex-col leading-tight">
+                <span className="text-lg font-bold tracking-tight">Euroscope</span>
+                <span className="text-[11px] text-white/60">
+                  Your journey to studying in Europe
+                </span>
+              </span>
+            </Link>
+          </div>
+          <Card className="border-border/70 shadow-sm">
             <CardContent className="p-6 sm:p-8">{children}</CardContent>
           </Card>
+          <p className="mt-5 text-center text-xs text-muted-foreground lg:hidden">
+            <Link href="/" className="hover:text-foreground hover:underline">
+              ← Back to euroscope site
+            </Link>
+          </p>
         </div>
       </div>
     </div>

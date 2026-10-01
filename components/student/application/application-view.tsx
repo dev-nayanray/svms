@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
-  AlertTriangle,
   Compass,
   FileUp,
   FolderOpen,
@@ -13,11 +12,15 @@ import {
   RefreshCw,
   Stamp,
   Wallet,
-  WifiOff,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui";
-import { MobilePage, MobileCard } from "@/components/student/ui";
+import {
+  MobilePage,
+  MobileCard,
+  StudentEmptyState,
+  StudentErrorState,
+} from "@/components/student/ui";
 import { Skeleton } from "@/components/ui/overlays";
 import { Tabs, TabsContent } from "@/components/ui/overlays";
 import { ApplicationSelector, type ApplicationOption } from "./application-selector";
@@ -40,6 +43,7 @@ import {
   type AppView,
 } from "./section-cards";
 import { cn } from "@/lib/utils";
+import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 
 // ── Types (mirror the API envelope shape) ──────────────────────────
 
@@ -97,30 +101,18 @@ export function ApplicationView() {
   if (listQ.isError && !listQ.data) {
     return (
       <MobilePage>
-        <MobileCard className="py-8 text-center">
-          {!online ? (
-            <WifiOff className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden />
-          ) : (
-            <AlertTriangle className="mx-auto h-10 w-10 text-destructive" aria-hidden />
-          )}
-          <h2 className="mt-3 text-base font-semibold">
-            {!online ? "You're offline" : "Couldn't load your applications"}
-          </h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            {!online
+        <StudentErrorState
+          online={online}
+          title={!online ? "You're offline" : "Couldn't load your applications"}
+          description={
+            !online
               ? "Check your connection and try again."
               : listQ.error instanceof Error
                 ? listQ.error.message
-                : "Please try again in a moment."}
-          </p>
-          <Button
-            onClick={() => listQ.refetch()}
-            className="mt-4"
-            disabled={!online}
-          >
-            <RefreshCw className="h-4 w-4" aria-hidden /> Retry
-          </Button>
-        </MobileCard>
+                : "Please try again in a moment."
+          }
+          onRetry={() => listQ.refetch()}
+        />
       </MobilePage>
     );
   }
@@ -129,18 +121,16 @@ export function ApplicationView() {
   if (apps.length === 0) {
     return (
       <MobilePage>
-        <MobileCard className="py-8 text-center">
-          <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
-            <FolderOpen className="h-6 w-6" aria-hidden />
-          </span>
-          <h2 className="mt-3 text-base font-semibold">No applications yet</h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            Browse universities and shortlist your favorites to start an application.
-          </p>
-          <Button onClick={() => router.push("/student/universities")} className="mt-4">
-            <Compass className="h-4 w-4" aria-hidden /> Browse Universities
-          </Button>
-        </MobileCard>
+        <StudentEmptyState
+          icon={<FolderOpen className="h-5 w-5" aria-hidden />}
+          title="No applications yet"
+          description="Browse universities and shortlist your favorites to start an application."
+          action={
+            <Button onClick={() => router.push("/student/universities")}>
+              <Compass className="h-4 w-4" aria-hidden /> Browse Universities
+            </Button>
+          }
+        />
       </MobilePage>
     );
   }
@@ -197,22 +187,15 @@ function ApplicationDetail({ id }: { id: string }) {
 
   if (detailQ.isError || !detailQ.data?.application) {
     return (
-      <MobileCard className="py-6 text-center">
-        <AlertTriangle className="mx-auto h-8 w-8 text-destructive" aria-hidden />
-        <p className="mt-2 text-sm text-muted-foreground">
-          {detailQ.error instanceof Error
+      <StudentErrorState
+        title="Couldn't load this application"
+        description={
+          detailQ.error instanceof Error
             ? detailQ.error.message
-            : "Couldn't load this application."}
-        </p>
-        <Button
-          size="sm"
-          variant="outline"
-          className="mt-3"
-          onClick={() => detailQ.refetch()}
-        >
-          <RefreshCw className="h-3.5 w-3.5" aria-hidden /> Retry
-        </Button>
-      </MobileCard>
+            : "Please try again in a moment."
+        }
+        onRetry={() => detailQ.refetch()}
+      />
     );
   }
 
@@ -480,17 +463,3 @@ function ApplicationSkeleton({ showHeader = true }: { showHeader?: boolean }) {
 
 // ── Online status hook (reused from profile-view) ─────────────────
 
-function useOnlineStatus() {
-  const [online, setOnline] = useState(true);
-  useEffect(() => {
-    const update = () => setOnline(navigator.onLine);
-    update();
-    window.addEventListener("online", update);
-    window.addEventListener("offline", update);
-    return () => {
-      window.removeEventListener("online", update);
-      window.removeEventListener("offline", update);
-    };
-  }, []);
-  return online;
-}

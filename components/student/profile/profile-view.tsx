@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  AlertTriangle,
   CheckCircle2,
   ChevronRight,
   IdCard,
@@ -19,8 +18,8 @@ import {
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { useToast } from "@/components/ui/toast";
-import { Button, Badge, Input, Select } from "@/components/ui";
-import { MobilePage, MobileCard, LoadingCards } from "@/components/student/ui";
+import { Button, Input, Select } from "@/components/ui";
+import { MobilePage, MobileCard, LoadingCards, StudentErrorState, StatusBadge } from "@/components/student/ui";
 import { ProfileSheet, Field } from "./profile-sheet";
 import { ProfilePhoto, ProfileAvatar } from "./profile-photo";
 import { AcademicRecordsSection } from "./academic-records";
@@ -28,6 +27,7 @@ import { EnglishProficiencySection } from "./english-proficiency";
 import { studentProfilePatchSchema, type StudentProfilePatch } from "@/lib/validations";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 
 type AcademicRecord = {
   id: string;
@@ -157,26 +157,16 @@ export function ProfileView() {
   if (isError && !profile) {
     return (
       <MobilePage>
-        <MobileCard className="py-8 text-center">
-          {!online ? (
-            <WifiOff className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden />
-          ) : (
-            <AlertTriangle className="mx-auto h-10 w-10 text-destructive" aria-hidden />
-          )}
-          <h2 className="mt-3 text-base font-semibold">
-            {!online ? "You're offline" : "Couldn't load your profile"}
-          </h2>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-            {!online
-              ? "Check your connection and try again."
-              : error instanceof Error
-                ? error.message
-                : "Please try again in a moment."}
-          </p>
-          <Button onClick={handleRefresh} className="mt-4" disabled={!online}>
-            <RefreshCw className="h-4 w-4" aria-hidden /> Retry
-          </Button>
-        </MobileCard>
+        <StudentErrorState
+          online={online}
+          title={!online ? "You're offline" : "Couldn't load your profile"}
+          description={!online
+            ? "Check your connection and try again."
+            : error instanceof Error
+              ? error.message
+              : "Please try again in a moment."}
+          onRetry={handleRefresh}
+        />
       </MobilePage>
     );
   }
@@ -201,17 +191,17 @@ export function ProfileView() {
         </div>
 
         {/* Completion indicator */}
-        <div className="rounded-lg border border-border bg-muted/30 p-3">
+        <div className="rounded-xl border border-border bg-muted/30 p-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               {incomplete ? (
-                <ShieldAlert className="h-4 w-4 text-warning" aria-hidden />
+                <ShieldAlert className="h-4 w-4 text-amber-600" aria-hidden />
               ) : (
-                <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden />
               )}
               <span className="text-sm font-medium">Profile Completion</span>
             </div>
-            <Badge tone={incomplete ? "warning" : "success"}>{completion.percent}%</Badge>
+            <StatusBadge tone={incomplete ? "warning" : "success"} className="tabular-nums">{completion.percent}%</StatusBadge>
           </div>
           <div
             role="progressbar"
@@ -224,7 +214,7 @@ export function ProfileView() {
             <div
               className={cn(
                 "h-full rounded-full transition-[width] motion-reduce:transition-none",
-                incomplete ? "bg-warning" : "bg-success"
+                incomplete ? "bg-amber-500" : "bg-emerald-500"
               )}
               style={{ width: `${completion.percent}%` }}
             />
@@ -236,13 +226,13 @@ export function ProfileView() {
                 {completion.missing.slice(0, 4).map((m) => (
                   <span
                     key={`${m.sectionKey}-${m.path}`}
-                    className="rounded-md bg-warning/10 px-1.5 py-0.5 text-[11px] text-warning"
+                    className="rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[11px] text-amber-600"
                   >
                     {m.label}
                   </span>
                 ))}
                 {completion.missing.length > 4 && (
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-[11px] text-muted-foreground tabular-nums">
                     +{completion.missing.length - 4} more
                   </span>
                 )}
@@ -301,7 +291,7 @@ export function ProfileView() {
       {/* Photo editor as a separate card so it's prominent */}
       <MobileCard className="space-y-3">
         <div className="flex items-center gap-2">
-          <User className="h-4 w-4 text-primary" aria-hidden />
+          <User className="h-4 w-4 text-amber-600" aria-hidden />
           <h2 className="text-sm font-semibold">Profile Photo</h2>
         </div>
         <ProfilePhoto
@@ -317,7 +307,7 @@ export function ProfileView() {
           {isFetching ? "Refreshing…" : `Last updated ${new Date().toLocaleTimeString()}`}
         </span>
         {!online && (
-          <span className="flex items-center gap-1 text-warning">
+          <span className="flex items-center gap-1 text-amber-600">
             <WifiOff className="h-3 w-3" aria-hidden /> Offline
           </span>
         )}
@@ -407,7 +397,7 @@ function PersonalSection({
   return (
     <MobileCard className="space-y-2">
       <SectionHeader
-        icon={<User className="h-4 w-4 text-primary" aria-hidden />}
+        icon={<User className="h-4 w-4 text-amber-600" aria-hidden />}
         title="Personal Information"
         onEdit={() => {
           form.reset({
@@ -521,7 +511,7 @@ function ContactSection({
   return (
     <MobileCard className="space-y-2">
       <SectionHeader
-        icon={<Phone className="h-4 w-4 text-primary" aria-hidden />}
+        icon={<Phone className="h-4 w-4 text-amber-600" aria-hidden />}
         title="Contact Information"
         onEdit={() => {
           form.reset({
@@ -625,7 +615,7 @@ function AddressSection({
   return (
     <MobileCard className="space-y-2">
       <SectionHeader
-        icon={<MapPin className="h-4 w-4 text-primary" aria-hidden />}
+        icon={<MapPin className="h-4 w-4 text-amber-600" aria-hidden />}
         title="Address"
         onEdit={() => {
           form.reset({
@@ -738,7 +728,7 @@ function PassportSection({
   return (
     <MobileCard className="space-y-2">
       <SectionHeader
-        icon={<IdCard className="h-4 w-4 text-primary" aria-hidden />}
+        icon={<IdCard className="h-4 w-4 text-amber-600" aria-hidden />}
         title="Passport Information"
         onEdit={() => {
           form.reset({
@@ -839,7 +829,7 @@ function EmergencySection({
   return (
     <MobileCard className="space-y-2">
       <SectionHeader
-        icon={<Siren className="h-4 w-4 text-primary" aria-hidden />}
+        icon={<Siren className="h-4 w-4 text-amber-600" aria-hidden />}
         title="Emergency Contact"
         onEdit={() => {
           form.reset({
@@ -900,7 +890,7 @@ function SectionHeader({
       </div>
       <button
         onClick={onEdit}
-        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-primary"
+        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-amber-600 hover:bg-amber-500/10 focus-visible:outline-2 focus-visible:outline-amber-500"
         aria-label={`Edit ${title}`}
       >
         Edit
@@ -948,17 +938,3 @@ function fmtDate(d?: string | null): string {
 // We need the Input/Select imports — already imported at the top.
 
 /** Hook that subscribes to online/offline events. */
-function useOnlineStatus() {
-  const [online, setOnline] = useState(true);
-  useEffect(() => {
-    const update = () => setOnline(navigator.onLine);
-    update();
-    window.addEventListener("online", update);
-    window.addEventListener("offline", update);
-    return () => {
-      window.removeEventListener("online", update);
-      window.removeEventListener("offline", update);
-    };
-  }, []);
-  return online;
-}
