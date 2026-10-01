@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/db";
 import { auditLog } from "@/lib/services/audit";
 import { getProviderAdapter, type ProviderType, type ConnectionTestResult } from "@/lib/ai/adapters/types";
+import { getTelegramConfig } from "@/lib/services/telegram-config";
 
 /**
  * AI Control Center Service
@@ -406,7 +407,7 @@ export async function getUsageStats(days = 30): Promise<{
 // ─── Overview Dashboard ──────────────────────────────────────────
 
 export async function getAiOverview() {
-  const [providers, usageStats, assistantConfigs, knowledgeSources] = await Promise.all([
+  const [providers, usageStats, assistantConfigs, knowledgeSources, telegramConfig] = await Promise.all([
     prisma.aiProvider.findMany({
       include: { models: { where: { enabled: true } } },
       orderBy: [{ priority: "asc" }],
@@ -414,6 +415,7 @@ export async function getAiOverview() {
     getUsageStats(7),
     prisma.aiAssistantConfig.count(),
     prisma.knowledgeSource.count({ where: { enabled: true, approved: true } }),
+    getTelegramConfig(),
   ]);
 
   const enabledProviders = providers.filter((p) => p.enabled);
@@ -438,7 +440,8 @@ export async function getAiOverview() {
     assistantConfigs,
     knowledgeSources,
     recentErrors: usageStats.recentErrors,
-    telegramConfigured: !!process.env.TELEGRAM_BOT_TOKEN,
-    telegramWebhookSecret: !!process.env.TELEGRAM_WEBHOOK_SECRET,
+    telegramConfigured: !!process.env.TELEGRAM_BOT_TOKEN || telegramConfig.configured,
+    telegramWebhookSecret: !!process.env.TELEGRAM_WEBHOOK_SECRET || telegramConfig.configured,
+    telegramConfig,
   };
 }

@@ -1225,3 +1225,23 @@ model KnowledgeSource {
   @@index([enabled])
   @@index([approved])
 }
+
+model TelegramConfig {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  // Singleton — always use the first row
+  botToken        String?
+  webhookSecret   String?
+  // Optional: custom webhook URL override (auto-detected from NEXT_PUBLIC_APP_URL if not set)
+  webhookUrl      String?
+  // Bot settings
+  botName         String    @default("Euroscope Assistant")
+  welcomeMessage  String    @default("Welcome to Euroscope! I can help you with studying in Europe. What's your name?")
+  enabled         Boolean   @default(false)
+  // Last webhook test result
+  lastTestStatus  String?   // connected | invalid_token | webhook_not_registered | network_error | untested
+  lastTestedAt    DateTime?
+  lastTestError   String?
+  updatedById     String?   @db.ObjectId
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}

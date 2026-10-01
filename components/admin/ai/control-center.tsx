@@ -26,6 +26,7 @@ import {
   Activity,
   Eye,
   EyeOff,
+  Save,
 } from "lucide-react";
 
 type Provider = {
@@ -63,6 +64,21 @@ type Overview = {
   recentErrors: Array<{ id: string; model: string; status: string; errorMessage: string | null; createdAt: string }>;
   telegramConfigured: boolean;
   telegramWebhookSecret: boolean;
+  telegramConfig?: {
+    configured: boolean;
+    hasDbToken: boolean;
+    hasEnvToken: boolean;
+    hasDbSecret: boolean;
+    hasEnvSecret: boolean;
+    botName: string;
+    welcomeMessage: string;
+    enabled: boolean;
+    webhookUrl: string | null;
+    lastTestStatus: string | null;
+    lastTestedAt: string | null;
+    lastTestError: string | null;
+    maskedToken: string | null;
+  };
 };
 
 const SECTIONS = [
@@ -670,191 +686,268 @@ function PlaygroundSection({ providers }: { providers: Provider[] }) {
 
 function TelegramSection({ overview }: { overview: Overview }) {
   const { toast } = useToast();
+  const [config, setConfig] = useState<NonNullable<Overview["telegramConfig"]> | null>(overview.telegramConfig ?? null);
+  const [botToken, setBotToken] = useState("");
+  const [webhookSecret, setWebhookSecret] = useState("");
+  const [webhookUrl, setWebhookUrl] = useState(overview.telegramConfig?.webhookUrl ?? "");
+  const [botName, setBotName] = useState(overview.telegramConfig?.botName ?? "Euroscope Assistant");
+  const [welcomeMessage, setWelcomeMessage] = useState(overview.telegramConfig?.welcomeMessage ?? "");
+  const [enabled, setEnabled] = useState(overview.telegramConfig?.enabled ?? false);
+  const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
-  const [webhookUrl, setWebhookUrl] = useState("");
+  const [registering, setRegistering] = useState(false);
+  const [showToken, setShowToken] = useState(false);
+  const [showSecret, setShowSecret] = useState(false);
+  const [generatingSecret, setGeneratingSecret] = useState(false);
 
-  const handleTestWebhook = async () => {
-    if (!overview.telegramWebhookSecret) {
-      toast({ title: "Webhook secret not configured", description: "Set TELEGRAM_WEBHOOK_SECRET in your environment variables first.", variant: "error" });
-      return;
+  // Load full config from API
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await apiFetch<NonNullable<Overview["telegramConfig"]>>("/api/admin/ai/telegram");
+        if (!cancelled) {
+          setConfig(data);
+          setWebhookUrl(data.webhookUrl ?? "");
+          setBotName(data.botName);
+          setWelcomeMessage(data.welcomeMessage);
+          setEnabled(data.enabled);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const updates: Record<string, unknown> = {
+        botName,
+        welcomeMessage,
+        enabled,
+        webhookUrl: webhookUrl || null,
+      };
+      // Only send token/secret if the admin typed a new value
+      if (botToken) updates.botToken = botToken;
+      if (webhookSecret) updates.webhookSecret = webhookSecret;
+
+      const updated = await apiFetch<NonNullable<Overview["telegramConfig"]>>("/api/admin/ai/telegram", {
+        method: "PUT",
+        json: updates,
+      });
+      setConfig(updated);
+      setBotToken("");
+      setWebhookSecret("");
+      toast({ title: "Telegram settings saved", variant: "success" });
+    } catch (err) {
+      toast({ title: "Save failed", description: (err as Error).message, variant: "error" });
+    } finally {
+      setSaving(false);
     }
+  };
+
+  const handleTest = async () => {
     setTesting(true);
     try {
-      const res = await fetch(`/api/telegram/webhook?secret=${process.env.NEXT_PUBLIC_TELEGRAM_WEBHOOK_SECRET ?? "missing"}`, {
-        method: "GET",
+      const result = await apiFetch<{ status: string; message: string; botUsername?: string }>("/api/admin/ai/telegram/test", {
+        method: "POST",
       });
-      if (res.ok) {
-        const data = await res.json();
-        toast({ title: "Webhook is live", description: `Bot status: ${data.bot}`, variant: "success" });
-      } else {
-        toast({ title: "Webhook test failed", description: "Check the webhook secret matches your env var.", variant: "error" });
-      }
-    } catch {
-      toast({ title: "Network error", description: "Could not reach the webhook endpoint.", variant: "error" });
+      toast({
+        title: result.status === "connected" ? "Connection successful" : "Connection failed",
+        description: result.message,
+        variant: result.status === "connected" ? "success" : "error",
+      });
+    } catch (err) {
+      toast({ title: "Test failed", description: (err as Error).message, variant: "error" });
     } finally {
       setTesting(false);
     }
   };
 
-  const handleRegisterWebhook = async () => {
-    if (!overview.telegramConfigured) {
-      toast({ title: "Bot token not configured", description: "Set TELEGRAM_BOT_TOKEN in your environment variables first.", variant: "error" });
-      return;
+  const handleRegister = async () => {
+    setRegistering(true);
+    try {
+      const result = await apiFetch<{ success: boolean; message: string; webhookUrl?: string }>("/api/admin/ai/telegram/register", {
+        method: "POST",
+      });
+      toast({
+        title: result.success ? "Webhook registered" : "Registration failed",
+        description: result.message,
+        variant: result.success ? "success" : "error",
+      });
+    } catch (err) {
+      toast({ title: "Registration failed", description: (err as Error).message, variant: "error" });
+    } finally {
+      setRegistering(false);
     }
-    if (!webhookUrl) {
-      toast({ title: "Webhook URL required", description: "Enter your production URL (e.g. https://your-domain.com)", variant: "error" });
-      return;
-    }
-    toast({
-      title: "Register via command line",
-      description: `Run: curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=${webhookUrl}/api/telegram/webhook?secret=<SECRET>"`,
-    });
   };
+
+  const handleGenerateSecret = () => {
+    setGeneratingSecret(true);
+    // Generate a random hex string
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    const secret = Array.from(array).map((b) => b.toString(16).padStart(2, "0")).join("");
+    setWebhookSecret(secret);
+    setGeneratingSecret(false);
+    toast({ title: "Secret generated", description: "Click Save to store it.", variant: "success" });
+  };
+
+  const isConfigured = config?.configured ?? false;
+  const hasToken = config?.hasDbToken ?? config?.hasEnvToken ?? false;
+  const hasSecret = config?.hasDbSecret ?? config?.hasEnvSecret ?? false;
 
   return (
     <div className="space-y-4">
-      {/* Status cards */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-        <div className={cn("rounded-lg border p-3", overview.telegramConfigured ? "border-success/30 bg-success/5" : "border-destructive/30 bg-destructive/5")}>
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-muted-foreground">Bot Token</p>
-            {overview.telegramConfigured ? <CheckCircle2 className="h-4 w-4 text-success" /> : <AlertCircle className="h-4 w-4 text-destructive" />}
-          </div>
-          <p className="mt-1 text-sm font-semibold">{overview.telegramConfigured ? "Configured" : "Missing"}</p>
-        </div>
-        <div className={cn("rounded-lg border p-3", overview.telegramWebhookSecret ? "border-success/30 bg-success/5" : "border-destructive/30 bg-destructive/5")}>
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-muted-foreground">Webhook Secret</p>
-            {overview.telegramWebhookSecret ? <CheckCircle2 className="h-4 w-4 text-success" /> : <AlertCircle className="h-4 w-4 text-destructive" />}
-          </div>
-          <p className="mt-1 text-sm font-semibold">{overview.telegramWebhookSecret ? "Configured" : "Missing"}</p>
-        </div>
-        <div className={cn("rounded-lg border p-3", overview.telegramConfigured && overview.telegramWebhookSecret ? "border-success/30 bg-success/5" : "border-warning/30 bg-warning/5")}>
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-muted-foreground">Overall Status</p>
-            <StatusDot active={overview.telegramConfigured && overview.telegramWebhookSecret} />
-          </div>
-          <p className="mt-1 text-sm font-semibold">
-            {overview.telegramConfigured && overview.telegramWebhookSecret ? "Ready" : "Setup needed"}
+      {/* Status banner */}
+      <div className={cn(
+        "flex items-center gap-3 rounded-lg border p-4",
+        isConfigured ? "border-success/30 bg-success/5" : "border-warning/30 bg-warning/5",
+      )}>
+        {isConfigured ? (
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
+        ) : (
+          <AlertCircle className="h-5 w-5 shrink-0 text-warning" />
+        )}
+        <div className="flex-1">
+          <p className="text-sm font-semibold">
+            {isConfigured ? "Telegram bot is configured" : "Telegram bot needs setup"}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {config?.maskedToken ? `Current token: ${config.maskedToken}` : "No token configured"}
+            {config?.hasEnvToken && " (from env var)"}
+            {config?.hasDbToken && " (from admin panel)"}
           </p>
         </div>
-      </div>
-
-      {/* Setup instructions */}
-      <div className="rounded-lg border border-border bg-card p-4">
-        <h3 className="text-sm font-semibold">Setup Instructions</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          The Telegram bot token and webhook secret are configured via environment variables (not editable from the UI for security).
-        </p>
-
-        <div className="mt-4 space-y-4">
-          {/* Step 1 */}
-          <div className="flex gap-3">
-            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">1</span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium">Create a bot with @BotFather</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Open <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">@BotFather</a> on Telegram,
-                send <code className="rounded bg-muted px-1 py-0.5 text-[10px]">/newbot</code>, and follow the prompts to get your bot token.
-              </p>
-            </div>
-          </div>
-
-          {/* Step 2 */}
-          <div className="flex gap-3">
-            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">2</span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium">Generate a webhook secret</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Run this command to generate a random secret:
-              </p>
-              <pre className="mt-1 overflow-x-auto rounded-md bg-muted/50 p-2 text-[10px] font-mono">
-                openssl rand -hex 32
-              </pre>
-            </div>
-          </div>
-
-          {/* Step 3 */}
-          <div className="flex gap-3">
-            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">3</span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium">Set environment variables</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Add these to your <code className="rounded bg-muted px-1 py-0.5 text-[10px]">.env</code> file (local) or Vercel project settings (production):
-              </p>
-              <pre className="mt-1 overflow-x-auto rounded-md bg-muted/50 p-2 text-[10px] font-mono">
-{`TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
-TELEGRAM_WEBHOOK_SECRET=<your-generated-secret>`}
-              </pre>
-            </div>
-          </div>
-
-          {/* Step 4 */}
-          <div className="flex gap-3">
-            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">4</span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium">Register the webhook</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Enter your production URL below, then run the command to register the webhook with Telegram:
-              </p>
-              <div className="mt-2 flex gap-2">
-                <Input
-                  value={webhookUrl}
-                  onChange={(e) => setWebhookUrl(e.target.value)}
-                  placeholder="https://your-domain.com"
-                  className="h-8 text-xs"
-                />
-                <Button size="sm" variant="outline" onClick={handleRegisterWebhook}>
-                  Show command
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Test webhook */}
-      <div className="rounded-lg border border-border bg-card p-4">
-        <h3 className="text-sm font-semibold">Test Webhook</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Verify the webhook endpoint is live and the bot token is valid.
-        </p>
-        <Button
-          size="sm"
-          variant="outline"
-          className="mt-3"
-          onClick={handleTestWebhook}
-          disabled={testing || !overview.telegramConfigured}
-        >
-          {testing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plug className="h-3.5 w-3.5" />}
-          Test Connection
-        </Button>
-        {!overview.telegramConfigured && (
-          <p className="mt-2 text-xs text-warning">⚠ Bot token not configured — set TELEGRAM_BOT_TOKEN first.</p>
+        {config?.lastTestStatus && (
+          <Badge tone={config.lastTestStatus === "connected" ? "success" : "destructive"}>
+            {config.lastTestStatus}
+          </Badge>
         )}
       </div>
 
-      {/* Bot behavior info */}
+      {/* Configuration form */}
+      <div className="rounded-lg border border-border bg-card p-4">
+        <h3 className="text-sm font-semibold">Bot Configuration</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Enter your Telegram bot token and webhook secret. These are stored securely in the database — never shown again after saving.
+        </p>
+
+        <div className="mt-4 space-y-4">
+          {/* Bot Token */}
+          <div className="space-y-1">
+            <Label>Bot Token {hasToken && <span className="text-xs text-muted-foreground">(currently: {config?.maskedToken})</span>}</Label>
+            <div className="flex gap-2">
+              <Input
+                type={showToken ? "text" : "password"}
+                value={botToken}
+                onChange={(e) => setBotToken(e.target.value)}
+                placeholder={hasToken ? "•••••••• (enter new to replace)" : "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"}
+                className="font-mono text-xs"
+              />
+              <Button size="icon" variant="outline" className="h-9 w-9 shrink-0" onClick={() => setShowToken(!showToken)}>
+                {showToken ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Get your token from <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">@BotFather</a> on Telegram.
+            </p>
+          </div>
+
+          {/* Webhook Secret */}
+          <div className="space-y-1">
+            <Label>Webhook Secret {hasSecret && <span className="text-xs text-muted-foreground">(configured)</span>}</Label>
+            <div className="flex gap-2">
+              <Input
+                type={showSecret ? "text" : "password"}
+                value={webhookSecret}
+                onChange={(e) => setWebhookSecret(e.target.value)}
+                placeholder={hasSecret ? "•••••••• (enter new to replace)" : "Click Generate to create a random secret"}
+                className="font-mono text-xs"
+              />
+              <Button size="icon" variant="outline" className="h-9 w-9 shrink-0" onClick={() => setShowSecret(!showSecret)}>
+                {showSecret ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              </Button>
+              <Button size="sm" variant="outline" className="shrink-0" onClick={handleGenerateSecret} disabled={generatingSecret}>
+                <Zap className="h-3.5 w-3.5" /> Generate
+              </Button>
+            </div>
+          </div>
+
+          {/* Webhook URL */}
+          <div className="space-y-1">
+            <Label>Webhook URL (optional)</Label>
+            <Input
+              value={webhookUrl}
+              onChange={(e) => setWebhookUrl(e.target.value)}
+              placeholder="https://your-domain.com (auto-detected from NEXT_PUBLIC_APP_URL if empty)"
+            />
+          </div>
+
+          {/* Bot Name */}
+          <div className="space-y-1">
+            <Label>Bot Name</Label>
+            <Input value={botName} onChange={(e) => setBotName(e.target.value)} />
+          </div>
+
+          {/* Welcome Message */}
+          <div className="space-y-1">
+            <Label>Welcome Message</Label>
+            <Textarea value={welcomeMessage} onChange={(e) => setWelcomeMessage(e.target.value)} rows={2} maxLength={500} />
+          </div>
+
+          {/* Enable toggle */}
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} className="h-4 w-4" />
+            Enable Telegram bot (processes incoming messages)
+          </label>
+        </div>
+
+        {/* Save button */}
+        <div className="mt-4 flex gap-2">
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Save Settings
+          </Button>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="rounded-lg border border-border bg-card p-4">
+        <h3 className="text-sm font-semibold">Actions</h3>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={handleTest} disabled={testing || !isConfigured}>
+            {testing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plug className="h-3.5 w-3.5" />}
+            Test Connection
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleRegister} disabled={registering || !isConfigured}>
+            {registering ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+            Register Webhook
+          </Button>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          <strong>Test Connection</strong> calls the Telegram API to verify the bot token is valid.<br />
+          <strong>Register Webhook</strong> tells Telegram to send messages to your webhook URL.
+        </p>
+      </div>
+
+      {/* How it works */}
       <div className="rounded-lg border border-info/30 bg-info/5 p-4">
         <h3 className="text-sm font-semibold text-info">How the bot works</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          When a user messages your Telegram bot, the webhook at <code className="rounded bg-muted px-1 py-0.5 text-[10px]">/api/telegram/webhook</code> receives the message and:
-        </p>
         <ol className="mt-2 space-y-1 text-xs text-muted-foreground">
-          <li>1. Greets the user and asks for their name</li>
-          <li>2. Asks for their phone number (with a share-contact button)</li>
-          <li>3. Creates a lead in the SVMS with source = "Telegram"</li>
-          <li>4. The lead appears in Admin → Leads with status "New"</li>
-          <li>5. Admin reviews + approves the lead → counselor is assigned</li>
+          <li>1. User messages your Telegram bot</li>
+          <li>2. Bot greets them and asks for their name</li>
+          <li>3. Bot asks for phone number (with a share-contact button)</li>
+          <li>4. A lead is created in SVMS with source = &quot;Telegram&quot;</li>
+          <li>5. Admin reviews + approves the lead</li>
+          <li>6. Counselor is automatically assigned</li>
         </ol>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Duplicate leads are automatically detected (by Telegram user ID or conversation ID).
-        </p>
       </div>
     </div>
   );
 }
-
 // ─── Shared ──────────────────────────────────────────────────────
 
 function StatCard({ label, value, icon: Icon, tone = "default" }: { label: string; value: string; icon: React.ComponentType<{ className?: string }>; tone?: "default" | "success" | "warning" | "info" }) {

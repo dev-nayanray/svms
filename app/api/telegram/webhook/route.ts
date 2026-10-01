@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { leadService } from "@/lib/services/lead";
 import { logSystemEvent } from "@/lib/system/logs";
+import { getTelegramBotToken, getTelegramWebhookSecret } from "@/lib/services/telegram-config";
 
 export const dynamic = "force-dynamic";
 
@@ -13,18 +14,13 @@ export const dynamic = "force-dynamic";
  *
  * Security:
  *  - Webhook secret verification via the `secret` query parameter
- *    (must match TELEGRAM_WEBHOOK_SECRET env var)
+ *    (must match the DB-stored secret or TELEGRAM_WEBHOOK_SECRET env var)
  *  - Rate limiting via Vercel's built-in limits
  *  - No secrets exposed in responses
  *
- * Bot flow:
- *  1. User sends /start → bot asks for their name
- *  2. User sends name → bot asks for phone/email
- *  3. User sends contact info → lead is created with source=TELEGRAM
- *  4. Admin reviews the lead in the admin panel
- *
- * The bot stores minimal conversation state (conversationId → stage) in
- * the SystemSetting table so we don't need a separate sessions model.
+ * The bot token + webhook secret can be configured from the admin UI
+ * (stored in the TelegramConfig table) or via environment variables
+ * (TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET). DB takes precedence.
  */
 
 type TelegramUpdate = {
@@ -55,10 +51,10 @@ const TELEGRAM_API = "https://api.telegram.org";
 
 /**
  * Verify the webhook secret from the query parameter.
- * In production, this MUST match TELEGRAM_WEBHOOK_SECRET.
+ * Checks the DB-stored secret first, falls back to env var.
  */
-function verifySecret(req: NextRequest): boolean {
-  const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
+async function verifySecret(req: NextRequest): Promise<boolean> {
+  const secret = await getTelegramWebhookSecret();
   if (!secret) return false;
   const provided = req.nextUrl.searchParams.get("secret");
   return provided === secret;
@@ -66,9 +62,10 @@ function verifySecret(req: NextRequest): boolean {
 
 /**
  * Send a message to a Telegram chat via the Bot API.
+ * Uses the DB-stored bot token (or env fallback).
  */
 async function sendTelegramMessage(chatId: number, text: string): Promise<void> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const token = await getTelegramBotToken();
   if (!token) return;
   try {
     await fetch(`${TELEGRAM_API}/bot${token}/sendMessage`, {
@@ -119,7 +116,7 @@ async function setConversationStage(chatId: number, stage: string, metadata?: Re
  */
 export async function POST(req: NextRequest) {
   // Verify webhook secret
-  if (!verifySecret(req)) {
+  if (!(await verifySecret(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -207,7 +204,7 @@ export async function POST(req: NextRequest) {
         );
 
         // Send a keyboard button to share contact
-        const token = process.env.TELEGRAM_BOT_TOKEN;
+        const token = await getTelegramBotToken();
         if (token) {
           try {
             await fetch(`${TELEGRAM_API}/bot${token}/sendMessage`, {
@@ -299,11 +296,11 @@ export async function POST(req: NextRequest) {
  * Used to verify the webhook is live (for health checks).
  */
 export async function GET(req: NextRequest) {
-  if (!verifySecret(req)) {
+  if (!(await verifySecret(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   return NextResponse.json({
     ok: true,
-    bot: process.env.TELEGRAM_BOT_TOKEN ? "configured" : "not_configured",
+    bot: (await getTelegramBotToken()) ? "configured" : "not_configured",
   });
 }
