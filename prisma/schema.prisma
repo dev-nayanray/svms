@@ -1068,3 +1068,160 @@ model MaintenanceWindow {
   @@index([enabled])
   @@index([startedAt])
 }
+
+// ─────────────────────────────────────────────
+// AI & Bot Control Center
+//
+// Multi-provider AI administration: providers, models, assistant config,
+// knowledge base, usage tracking, playground sessions.
+// ─────────────────────────────────────────────
+
+model AiProvider {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  // provider: openai | anthropic | gemini | openai-compatible
+  provider       String
+  // Display name (e.g. "OpenAI Production", "Gemini Free Tier")
+  name           String
+  // Encrypted API key — never returned to the frontend
+  apiKeyEncrypted String?
+  // For openai-compatible: custom base URL (e.g. https://api.openrouter.ai/v1)
+  baseUrl        String?
+  // Selected default model for this provider
+  defaultModel   String?
+  enabled        Boolean   @default(false)
+  // Last connection test result
+  lastTestStatus String? // connected | invalid_credentials | unsupported_model | rate_limited | quota_exceeded | network_error | provider_unavailable | untested
+  lastTestedAt   DateTime?
+  lastTestError  String?
+  // Priority for failover (lower = higher priority)
+  priority       Int       @default(100)
+  // Optional: max requests per hour (rate limiting)
+  maxRequestsPerHour Int?
+  createdById    String?   @db.ObjectId
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  models         AiModel[]
+  usageLogs      AiUsageLog[]
+
+  @@index([provider])
+  @@index([enabled])
+  @@index([priority])
+}
+
+model AiModel {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  providerId     String    @db.ObjectId
+  provider       AiProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  // Model identifier (e.g. "gpt-4o-mini", "claude-3-5-sonnet-20241022", "gemini-1.5-flash")
+  modelId        String
+  // Display name
+  name           String
+  // Capabilities supported by this model
+  supportsStreaming Boolean  @default(true)
+  supportsToolCalling Boolean @default(false)
+  supportsVision Boolean  @default(false)
+  // Context window in tokens
+  contextWindow  Int?
+  // Pricing per 1M tokens (in USD cents — stored as int to avoid float issues)
+  inputPricePerMillionCents  Int?
+  outputPricePerMillionCents Int?
+  enabled        Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+
+  @@index([providerId])
+  @@index([modelId])
+}
+
+model AiAssistantConfig {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  // Channel: student | telegram | meta | playground
+  channel        String
+  name           String    @default("Euroscope Assistant")
+  avatar         String?
+  welcomeMessage String?
+  // System instructions (the system prompt prefix)
+  systemInstructions String?
+  fallbackResponse String?
+  // Generation settings
+  temperature    Float     @default(0.7)
+  maxTokens      Int       @default(2048)
+  // Provider + model assignment
+  providerId     String?   @db.ObjectId
+  modelId        String?
+  // Languages
+  defaultLanguage String   @default("en")
+  supportedLanguages String[] @default(["en"])
+  // Tone: professional | friendly | casual | formal
+  tone           String    @default("professional")
+  // Human handoff settings
+  enableHumanHandoff Boolean @default(true)
+  handoffAfterUnanswered Int @default(3)
+  // Publishing
+  status         String    @default("draft") // draft | published
+  publishedAt    DateTime?
+  publishedById  String?   @db.ObjectId
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([channel])
+}
+
+model AiUsageLog {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  providerId     String    @db.ObjectId
+  provider       AiProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  // Model used
+  model          String
+  // Request metadata
+  channel        String? // student | telegram | meta | playground
+  inputTokens    Int       @default(0)
+  outputTokens   Int       @default(0)
+  // Latency in ms
+  latencyMs      Int?
+  // Status: success | error | rate_limited | quota_exceeded | timeout
+  status         String    @default("success")
+  errorMessage   String?
+  // Estimated cost in USD cents (input + output)
+  costCents      Int       @default(0)
+  // Optional: conversation/message reference
+  conversationId String?
+  createdAt      DateTime  @default(now())
+
+  @@index([providerId, createdAt])
+  @@index([channel])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model KnowledgeSource {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  // Type: faq | document | website | manual
+  type           String
+  title          String
+  // Content (for FAQ/manual) or text extraction (for documents)
+  content        String?
+  // For documents: file metadata
+  fileName       String?
+  mimeType       String?
+  fileSize       Int?
+  // For website ingestion: URL
+  sourceUrl      String?
+  // Processing status for documents
+  processingStatus String? @default("completed") // pending | processing | completed | failed
+  // Activation
+  enabled        Boolean   @default(true)
+  // Approval workflow
+  approved       Boolean   @default(false)
+  approvedById   String?   @db.ObjectId
+  approvedAt     DateTime?
+  // Versioning
+  version        Int       @default(1)
+  createdById    String?   @db.ObjectId
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([type])
+  @@index([enabled])
+  @@index([approved])
+}
