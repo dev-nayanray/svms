@@ -2,7 +2,11 @@ import "server-only";
 import { prisma } from "@/lib/db";
 import { auditLog } from "@/lib/services/audit";
 import { getProviderAdapter, type ProviderType, type ConnectionTestResult } from "@/lib/ai/adapters/types";
+import { ensureAdaptersRegistered } from "@/lib/ai/adapters";
 import { getTelegramConfig } from "@/lib/services/telegram-config";
+
+// Ensure all provider adapters are registered before any call to getProviderAdapter
+ensureAdaptersRegistered();
 
 /**
  * AI Control Center Service
@@ -242,8 +246,21 @@ export async function testProviderConnection(
   id: string,
   model?: string,
 ): Promise<ConnectionTestResult> {
-  const provider = await prisma.aiProvider.findUnique({ where: { id } });
-  if (!provider) throw new Error("Provider not found");
+  let provider;
+  try {
+    provider = await prisma.aiProvider.findUnique({ where: { id } });
+  } catch (dbErr) {
+    return {
+      status: "network_error",
+      message: `Database error: ${dbErr instanceof Error ? dbErr.message : "Could not read provider"}`,
+    };
+  }
+  if (!provider) {
+    return {
+      status: "network_error",
+      message: "Provider not found in the database.",
+    };
+  }
 
   const apiKey = provider.apiKeyEncrypted;
   if (!apiKey) {
@@ -251,49 +268,75 @@ export async function testProviderConnection(
       status: "invalid_credentials",
       message: "No API key configured. Add an API key first.",
     };
-    await prisma.aiProvider.update({
-      where: { id },
-      data: {
-        lastTestStatus: result.status,
-        lastTestedAt: new Date(),
-        lastTestError: result.message,
-      },
-    });
+    try {
+      await prisma.aiProvider.update({
+        where: { id },
+        data: {
+          lastTestStatus: result.status,
+          lastTestedAt: new Date(),
+          lastTestError: result.message,
+        },
+      });
+    } catch { /* ignore */ }
     return result;
   }
 
-  const testModel = model ?? provider.defaultModel ?? provider.defaultModel;
+  const testModel = model || provider.defaultModel;
   if (!testModel) {
     const result: ConnectionTestResult = {
       status: "unsupported_model",
       message: "No model configured. Select a default model first.",
     };
+    try {
+      await prisma.aiProvider.update({
+        where: { id },
+        data: {
+          lastTestStatus: result.status,
+          lastTestedAt: new Date(),
+          lastTestError: result.message,
+        },
+      });
+    } catch { /* ignore */ }
+    return result;
+  }
+
+  // Ensure adapters are registered before calling getProviderAdapter
+  ensureAdaptersRegistered();
+
+  let adapter;
+  try {
+    adapter = getProviderAdapter(provider.provider as ProviderType);
+  } catch {
+    return {
+      status: "provider_unavailable",
+      message: `Unknown provider type: ${provider.provider}. Supported types: openai, anthropic, gemini, openai-compatible.`,
+    };
+  }
+
+  let result: ConnectionTestResult;
+  try {
+    result = await adapter.testConnection({
+      apiKey,
+      baseUrl: provider.baseUrl ?? undefined,
+      model: testModel,
+    });
+  } catch (err) {
+    result = {
+      status: "network_error",
+      message: `Connection failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+
+  try {
     await prisma.aiProvider.update({
       where: { id },
       data: {
         lastTestStatus: result.status,
         lastTestedAt: new Date(),
-        lastTestError: result.message,
+        lastTestError: result.status === "connected" ? null : result.message,
       },
     });
-    return result;
-  }
-
-  const adapter = getProviderAdapter(provider.provider as ProviderType);
-  const result = await adapter.testConnection({
-    apiKey,
-    baseUrl: provider.baseUrl ?? undefined,
-    model: testModel,
-  });
-
-  await prisma.aiProvider.update({
-    where: { id },
-    data: {
-      lastTestStatus: result.status,
-      lastTestedAt: new Date(),
-      lastTestError: result.status === "connected" ? null : result.message,
-    },
-  });
+  } catch { /* ignore DB update errors */ }
 
   return result;
 }
