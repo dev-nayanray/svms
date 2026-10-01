@@ -157,21 +157,32 @@ export class OpenAiCompatibleProvider implements AiProvider {
         yield { type: "error", code: "ABORTED", message: "Request was aborted" };
         return;
       }
+      // SECURITY: Log the raw error server-side, but return a generic
+      // message to the caller. The raw error can contain hostnames,
+      // connection strings, or internal infrastructure details.
+      console.error("[ai:provider] network error:", err instanceof Error ? err.message : "unknown");
       yield {
         type: "error",
         code: "NETWORK_ERROR",
-        message: `Failed to reach AI provider: ${err instanceof Error ? err.message : "unknown error"}`,
+        message: "AI service is temporarily unavailable. Please try again.",
       };
       return;
     }
 
     if (!response.ok) {
       const errText = await response.text().catch(() => "");
-      yield {
-        type: "error",
-        code: response.status === 401 ? "UNAUTHORIZED" : response.status === 429 ? "RATE_LIMITED" : "PROVIDER_ERROR",
-        message: `AI provider returned ${response.status}: ${errText.slice(0, 200)}`,
-      };
+      // SECURITY: Log the raw upstream error server-side only.
+      // Return a generic message — upstream error bodies can contain
+      // model names, organization IDs, rate-limit details, and
+      // internal infrastructure info.
+      console.error(`[ai:provider] upstream ${response.status}:`, errText.slice(0, 500));
+      const code = response.status === 401 ? "UNAUTHORIZED" : response.status === 429 ? "RATE_LIMITED" : "PROVIDER_ERROR";
+      const message = response.status === 429
+        ? "AI service is busy. Please try again in a moment."
+        : response.status === 401
+          ? "AI service configuration error. Please contact support."
+          : "AI service is temporarily unavailable. Please try again.";
+      yield { type: "error", code, message };
       return;
     }
 

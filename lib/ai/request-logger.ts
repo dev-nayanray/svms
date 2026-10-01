@@ -86,11 +86,28 @@ function maskId(id: string): string {
 /**
  * Create a preview of a user message for logging.
  * Returns the first 50 chars — enough for debugging, not enough
- * to expose sensitive details.
+ * to expose sensitive details. The preview is also run through
+ * the sensitive-data sanitizer (from conversation.ts) to strip
+ * API keys, passwords, tokens, and connection strings.
  */
 export function previewMessage(message: string): string {
-  if (message.length <= 50) return message;
-  return message.slice(0, 50) + "...";
+  const truncated = message.length <= 50 ? message : message.slice(0, 50) + "...";
+  return redactSensitiveInPreview(truncated);
+}
+
+/**
+ * Redact sensitive patterns from a log preview string.
+ * This is a lightweight version of the conversation sanitizer —
+ * it covers the most common patterns (API keys, passwords, tokens,
+ * connection strings) without importing the full sanitizer (which
+ * is server-only and would create a circular dependency).
+ */
+function redactSensitiveInPreview(text: string): string {
+  let redacted = text;
+  redacted = redacted.replace(/\b(sk-[a-zA-Z0-9]{20,}|AKIA[A-Z0-9]{16}|ghp_[a-zA-Z0-9]{36})\b/g, "[REDACTED]");
+  redacted = redacted.replace(/\b(password|pwd|secret|token|apikey|api_key)\s*[=:]\s*\S+/gi, "$1=[REDACTED]");
+  redacted = redacted.replace(/\b(mongodb(\+srv)?|postgres|mysql|redis):\/\/[^\s]+/gi, "[REDACTED]");
+  return redacted;
 }
 
 /**

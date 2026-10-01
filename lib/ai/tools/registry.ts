@@ -26,7 +26,7 @@
  */
 
 import type { AiTool, ToolContext, ToolResult, ToolCallLog } from "./types";
-import { sanitizeToolResult, summarizeForResult } from "./sanitize";
+import { sanitizeToolResult } from "./sanitize";
 import { checkToolRateLimit } from "./rate-limit";
 
 /**
@@ -175,7 +175,9 @@ export class ToolRegistry {
           args: cleanedArgs,
           success: true,
           durationMs,
-          resultSummary: summarizeForResult(sanitized),
+          // SECURITY: Only log the result shape (keys + array lengths),
+          // not the full result values — which may contain PII.
+          resultSummary: this.summarizeResultShape(sanitized),
           timestamp: new Date().toISOString(),
         });
         return { ok: true, data: sanitized };
@@ -248,6 +250,30 @@ export class ToolRegistry {
         level: entry.success ? "info" : "warn",
       }),
     );
+  }
+
+  /**
+   * Summarize a tool result's SHAPE (keys + array lengths) without
+   * exposing any values. This prevents PII from leaking into logs
+   * while still providing enough info for debugging.
+   *
+   * Example: { firstName: "...", email: "...", courses: [...] }
+   * → '{"keys":["firstName","email","courses"],"coursesLength":3}'
+   */
+  private summarizeResultShape(result: unknown): string {
+    if (result === null || result === undefined) return "null";
+    if (typeof result !== "object") return typeof result;
+    if (Array.isArray(result)) return `array[${result.length}]`;
+
+    const obj = result as Record<string, unknown>;
+    const keys = Object.keys(obj);
+    const summary: Record<string, unknown> = { keys };
+    for (const key of keys) {
+      if (Array.isArray(obj[key])) {
+        summary[`${key}Length`] = (obj[key] as unknown[]).length;
+      }
+    }
+    return JSON.stringify(summary).slice(0, 200);
   }
 }
 

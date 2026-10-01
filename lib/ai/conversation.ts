@@ -95,16 +95,18 @@ const MAX_PAGE_SIZE = 100;
  * into the chat, it won't be stored in the conversation history.
  */
 const SENSITIVE_PATTERNS: ReadonlyArray<{ pattern: RegExp; replacement: string }> = [
-  // API keys (common formats): sk-..., AKIA..., ghp_..., etc.
+  // API keys (common formats): sk-..., AKIA..., ghp_..., AIza..., etc.
   { pattern: /\b(sk-[a-zA-Z0-9]{20,}|AKIA[A-Z0-9]{16}|ghp_[a-zA-Z0-9]{36}|AIza[a-zA-Z0-9_-]{35})\b/g, replacement: "[REDACTED]" },
   // Bearer tokens
   { pattern: /\bBearer\s+[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\b/g, replacement: "[REDACTED]" },
   // JWT tokens (header.payload.signature)
   { pattern: /\beyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\b/g, replacement: "[REDACTED]" },
-  // Password-like patterns (password=..., pwd=..., pass=...)
-  { pattern: /\b(password|pwd|pass|secret|token|apikey|api_key)\s*[=:]\s*\S+/gi, replacement: "$1=[REDACTED]" },
-  // Connection strings (mongodb://, postgres://, etc.)
-  { pattern: /\b(mongodb|postgres|postgresql|redis|amqp):\/\/[^\s]+/gi, replacement: "[REDACTED]" },
+  // Password-like patterns (password=..., pwd=..., pass=..., secret=..., token=..., apikey=..., api-key=..., api_key=...)
+  { pattern: /\b(password|pwd|pass|secret|token|api[-_ ]?key)\s*[=:]\s*\S+/gi, replacement: "$1=[REDACTED]" },
+  // Connection strings — broadened to cover mongodb+srv, mysql, mssql, oracle, ssh, sftp, ftp, smtp
+  { pattern: /\b(mongodb(\+srv)?|postgres(sql)?|mysql|mssql|oracle|redis|amqp|ssh|sftp|ftp|smtp):\/\/[^\s]+/gi, replacement: "[REDACTED]" },
+  // PEM private keys
+  { pattern: /-----BEGIN (RSA |EC |DSA |OPENSSH |)PRIVATE KEY-----[\s\S]*?-----END \1PRIVATE KEY-----/g, replacement: "[REDACTED]" },
 ];
 
 // ── In-memory store ──────────────────────────────────────────────

@@ -132,6 +132,21 @@ export async function DELETE(
   const requestId = generateRequestId();
   const startTime = Date.now();
 
+  // ── 0. CSRF protection: reject cross-origin requests ──────────
+  const origin = req.headers.get("origin");
+  if (origin) {
+    const host = req.headers.get("host");
+    if (host && !origin.includes(host)) {
+      return fail("FORBIDDEN", "Cross-origin requests are not allowed.", 403);
+    }
+    if (!host) {
+      const url = new URL(req.url);
+      if (!origin.includes(url.host)) {
+        return fail("FORBIDDEN", "Cross-origin requests are not allowed.", 403);
+      }
+    }
+  }
+
   try {
     // ── 1. Authentication + student role validation ────────────
     const g = await studentApiGuard();

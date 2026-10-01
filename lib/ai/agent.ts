@@ -46,7 +46,7 @@ export const AGENT_CONFIG = {
 // ── Prompt injection detection ───────────────────────────────────
 
 const INJECTION_PATTERNS = [
-  /ignore (all )?(previous |prior )?instructions/i,
+  /ignore .*(previous |prior )?instructions/i,
   /you are now (an? )?(admin|developer|system)/i,
   /act as (an? )?(admin|developer|system|different)/i,
   /pretend (to be|you are)/i,
@@ -54,9 +54,10 @@ const INJECTION_PATTERNS = [
   /show me (other |all )?users?/i,
   /show me (passwords|api keys|tokens|secrets)/i,
   /reveal (your |the )?(system |)?(instructions|prompt)/i,
-  /what (are |is )(your |the )?(system |)?prompt/i,
+  /what (are |is )(your |the )?(system |)?(instructions|prompt)/i,
   /repeat (your |the )?(system |)?(instructions|prompt)/i,
   /disclose (your |the )?(system |)?(instructions|prompt)/i,
+  /disregard .*(prior |previous )?(guidance|rules|instructions)/i,
 ];
 
 /**
@@ -238,11 +239,13 @@ export async function* runAgent(params: {
         if (chunkError) break;
       }
     } catch (err) {
+      // SECURITY: Log the raw error server-side, return generic message.
+      console.error("[ai:agent] error:", err instanceof Error ? err.message : "unknown");
       yield {
         type: "error",
         error: {
           code: "PROVIDER_ERROR",
-          message: `AI service error: ${err instanceof Error ? err.message : "unknown"}`,
+          message: "AI service is temporarily unavailable. Please try again.",
         },
       };
       return;

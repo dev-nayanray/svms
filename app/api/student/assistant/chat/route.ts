@@ -59,17 +59,40 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const chatSchema = z.object({
-  message: z
-    .string()
-    .min(1, "Message cannot be empty")
-    .max(2000, "Message is too long (max 2000 characters)"),
-  conversationId: z.string().optional(),
-});
+const chatSchema = z
+  .object({
+    message: z
+      .string()
+      .min(1, "Message cannot be empty")
+      .max(2000, "Message is too long (max 2000 characters)"),
+    conversationId: z.string().optional(),
+  })
+  .strict(); // Reject unknown fields — defense in depth
 
 export async function POST(req: NextRequest) {
   const requestId = generateRequestId();
   const startTime = Date.now();
+
+  // ── 0. CSRF protection: reject cross-origin requests ──────────
+  // The Origin header is sent by browsers on all POST requests.
+  // If it doesn't match our host, reject. This prevents CSRF from
+  // other websites (same-origin requests have no Origin or a
+  // matching one).
+  const origin = req.headers.get("origin");
+  if (origin) {
+    const host = req.headers.get("host");
+    // If we have a host header, check if origin matches
+    if (host && !origin.includes(host)) {
+      return fail("FORBIDDEN", "Cross-origin requests are not allowed.", 403);
+    }
+    // If no host header (some proxies strip it), check against the URL
+    if (!host) {
+      const url = new URL(req.url);
+      if (!origin.includes(url.host)) {
+        return fail("FORBIDDEN", "Cross-origin requests are not allowed.", 403);
+      }
+    }
+  }
 
   // ── 1. Authentication + student role validation ──────────────
   // studentApiGuard() derives studentId from the NextAuth session.
@@ -78,21 +101,10 @@ export async function POST(req: NextRequest) {
   const g = await studentApiGuard();
   if (!g.ok) return g.error;
 
-  // ── 2. Kill switch ────────────────────────────────────────────
-  if (process.env.AI_ASSISTANT_ENABLED === "false") {
-    logAiRequest({
-      requestId,
-      event: "ai.chat.disabled",
-      studentId: g.student.id,
-      method: "POST",
-      path: "/api/student/assistant/chat",
-      timestamp: new Date().toISOString(),
-      statusCode: 503,
-    });
-    return fail("UNAVAILABLE", "AI assistant is currently disabled.", 503);
-  }
-
-  // ── 3. Rate limiting ──────────────────────────────────────────
+  // ── 2. Rate limiting (BEFORE kill switch to prevent auth'd DoS) ─
+  // Rate limit check is cheap (in-memory) and runs before the kill
+  // switch so a disabled assistant can't be spammed to drain DB
+  // connections.
   const rateLimit = checkApiRateLimit(g.student.id);
   if (!rateLimit.allowed) {
     logAiRequest({
@@ -111,6 +123,20 @@ export async function POST(req: NextRequest) {
       429,
       { retryAfter: rateLimit.retryAfterMs },
     );
+  }
+
+  // ── 3. Kill switch ────────────────────────────────────────────
+  if (process.env.AI_ASSISTANT_ENABLED === "false") {
+    logAiRequest({
+      requestId,
+      event: "ai.chat.disabled",
+      studentId: g.student.id,
+      method: "POST",
+      path: "/api/student/assistant/chat",
+      timestamp: new Date().toISOString(),
+      statusCode: 503,
+    });
+    return fail("UNAVAILABLE", "AI assistant is currently disabled.", 503);
   }
 
   // ── 4. Input validation ───────────────────────────────────────
@@ -234,7 +260,7 @@ export async function POST(req: NextRequest) {
             studentId: g.student.id,
             userId: g.userId,
             role: "STUDENT",
-            requestId: conversation!.id,
+            requestId: requestId, // Use the actual request UUID for log correlation
           },
           provider,
           registry,
