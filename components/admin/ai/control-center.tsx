@@ -8,6 +8,7 @@ import { Button, Input, Label, Select, Textarea, Badge } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { Dialog, DialogContent } from "@/components/ui/overlays";
 import { cn } from "@/lib/utils";
+import { AddProviderDialog } from "./add-provider-dialog";
 import {
   LayoutDashboard,
   Cpu,
@@ -317,21 +318,25 @@ function ProviderCard({ provider, onChanged }: { provider: Provider; onChanged: 
   const [editing, setEditing] = useState(false);
   const [showKey, setShowKey] = useState(false);
   const [apiKey, setApiKey] = useState("");
-  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ status: string; message: string } | null>(null);
 
   const testMutation = useMutation({
     mutationFn: async (): Promise<{ status: string; message: string }> =>
       apiFetch(`/api/admin/ai/providers/${provider.id}/test`, { method: "POST", json: {} }),
     onSuccess: (data: { status: string; message: string }) => {
-      const tone = data.status === "connected" ? "success" : "error";
-      toast({
-        title: data.status === "connected" ? "Connection successful" : "Connection failed",
-        description: data.message,
-        variant: tone,
-      });
+      setTestResult(data);
+      if (data.status === "connected") {
+        toast({ title: "Connection successful", description: data.message, variant: "success" });
+      } else {
+        toast({ title: "Connection failed", description: data.message, variant: "error" });
+      }
       onChanged();
     },
-    onError: (err) => toast({ title: "Test failed", description: (err as Error).message, variant: "error" }),
+    onError: (err) => {
+      const msg = (err as Error).message;
+      setTestResult({ status: "network_error", message: msg });
+      toast({ title: "Test failed", description: msg, variant: "error" });
+    },
   });
 
   const toggleMutation = useMutation({
@@ -355,16 +360,24 @@ function ProviderCard({ provider, onChanged }: { provider: Provider; onChanged: 
     mutationFn: async () =>
       apiFetch("/api/admin/ai/providers", { method: "PUT", json: { id: provider.id, apiKey } }),
     onSuccess: () => {
-      toast({ title: "API key updated", variant: "success" });
+      toast({ title: "API key updated", description: "Click Test to verify the new key.", variant: "success" });
       setApiKey("");
       setEditing(false);
       onChanged();
     },
   });
 
-  const statusTone = provider.lastTestStatus === "connected" ? "success"
-    : provider.lastTestStatus === "untested" || !provider.lastTestStatus ? "default"
+  // Determine display status — use the most recent test result
+  const currentStatus = testResult?.status ?? provider.lastTestStatus ?? "untested";
+  const currentError = testResult?.message ?? provider.lastTestError;
+  const isConnected = currentStatus === "connected";
+
+  const statusTone = isConnected ? "success"
+    : currentStatus === "untested" ? "default"
     : "destructive";
+
+  const statusColor = isConnected ? "text-success" : currentStatus === "untested" ? "text-muted-foreground" : "text-destructive";
+  const StatusIcon = isConnected ? CheckCircle2 : currentStatus === "untested" ? AlertCircle : AlertCircle;
 
   return (
     <div className="rounded-lg border border-border bg-card p-4">
@@ -379,9 +392,10 @@ function ProviderCard({ provider, onChanged }: { provider: Provider; onChanged: 
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground capitalize">{provider.provider}</p>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
+          <StatusIcon className={cn("h-4 w-4", statusColor)} />
           <Badge tone={statusTone as "success" | "default" | "destructive"}>
-            {provider.lastTestStatus ?? "untested"}
+            {currentStatus.replace(/_/g, " ")}
           </Badge>
         </div>
       </div>
@@ -398,13 +412,32 @@ function ProviderCard({ provider, onChanged }: { provider: Provider; onChanged: 
             {provider.hasApiKey ? "••••••••••••" : "Not set"}
           </span>
         </div>
-        {provider.lastTestedAt && (
+        {provider.baseUrl && (
+          <div className="flex justify-between">
+            <span>Base URL:</span>
+            <span className="truncate font-mono text-[10px]">{provider.baseUrl}</span>
+          </div>
+        )}
+        {provider.lastTestedAt && !testResult && (
           <div className="flex justify-between">
             <span>Last tested:</span>
             <span>{new Date(provider.lastTestedAt).toLocaleString("en-GB")}</span>
           </div>
         )}
       </div>
+
+      {/* Test result error — shown inline when test fails */}
+      {!isConnected && currentStatus !== "untested" && currentError && (
+        <div className="mt-3 rounded-md border border-destructive/30 bg-destructive/5 p-2">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-destructive">Connection failed</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{currentError}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* API key editor */}
       {editing && (
@@ -421,7 +454,7 @@ function ProviderCard({ provider, onChanged }: { provider: Provider; onChanged: 
             <Button
               size="icon"
               variant="outline"
-              className="h-8 w-8"
+              className="h-8 w-8 shrink-0"
               onClick={() => setShowKey(!showKey)}
             >
               {showKey ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
@@ -429,7 +462,7 @@ function ProviderCard({ provider, onChanged }: { provider: Provider; onChanged: 
           </div>
           <div className="flex gap-2">
             <Button size="sm" onClick={() => updateKeyMutation.mutate()} disabled={!apiKey || updateKeyMutation.isPending}>
-              {updateKeyMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+              {updateKeyMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
               Save Key
             </Button>
             <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setApiKey(""); }}>
@@ -444,14 +477,17 @@ function ProviderCard({ provider, onChanged }: { provider: Provider; onChanged: 
         <Button
           size="sm"
           variant="outline"
-          onClick={() => testMutation.mutate()}
-          disabled={testing || testMutation.isPending}
+          onClick={() => {
+            setTestResult(null);
+            testMutation.mutate();
+          }}
+          disabled={testMutation.isPending}
         >
           {testMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plug className="h-3 w-3" />}
-          Test
+          Test Connection
         </Button>
         <Button size="sm" variant="ghost" onClick={() => setEditing(!editing)}>
-          <Settings className="h-3 w-3" /> Edit
+          <Settings className="h-3 w-3" /> Edit Key
         </Button>
         <Button
           size="sm"
@@ -473,83 +509,6 @@ function ProviderCard({ provider, onChanged }: { provider: Provider; onChanged: 
         </Button>
       </div>
     </div>
-  );
-}
-
-function AddProviderDialog({ open, onOpenChange, onAdded }: { open: boolean; onOpenChange: (v: boolean) => void; onAdded: () => void }) {
-  const { toast } = useToast();
-  const [providerType, setProviderType] = useState<"openai" | "anthropic" | "gemini" | "openai-compatible">("openai");
-  const [name, setName] = useState("");
-  const [apiKey, setApiKey] = useState("");
-  const [baseUrl, setBaseUrl] = useState("");
-  const [defaultModel, setDefaultModel] = useState("");
-
-  const mutation = useMutation({
-    mutationFn: async () =>
-      apiFetch("/api/admin/ai/providers", {
-        method: "POST",
-        json: {
-          provider: providerType,
-          name: name || `${providerType} Provider`,
-          apiKey: apiKey || undefined,
-          baseUrl: baseUrl || undefined,
-          defaultModel: defaultModel || undefined,
-        },
-      }),
-    onSuccess: () => {
-      toast({ title: "Provider added", variant: "success" });
-      onOpenChange(false);
-      setName("");
-      setApiKey("");
-      setBaseUrl("");
-      setDefaultModel("");
-      onAdded();
-    },
-    onError: (err) => toast({ title: "Failed", description: (err as Error).message, variant: "error" }),
-  });
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent title="Add AI Provider" className="max-w-md">
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <Label>Provider Type</Label>
-            <Select value={providerType} onChange={(e) => setProviderType(e.target.value as "openai" | "anthropic" | "gemini" | "openai-compatible")}>
-              <option value="openai">OpenAI</option>
-              <option value="anthropic">Anthropic Claude</option>
-              <option value="gemini">Google Gemini</option>
-              <option value="openai-compatible">OpenAI-compatible (custom URL)</option>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label>Display Name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. OpenAI Production" />
-          </div>
-          <div className="space-y-1">
-            <Label>API Key</Label>
-            <Input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="sk-..." className="font-mono" />
-            <p className="text-xs text-muted-foreground">Stored encrypted. Never shown again after saving.</p>
-          </div>
-          {providerType === "openai-compatible" && (
-            <div className="space-y-1">
-              <Label>Base URL</Label>
-              <Input value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} placeholder="https://api.openrouter.ai/v1" />
-            </div>
-          )}
-          <div className="space-y-1">
-            <Label>Default Model (optional)</Label>
-            <Input value={defaultModel} onChange={(e) => setDefaultModel(e.target.value)} placeholder="gpt-4o-mini" className="font-mono" />
-          </div>
-        </div>
-        <div className="mt-5 flex justify-end gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
-            {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            Add Provider
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }
 
