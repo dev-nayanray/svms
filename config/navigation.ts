@@ -87,6 +87,12 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
       { href: "/admin/system/audit", label: "Audit Logs", icon: "ScrollText" },
     ],
   },
+  {
+    label: "AI & Automation",
+    items: [
+      { href: "/admin/ai", label: "AI Control Center", icon: "Brain" },
+    ],
+  },
 ];
 
 // Flatten for backwards compatibility

@@ -31,6 +31,7 @@ import {
   Activity,
   Wrench,
   Palette,
+  Brain,
   type LucideIcon,
 } from "lucide-react";
 
@@ -71,6 +72,7 @@ export const NAV_ICONS = {
   Activity,
   Wrench,
   Palette,
+  Brain,
 } satisfies Record<string, LucideIcon>;
 
 export type NavIconName = keyof typeof NAV_ICONS;
