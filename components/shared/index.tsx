@@ -1,4 +1,6 @@
 import { cn } from "@/lib/utils";
+import { AlertCircle, RefreshCw, type LucideIcon } from "lucide-react";
+import { Button } from "@/components/ui";
 
 export function StatCard({
   title,
@@ -23,20 +25,132 @@ export function StatCard({
   );
 }
 
+/**
+ * EmptyState — friendly, icon-supported empty state.
+ *
+ * UX writing guidelines:
+ *  - Avoid "No records found." (technical)
+ *  - Prefer "Nothing here yet." (human)
+ *  - Always offer a clear next step via the `action` prop
+ *
+ * Usage:
+ *   <EmptyState icon={FileText} title="Nothing here yet" description="You haven't uploaded any documents." action={<Button>Upload</Button>} />
+ */
 export function EmptyState({
+  icon: Icon,
   title,
   description,
   action,
+  className,
 }: {
+  icon?: LucideIcon;
   title: string;
   description?: string;
   action?: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 px-6 py-16 text-center">
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 px-6 py-16 text-center",
+        className,
+      )}
+    >
+      {Icon && (
+        <div className="mb-4 grid h-14 w-14 place-items-center rounded-full bg-muted text-muted-foreground">
+          <Icon className="h-6 w-6" aria-hidden />
+        </div>
+      )}
       <p className="font-semibold text-foreground">{title}</p>
-      {description && <p className="mt-1 text-sm text-muted-foreground max-w-sm">{description}</p>}
+      {description && (
+        <p className="mt-1 max-w-sm text-sm text-muted-foreground">{description}</p>
+      )}
       {action && <div className="mt-4">{action}</div>}
+    </div>
+  );
+}
+
+/**
+ * ErrorState — friendly error display with optional retry button.
+ *
+ * Avoids "Error." or "Failed." (technical) — prefers human language.
+ *
+ * Usage:
+ *   <ErrorState message="We couldn't load your documents." onRetry={refetch} />
+ */
+export function ErrorState({
+  message = "Something went wrong. Please try again.",
+  onRetry,
+  className,
+}: {
+  message?: string;
+  onRetry?: () => void;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center rounded-xl border border-destructive/30 bg-destructive/5 px-6 py-12 text-center",
+        className,
+      )}
+    >
+      <div className="mb-3 grid h-12 w-12 place-items-center rounded-full bg-destructive/10 text-destructive">
+        <AlertCircle className="h-5 w-5" aria-hidden />
+      </div>
+      <p className="text-sm font-medium text-foreground">{message}</p>
+      {onRetry && (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onRetry}
+          className="mt-4"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          Try again
+        </Button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * CardSkeleton — loading placeholder that matches the Card component shape.
+ * Use multiple in a grid to show a loading state that matches the real layout.
+ *
+ * Usage:
+ *   <div className="grid gap-4 md:grid-cols-3">
+ *     <CardSkeleton /><CardSkeleton /><CardSkeleton />
+ *   </div>
+ */
+export function CardSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "rounded-xl border border-border bg-card p-4",
+        className,
+      )}
+    >
+      <div className="space-y-3">
+        <div className="h-4 w-1/3 animate-pulse rounded bg-muted" />
+        <div className="h-8 w-2/3 animate-pulse rounded bg-muted" />
+        <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * RowSkeleton — loading placeholder for table rows / list items.
+ */
+export function RowSkeleton({ className }: { className?: string }) {
+  return (
+    <div className={cn("flex items-center gap-3 p-3", className)}>
+      <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-muted" />
+      <div className="flex-1 space-y-2">
+        <div className="h-3 w-1/3 animate-pulse rounded bg-muted" />
+        <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+      </div>
+      <div className="h-6 w-16 animate-pulse rounded bg-muted" />
     </div>
   );
 }
@@ -64,7 +178,11 @@ export function TableShell({
         </thead>
         <tbody className="divide-y divide-border">{children}</tbody>
       </table>
-      {empty && <div className="p-6 text-center text-sm text-muted-foreground">No records found.</div>}
+      {empty && (
+        <div className="p-6 text-center text-sm text-muted-foreground">
+          Nothing here yet.
+        </div>
+      )}
     </div>
   );
 }

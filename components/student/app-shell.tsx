@@ -6,26 +6,21 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { signOut } from "next-auth/react";
-import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { ArrowLeft, Bell, ChevronRight, Grid3x3, LogOut, Search } from "lucide-react";
+import { ArrowLeft, ChevronRight, Search, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
 import { APP_NAME } from "@/lib/constants/app";
-import { STUDENT_TABS, STUDENT_MORE, isActivePath } from "@/config/student-nav";
+import { STUDENT_TABS, isActivePath } from "@/config/student-nav";
 import { StudentNavIcon, NotificationBadge } from "@/components/student/ui";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { LiveIndicator, useRealtime } from "@/components/student/realtime-provider";
 import { GlobalSearchOverlay } from "@/components/student/search/global-search-overlay";
 
 const TAB_ICONS: Record<string, string> = Object.fromEntries(STUDENT_TABS.map((t) => [t.href, t.icon]));
-const MORE_ICONS: Record<string, string> = Object.fromEntries(STUDENT_MORE.map((t) => [t.href, t.icon]));
 
 /**
  * Helper for the "/" keyboard shortcut — returns true if the user is
  * currently focused on an input, textarea, or contenteditable element.
- * When true, we DON'T trigger the search overlay (because the user is
- * probably typing something else, and intercepting "/" would delete
- * their typed character).
  */
 function isInputFocused(): boolean {
   const el = document.activeElement;
@@ -58,7 +53,6 @@ const PAGE_TITLES: Record<string, string> = {
 function pageTitle(pathname: string): string {
   if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
   if (pathname.startsWith("/student/applications")) return "My Application";
-  if (pathname.startsWith("/student/documents")) return "Documents";
   if (pathname.startsWith("/student/")) {
     const seg = pathname.split("/")[2] ?? "";
     return seg.charAt(0).toUpperCase() + seg.slice(1).replace(/-/g, " ");
@@ -87,27 +81,18 @@ export function StudentAppShell({
   const pathname = usePathname();
   const router = useRouter();
   const unread = useUnreadCount();
-  const { status: realtimeStatus } = useRealtime();
-  const [moreOpen, setMoreOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchInstance, setSearchInstance] = useState(0);
   const isHome = pathname === "/student" || pathname.startsWith("/student/dashboard");
-  const isMoreActive = STUDENT_MORE.some((m) => isActivePath(pathname, m.href));
 
   // Keyboard shortcut: Cmd/Ctrl+K opens the global search overlay.
-  // Esc is handled by Radix Dialog automatically. We only register
-  // the listener once on mount and check for the modifier key on each
-  // keydown to avoid the cost of adding + removing listeners per render.
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      // Cmd/Ctrl+K — open search
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         openSearch();
         return;
       }
-      // Forward-slash opens search when not focused in an input —
-      // the GitHub / Linear / Notion pattern. Catches users mid-flow.
       if (e.key === "/" && !isInputFocused()) {
         e.preventDefault();
         openSearch();
@@ -117,25 +102,10 @@ export function StudentAppShell({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  // Open search — bumps the key so the overlay remounts with fresh
-  // state (clears the query + debouncedQuery from the previous session).
   function openSearch() {
     setSearchInstance((n) => n + 1);
     setSearchOpen(true);
   }
-
-  const initials = userName
-    .split(/\s+/)
-    .map((w) => w[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-
-  // Online status for the avatar dot — green when SSE is live,
-  // amber when reconnecting, hidden when offline.
-  const isOnline = realtimeStatus === "live";
-  const isReconnecting = realtimeStatus === "connecting" || realtimeStatus === "reconnecting";
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
@@ -144,25 +114,12 @@ export function StudentAppShell({
       {/* ── Global search overlay ── */}
       <GlobalSearchOverlay key={searchInstance} open={searchOpen} onOpenChange={setSearchOpen} />
 
-      {/* ── Mobile header — premium glassmorphism + gradient brand ── */}
+      {/* ── Mobile header — clean, minimal ── */}
       <header
         className={cn(
-          "sticky top-0 z-30 border-b backdrop-blur-xl supports-[backdrop-filter]:bg-card/80",
-          isHome
-            ? "border-border/60 bg-gradient-to-r from-amber-500/5 via-card/80 to-amber-500/5"
-            : "border-border/60 bg-card/80",
+          "sticky top-0 z-30 border-b border-border/60 bg-card/80 backdrop-blur-xl supports-[backdrop-filter]:bg-card/80",
         )}
       >
-        {/* Top accent line — subtle gradient strip that catches the eye */}
-        <div
-          aria-hidden
-          className={cn(
-            "absolute inset-x-0 top-0 h-px bg-gradient-to-r opacity-60",
-            isHome
-              ? "from-amber-400 via-amber-500 to-amber-400"
-              : "from-transparent via-border to-transparent",
-          )}
-        />
         <div
           className="flex h-14 items-center gap-2 px-3"
           style={{ paddingTop: "max(env(safe-area-inset-top), 0px)" }}
@@ -171,20 +128,17 @@ export function StudentAppShell({
             <button
               onClick={() => router.back()}
               aria-label="Go back"
-              className="group grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-amber-500 active:scale-95"
+              className="grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary active:scale-95"
             >
-              <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
+              <ArrowLeft className="h-5 w-5" />
             </button>
           ) : (
             <Link
               href="/student"
               aria-label="Home"
-              className="group flex items-center gap-2.5 rounded-xl transition-all focus-visible:outline-2 focus-visible:outline-amber-500 active:scale-[0.98]"
+              className="group flex items-center gap-2.5 rounded-xl transition-all focus-visible:outline-2 focus-visible:outline-primary"
             >
-              {/* Logo icon — transparent PNG, no background container.
-                  The new mark has its own gold gradient on transparent
-                  bg, so we show it directly without a colored wrapper. */}
-              <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg transition-transform group-hover:scale-105">
+              <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg">
                 <Image
                   src="/euroscope-mark.png"
                   alt="Euroscope"
@@ -194,9 +148,7 @@ export function StudentAppShell({
                 />
               </span>
               <span className="flex flex-col leading-none">
-                <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-sm font-bold tracking-tight text-transparent">
-                  {APP_NAME}
-                </span>
+                <span className="text-sm font-bold tracking-tight">{APP_NAME}</span>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                   Student
                 </span>
@@ -212,66 +164,14 @@ export function StudentAppShell({
             )}
           </h1>
 
-          {/* ── Search button — opens the global search overlay ── */}
+          {/* Search button — desktop only on mobile header, icon on desktop */}
           <button
             onClick={openSearch}
             aria-label="Search (Cmd+K)"
-            className="group grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-amber-500 active:scale-95"
+            className="grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary active:scale-95"
           >
-            <Search className="h-5 w-5 transition-transform group-hover:scale-110" />
+            <Search className="h-5 w-5" />
           </button>
-
-          {/* Live indicator — premium pill, hidden on very narrow screens */}
-          <span className="hidden sm:inline-flex">
-            <LiveIndicator />
-          </span>
-
-          {/* Notifications bell with hover lift + ring */}
-          <Link
-            href="/student/notifications"
-            aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
-            className="group relative grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-amber-500 active:scale-95"
-          >
-            <Bell className="h-5 w-5 transition-transform group-hover:rotate-6 group-hover:scale-105" />
-            <NotificationBadge count={unread} />
-          </Link>
-
-          {/* Profile avatar with online status dot */}
-          <Link
-            href="/student/profile"
-            aria-label="Profile"
-            className="group relative grid h-10 w-10 place-items-center rounded-full transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 active:scale-95"
-          >
-            {profilePhotoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={profilePhotoUrl}
-                alt={userName}
-                className="h-8 w-8 rounded-full object-cover ring-2 ring-card transition-shadow group-hover:ring-amber-500/40"
-              />
-            ) : (
-              <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-amber-500/20 to-amber-500/10 text-xs font-bold text-amber-600 ring-2 ring-card transition-shadow group-hover:ring-amber-500/40">
-                {initials || "S"}
-              </span>
-            )}
-            {/* Online status dot — emerald when SSE is live, amber when
-                reconnecting, hidden when offline. */}
-            {(isOnline || isReconnecting) && (
-              <span
-                aria-hidden
-                className={cn(
-                  "absolute -bottom-0.5 -right-0.5 grid h-3 w-3 place-items-center rounded-full ring-2 ring-card",
-                  isOnline ? "bg-emerald-500" : "bg-amber-500",
-                )}
-              >
-                {/* Subtle ping when reconnecting to indicate "working on it" */}
-                {isReconnecting && (
-                  <span className="absolute inset-0 animate-ping rounded-full bg-amber-500 opacity-75 motion-reduce:hidden" />
-                )}
-                <span className={cn("h-1.5 w-1.5 rounded-full", isOnline ? "bg-emerald-300" : "bg-amber-300")} />
-              </span>
-            )}
-          </Link>
         </div>
       </header>
 
@@ -288,138 +188,48 @@ export function StudentAppShell({
           />
         </aside>
 
-        <main id="main-content" className="app-page-enter min-w-0 flex-1 px-4 py-4 md:p-6">
-          {children}
-        </main>
+        <main id="main-content" className="app-page-enter min-w-0 flex-1 px-4 py-4 md:p-6 pb-24 md:pb-6">{children}</main>
       </div>
 
-      {/* ── Mobile bottom navigation — premium tab bar ──
-          Height bumped to 60px so each tab's touch target is ≥ 44px
-          (WCAG minimum). Top accent indicator widened to 32px for
-          better visibility at-a-glance. */}
+      {/* ── Mobile bottom navigation — 5 tabs, no "More" button ── */}
       <nav
         aria-label="Primary"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-card/90 backdrop-blur-xl supports-[backdrop-filter]:bg-card/85 md:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur-lg supports-[backdrop-filter]:bg-card/90 md:hidden"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0px)" }}
       >
-        <ul className="mx-auto flex max-w-lg items-stretch justify-around">
+        <ul className="mx-auto flex max-w-md items-stretch justify-around">
           {STUDENT_TABS.map((tab) => {
             const active = isActivePath(pathname, tab.href);
+            const showBadge = tab.href === "/student/notifications" && unread > 0;
             return (
               <li key={tab.href} className="flex-1">
                 <Link
                   href={tab.href}
                   aria-current={active ? "page" : undefined}
+                  aria-label={tab.label}
                   className={cn(
-                    "relative flex min-h-[60px] flex-col items-center justify-center gap-1 px-1 py-2 text-[10px] font-semibold transition-all duration-200 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-amber-500",
-                    active ? "text-amber-600" : "text-muted-foreground/70",
+                    "relative flex min-h-[56px] flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-semibold transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary",
+                    active ? "text-primary" : "text-muted-foreground",
                   )}
                 >
-                  {/* Active indicator — top bar */}
-                  {active && (
-                    <span
-                      aria-hidden
-                      className="absolute top-0 h-0.5 w-8 rounded-full bg-amber-500"
-                    />
-                  )}
                   <span className={cn(
-                    "grid h-7 w-7 place-items-center rounded-lg transition-all duration-200",
-                    active ? "scale-110 bg-amber-500/15" : "",
+                    "relative grid h-8 w-8 place-items-center rounded-xl transition-all duration-200",
+                    active ? "bg-primary/15 scale-105" : "",
                   )}>
-                    <StudentNavIcon name={TAB_ICONS[tab.href]} className="h-[18px] w-[18px]" />
+                    <StudentNavIcon name={TAB_ICONS[tab.href]} className="h-5 w-5" />
+                    {showBadge && (
+                      <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
+                        {unread > 9 ? "9+" : unread}
+                      </span>
+                    )}
                   </span>
                   {tab.label}
                 </Link>
               </li>
             );
           })}
-          {/* More button */}
-          <li className="flex-1">
-            <button
-              onClick={() => setMoreOpen(true)}
-              aria-haspopup="dialog"
-              aria-expanded={moreOpen}
-              className={cn(
-                "relative flex min-h-[60px] w-full flex-col items-center justify-center gap-1 px-1 py-2 text-[10px] font-semibold transition-all duration-200 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-amber-500",
-                isMoreActive ? "text-amber-600" : "text-muted-foreground/70",
-              )}
-            >
-              {isMoreActive && (
-                <span
-                  aria-hidden
-                  className="absolute top-0 h-0.5 w-8 rounded-full bg-amber-500"
-                />
-              )}
-              <span className={cn(
-                "grid h-7 w-7 place-items-center rounded-lg transition-all duration-200",
-                isMoreActive ? "scale-110 bg-amber-500/15" : "",
-              )}>
-                <Grid3x3 className="h-[18px] w-[18px]" aria-hidden />
-              </span>
-              More
-            </button>
-          </li>
         </ul>
       </nav>
-
-      {/* ── More bottom sheet ── */}
-      <DialogPrimitive.Root open={moreOpen} onOpenChange={setMoreOpen}>
-        <DialogPrimitive.Portal>
-          <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
-          <DialogPrimitive.Content
-            className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-border bg-card pb-[max(env(safe-area-inset-bottom),0.75rem)] shadow-2xl focus:outline-none"
-            style={{ maxHeight: "80dvh" }}
-          >
-            {/* Drag handle */}
-            <div aria-hidden className="mx-auto mt-3 h-1 w-10 rounded-full bg-muted-foreground/30" />
-
-            <DialogPrimitive.Title className="px-4 pb-1 pt-3 text-lg font-bold tracking-tight">More</DialogPrimitive.Title>
-
-            <div className="max-h-[60dvh] overflow-y-auto px-3 pb-3">
-              {/* Grid of navigation items */}
-              <div className="grid grid-cols-3 gap-2 py-2">
-                {STUDENT_MORE.filter((m) => m.href !== "/student/notifications").map((item) => {
-                  const active = isActivePath(pathname, item.href);
-                  return (
-                    <DialogPrimitive.Close asChild key={item.href}>
-                      <Link
-                        href={item.href}
-                        className={cn(
-                          "flex flex-col items-center gap-2 rounded-2xl border p-3 text-center transition-all hover:-translate-y-0.5 hover:shadow-sm",
-                          active
-                            ? "border-amber-300/60 bg-amber-50/40 dark:bg-amber-950/10 text-amber-600"
-                            : "border-border bg-muted/30 text-foreground hover:bg-muted/50",
-                        )}
-                      >
-                        <span className={cn(
-                          "grid h-10 w-10 place-items-center rounded-xl",
-                          active ? "bg-amber-500/15 text-amber-600" : "bg-muted text-muted-foreground",
-                        )}>
-                          <StudentNavIcon name={MORE_ICONS[item.href]} className="h-5 w-5" />
-                        </span>
-                        <span className="text-xs font-semibold leading-tight">{item.label}</span>
-                      </Link>
-                    </DialogPrimitive.Close>
-                  );
-                })}
-              </div>
-
-              {/* Logout */}
-              <div className="mt-2 border-t border-border pt-2">
-                <button
-                  onClick={() => signOut({ callbackUrl: "/login" })}
-                  className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-destructive hover:bg-destructive/10 focus-visible:outline-2 focus-visible:outline-destructive"
-                >
-                  <span className="grid h-9 w-9 place-items-center rounded-xl bg-destructive/10">
-                    <LogOut className="h-4 w-4" aria-hidden />
-                  </span>
-                  Log out
-                </button>
-              </div>
-            </div>
-          </DialogPrimitive.Content>
-        </DialogPrimitive.Portal>
-      </DialogPrimitive.Root>
     </div>
   );
 }
@@ -451,28 +261,57 @@ function DesktopNav({
     .join("")
     .toUpperCase();
 
-  const items = [
-    ...STUDENT_TABS.map((t) => ({ href: t.href, label: t.label, icon: t.icon })),
-    ...STUDENT_MORE.map((t) => ({ href: t.href, label: t.label, icon: t.icon })),
+  // Group nav items into logical sections so the sidebar is scannable
+  // instead of a flat 15-item list. Each group has a small uppercase label.
+  const navGroups: { label: string; items: { href: string; label: string; icon: string }[] }[] = [
+    {
+      label: "Main",
+      items: [
+        { href: "/student", label: "Home", icon: "House" },
+        { href: "/student/universities", label: "Universities", icon: "Building2" },
+        { href: "/student/courses", label: "Courses", icon: "BookOpen" },
+      ],
+    },
+    {
+      label: "Application",
+      items: [
+        { href: "/student/applications", label: "My Application", icon: "FolderKanban" },
+        { href: "/student/documents", label: "Documents", icon: "FileText" },
+        { href: "/student/visa", label: "Visa", icon: "Stamp" },
+        { href: "/student/tasks", label: "Tasks", icon: "CheckSquare" },
+        { href: "/student/appointments", label: "Appointments", icon: "CalendarClock" },
+      ],
+    },
+    {
+      label: "Communication",
+      items: [
+        { href: "/student/messages", label: "Messages", icon: "MessageSquare" },
+        { href: "/student/notifications", label: "Notifications", icon: "Bell" },
+        { href: "/student/support", label: "Support", icon: "LifeBuoy" },
+      ],
+    },
+    {
+      label: "Account",
+      items: [
+        { href: "/student/payments", label: "Payments", icon: "CreditCard" },
+        { href: "/student/invoices", label: "Invoices", icon: "Receipt" },
+        { href: "/student/profile", label: "Profile", icon: "UserRound" },
+        { href: "/student/settings", label: "Settings", icon: "Settings" },
+      ],
+    },
   ];
 
   return (
     <div className="flex h-full flex-col">
-      {/* ── Premium top section — search + user card ──
-          The brand is NOT duplicated here — it lives in the header
-          on the home page (and the back-arrow takes you home on
-          inner pages). The sidebar starts directly with search +
-          the user card, which is what students need quick access to. */}
+      {/* ── Top section — search + user card ── */}
       <div className="border-b border-border/60 p-3">
-        {/* Search button — full-width pill that opens the global search overlay.
-            Shows the Cmd+K hint on the right so the shortcut is discoverable. */}
         <button
           type="button"
           onClick={onSearchOpen}
-          className="group mb-2 flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-card/60 px-2.5 text-sm text-muted-foreground transition-all hover:border-amber-300/60 hover:bg-amber-500/5 focus-visible:outline-2 focus-visible:outline-amber-500"
+          className="group mb-2 flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-card/60 px-2.5 text-sm text-muted-foreground transition-all hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-2 focus-visible:outline-primary"
           aria-label="Search (Cmd+K)"
         >
-          <Search className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />
+          <Search className="h-4 w-4 shrink-0" />
           <span className="min-w-0 flex-1 truncate text-left text-xs font-medium">
             Search…
           </span>
@@ -481,10 +320,9 @@ function DesktopNav({
           </kbd>
         </button>
 
-        {/* User card — avatar + name + live indicator */}
         <Link
           href="/student/profile"
-          className="group flex items-center gap-2.5 rounded-xl border border-border/60 bg-card/60 p-2 transition-all hover:border-amber-300/60 hover:bg-amber-500/5 focus-visible:outline-2 focus-visible:outline-amber-500"
+          className="group flex items-center gap-2.5 rounded-xl border border-border/60 bg-card/60 p-2 transition-all hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-2 focus-visible:outline-primary"
         >
           <span className="relative">
             {profilePhotoUrl ? (
@@ -492,14 +330,13 @@ function DesktopNav({
               <img
                 src={profilePhotoUrl}
                 alt={userName}
-                className="h-9 w-9 rounded-full object-cover ring-2 ring-card transition-shadow group-hover:ring-amber-500/40"
+                className="h-9 w-9 rounded-full object-cover ring-2 ring-card transition-shadow group-hover:ring-primary/40"
               />
             ) : (
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-amber-500/20 to-amber-500/10 text-xs font-bold text-amber-600 ring-2 ring-card transition-shadow group-hover:ring-amber-500/40">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-primary/20 to-info/20 text-xs font-bold text-primary ring-2 ring-card transition-shadow group-hover:ring-primary/40">
                 {initials || "S"}
               </span>
             )}
-            {/* Online status dot */}
             {(isOnline || isReconnecting) && (
               <span
                 aria-hidden
@@ -528,50 +365,55 @@ function DesktopNav({
         </Link>
       </div>
 
-      {/* ── Nav items with gradient active state ── */}
-      <nav aria-label="Student navigation" className="flex-1 space-y-0.5 overflow-y-auto p-2">
-        {items.map((item) => {
-          const active = isActivePath(pathname, item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "group relative flex min-h-[40px] items-center gap-2.5 rounded-lg px-3 text-sm font-medium transition-all",
-                active
-                  ? "bg-gradient-to-r from-amber-500/15 to-amber-500/10 font-semibold text-amber-600"
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-              )}
-            >
-              {/* Active accent bar on the left */}
-              {active && (
-                <span
-                  aria-hidden
-                  className="absolute -left-2 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full bg-gradient-to-b from-amber-400 to-amber-600"
-                />
-              )}
-              <span className="relative shrink-0">
-                <StudentNavIcon
-                  name={item.icon}
-                  className={cn(
-                    "h-4 w-4 transition-transform",
-                    active ? "scale-110" : "group-hover:scale-105",
-                  )}
-                />
-                {item.href === "/student/notifications" && <NotificationBadge count={unread} />}
-              </span>
-              <span className="truncate">{item.label}</span>
-            </Link>
-          );
-        })}
+      {/* ── Nav items — grouped by category ── */}
+      <nav aria-label="Student navigation" className="flex-1 overflow-y-auto px-2 py-2">
+        {navGroups.map((group, gi) => (
+          <div key={group.label} className={gi > 0 ? "mt-4" : ""}>
+            <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+              {group.label}
+            </p>
+            <div className="space-y-0.5">
+              {group.items.map((item) => {
+                const active = isActivePath(pathname, item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "group relative flex min-h-[36px] items-center gap-2.5 rounded-lg px-3 text-sm font-medium transition-all",
+                      active
+                        ? "bg-primary/10 font-semibold text-primary"
+                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                    )}
+                  >
+                    {active && (
+                      <span
+                        aria-hidden
+                        className="absolute -left-2 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-primary"
+                      />
+                    )}
+                    <span className="relative shrink-0">
+                      <StudentNavIcon
+                        name={item.icon}
+                        className={cn(
+                          "h-4 w-4 transition-transform",
+                          active ? "scale-110" : "group-hover:scale-105",
+                        )}
+                      />
+                      {item.href === "/student/notifications" && <NotificationBadge count={unread} />}
+                    </span>
+                    <span className="truncate">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
-      {/* ── Footer with live indicator + sign out ── */}
+      {/* ── Footer — sign out ── */}
       <div className="border-t border-border/60 p-2">
-        <div className="mb-1 hidden items-center justify-between px-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-          <span>Account</span>
-        </div>
         <button
           onClick={onSignOut}
           className="flex min-h-[40px] w-full items-center gap-2.5 rounded-lg px-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 focus-visible:outline-2 focus-visible:outline-destructive"
