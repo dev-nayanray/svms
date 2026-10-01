@@ -10,7 +10,7 @@ import { ArrowLeft, ChevronRight, Search, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
 import { APP_NAME } from "@/lib/constants/app";
-import { STUDENT_TABS, STUDENT_MORE, isActivePath } from "@/config/student-nav";
+import { STUDENT_TABS, isActivePath } from "@/config/student-nav";
 import { StudentNavIcon, NotificationBadge } from "@/components/student/ui";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { LiveIndicator, useRealtime } from "@/components/student/realtime-provider";
@@ -259,10 +259,44 @@ function DesktopNav({
     .join("")
     .toUpperCase();
 
-  // All items — primary tabs + secondary destinations
-  const items = [
-    ...STUDENT_TABS.map((t) => ({ href: t.href, label: t.label, icon: t.icon, primary: true })),
-    ...STUDENT_MORE.map((t) => ({ href: t.href, label: t.label, icon: t.icon, primary: false })),
+  // Group nav items into logical sections so the sidebar is scannable
+  // instead of a flat 15-item list. Each group has a small uppercase label.
+  const navGroups: { label: string; items: { href: string; label: string; icon: string }[] }[] = [
+    {
+      label: "Main",
+      items: [
+        { href: "/student", label: "Home", icon: "House" },
+        { href: "/student/universities", label: "Universities", icon: "Building2" },
+        { href: "/student/courses", label: "Courses", icon: "BookOpen" },
+      ],
+    },
+    {
+      label: "Application",
+      items: [
+        { href: "/student/applications", label: "My Application", icon: "FolderKanban" },
+        { href: "/student/documents", label: "Documents", icon: "FileText" },
+        { href: "/student/visa", label: "Visa", icon: "Stamp" },
+        { href: "/student/tasks", label: "Tasks", icon: "CheckSquare" },
+        { href: "/student/appointments", label: "Appointments", icon: "CalendarClock" },
+      ],
+    },
+    {
+      label: "Communication",
+      items: [
+        { href: "/student/messages", label: "Messages", icon: "MessageSquare" },
+        { href: "/student/notifications", label: "Notifications", icon: "Bell" },
+        { href: "/student/support", label: "Support", icon: "LifeBuoy" },
+      ],
+    },
+    {
+      label: "Account",
+      items: [
+        { href: "/student/payments", label: "Payments", icon: "CreditCard" },
+        { href: "/student/invoices", label: "Invoices", icon: "Receipt" },
+        { href: "/student/profile", label: "Profile", icon: "UserRound" },
+        { href: "/student/settings", label: "Settings", icon: "Settings" },
+      ],
+    },
   ];
 
   return (
@@ -329,42 +363,51 @@ function DesktopNav({
         </Link>
       </div>
 
-      {/* ── Nav items ── */}
-      <nav aria-label="Student navigation" className="flex-1 space-y-0.5 overflow-y-auto p-2">
-        {items.map((item) => {
-          const active = isActivePath(pathname, item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "group relative flex min-h-[40px] items-center gap-2.5 rounded-lg px-3 text-sm font-medium transition-all",
-                active
-                  ? "bg-primary/10 font-semibold text-primary"
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-              )}
-            >
-              {active && (
-                <span
-                  aria-hidden
-                  className="absolute -left-2 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full bg-primary"
-                />
-              )}
-              <span className="relative shrink-0">
-                <StudentNavIcon
-                  name={item.icon}
-                  className={cn(
-                    "h-4 w-4 transition-transform",
-                    active ? "scale-110" : "group-hover:scale-105",
-                  )}
-                />
-                {item.href === "/student/notifications" && <NotificationBadge count={unread} />}
-              </span>
-              <span className="truncate">{item.label}</span>
-            </Link>
-          );
-        })}
+      {/* ── Nav items — grouped by category ── */}
+      <nav aria-label="Student navigation" className="flex-1 overflow-y-auto px-2 py-2">
+        {navGroups.map((group, gi) => (
+          <div key={group.label} className={gi > 0 ? "mt-4" : ""}>
+            <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+              {group.label}
+            </p>
+            <div className="space-y-0.5">
+              {group.items.map((item) => {
+                const active = isActivePath(pathname, item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "group relative flex min-h-[36px] items-center gap-2.5 rounded-lg px-3 text-sm font-medium transition-all",
+                      active
+                        ? "bg-primary/10 font-semibold text-primary"
+                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                    )}
+                  >
+                    {active && (
+                      <span
+                        aria-hidden
+                        className="absolute -left-2 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-primary"
+                      />
+                    )}
+                    <span className="relative shrink-0">
+                      <StudentNavIcon
+                        name={item.icon}
+                        className={cn(
+                          "h-4 w-4 transition-transform",
+                          active ? "scale-110" : "group-hover:scale-105",
+                        )}
+                      />
+                      {item.href === "/student/notifications" && <NotificationBadge count={unread} />}
+                    </span>
+                    <span className="truncate">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* ── Footer — sign out ── */}
