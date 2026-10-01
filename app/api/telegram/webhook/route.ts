@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { leadService } from "@/lib/services/lead";
 import { logSystemEvent } from "@/lib/system/logs";
 import { getTelegramBotToken, getTelegramWebhookSecret } from "@/lib/services/telegram-config";
+import { getProviderAdapter, type ProviderType, type ChatMessage } from "@/lib/ai/adapters/types";
 
 export const dynamic = "force-dynamic";
 
@@ -106,6 +107,100 @@ async function setConversationStage(chatId: number, stage: string, metadata?: Re
     });
   } catch {
     // best-effort
+  }
+}
+
+/**
+ * Generate an AI response for a Telegram user's message.
+ *
+ * Uses the first enabled + connected AI provider from the DB.
+ * Falls back to the legacy AI_PROVIDER_API_KEY env var if no DB
+ * provider is configured.
+ *
+ * Returns null if no AI provider is available (caller should use
+ * the generic "we'll get back to you" fallback).
+ *
+ * SECURITY:
+ *  - The system prompt restricts the AI to Euroscope-related topics
+ *  - Never exposes student data, internal IDs, or credentials
+ *  - Never makes promises about visas or admission (regulated advice)
+ */
+async function generateAiResponse(userMessage: string, chatId: number): Promise<string | null> {
+  try {
+    // Find an enabled AI provider from the DB (priority order)
+    const provider = await prisma.aiProvider.findFirst({
+      where: { enabled: true, apiKeyEncrypted: { not: null } },
+      orderBy: [{ priority: "asc" }],
+      include: { models: { where: { enabled: true }, take: 1 } },
+    });
+
+    let apiKey: string | null = null;
+    let baseUrl: string | undefined = undefined;
+    let model: string | null = null;
+    let providerType: ProviderType = "openai";
+
+    if (provider && provider.apiKeyEncrypted && provider.defaultModel) {
+      // Use DB-configured provider
+      apiKey = provider.apiKeyEncrypted;
+      baseUrl = provider.baseUrl ?? undefined;
+      model = provider.defaultModel;
+      providerType = provider.provider as ProviderType;
+    } else {
+      // Fall back to legacy env vars
+      apiKey = process.env.AI_PROVIDER_API_KEY ?? null;
+      baseUrl = process.env.AI_PROVIDER_BASE_URL ?? undefined;
+      model = process.env.AI_PROVIDER_MODEL ?? "gpt-4o-mini";
+      providerType = "openai";
+    }
+
+    if (!apiKey || !model) {
+      return null; // No provider available
+    }
+
+    const adapter = getProviderAdapter(providerType);
+    const messages: ChatMessage[] = [
+      {
+        role: "system",
+        content: `You are the Euroscope Assistant, a helpful bot for a student visa consultancy that helps students study in Europe.
+
+Your role:
+- Answer questions about studying in Europe (universities, courses, visas, costs, scholarships)
+- Be friendly, concise, and helpful
+- If you don't know something, say so and suggest the user contact a counselor
+- NEVER make specific promises about visa approval or university admission
+- NEVER ask for or share sensitive personal information (passport numbers, financial details)
+- Keep responses under 200 words for Telegram
+- If the user asks to speak to a counselor, tell them our team will reach out
+
+This is a Telegram conversation. Keep your response clean (no markdown tables, no complex formatting). Use simple text with line breaks.`,
+      },
+      {
+        role: "user",
+        content: userMessage,
+      },
+    ];
+
+    const result = await adapter.generate({
+      apiKey,
+      baseUrl,
+      options: {
+        messages,
+        model,
+        temperature: 0.7,
+        maxTokens: 300,
+        stream: false,
+      },
+    });
+
+    return result.content || null;
+  } catch (err) {
+    await logSystemEvent(
+      "WARNING",
+      "system",
+      `AI response failed in Telegram webhook: ${err instanceof Error ? err.message : String(err)}`,
+      { chatId },
+    );
+    return null; // Fall back to generic message
   }
 }
 
@@ -271,11 +366,20 @@ export async function POST(req: NextRequest) {
       }
 
       if (stage === "COMPLETED") {
-        // User is sending a message after lead creation — store as a note
-        await sendTelegramMessage(
-          chatId,
-          `Thanks for your message! Our team will get back to you soon. If this is urgent, please mention "urgent" in your message.`,
-        );
+        // User is sending a message after lead creation — use AI to answer
+        // their question if an AI provider is configured, otherwise fall back
+        // to the generic "we'll get back to you" message.
+        const aiResponse = await generateAiResponse(text, chatId);
+
+        if (aiResponse) {
+          await sendTelegramMessage(chatId, aiResponse);
+        } else {
+          // No AI provider configured — generic fallback
+          await sendTelegramMessage(
+            chatId,
+            `Thanks for your message! Our team will get back to you soon. If this is urgent, please mention "urgent" in your message.`,
+          );
+        }
         return NextResponse.json({ ok: true });
       }
     }

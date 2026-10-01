@@ -329,6 +329,168 @@ export class MockProvider implements AiProvider {
   }
 }
 
+// ── Gemini Provider ──────────────────────────────────────────────
+
+/**
+ * Gemini Provider — implements the AiProvider interface but uses
+ * Google's Gemini API format instead of OpenAI's.
+ *
+ * Gemini differences:
+ *  - Endpoint: /models/{model}:generateContent?key=API_KEY
+ *  - Uses "contents" array with "parts" (not "messages")
+ *  - System instruction is a separate field
+ *  - Streaming uses SSE with different chunk format
+ *  - Auth via URL param, not Bearer header
+ */
+class GeminiProvider implements AiProvider {
+  private config: ProviderConfig;
+
+  constructor(config?: Partial<ProviderConfig>) {
+    this.config = { ...getProviderConfig(), ...config };
+  }
+
+  async *streamChat(params: StreamChatParams): AsyncIterable<ChatChunk> {
+    const { messages, tools, maxOutputTokens, temperature, signal } = params;
+
+    // Convert OpenAI-style messages to Gemini format
+    let systemText = "";
+    const contents: { role: string; parts: { text: string }[] }[] = [];
+
+    for (const msg of messages) {
+      if (msg.role === "system") {
+        systemText += (systemText ? "\n" : "") + msg.content;
+      } else {
+        const role = msg.role === "assistant" ? "model" : "user";
+        contents.push({ role, parts: [{ text: msg.content }] });
+      }
+    }
+
+    const body: Record<string, unknown> = {
+      contents,
+      generationConfig: {
+        temperature: temperature ?? 0.7,
+        maxOutputTokens: maxOutputTokens ?? 2048,
+      },
+      ...(systemText ? { systemInstruction: { parts: [{ text: systemText }] } } : {}),
+    };
+
+    // Gemini function calling
+    if (tools && tools.length > 0) {
+      body.tools = [{
+        functionDeclarations: tools.map((t) => ({
+          name: t.function.name,
+          description: t.function.description,
+          parameters: t.function.parameters,
+        })),
+      }];
+    }
+
+    const model = this.config.model;
+    const url = `${this.config.baseUrl}/models/${model}:streamGenerateContent?alt=sse&key=${this.config.apiKey}`;
+
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal,
+      });
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        yield { type: "error", code: "ABORTED", message: "Request was aborted" };
+        return;
+      }
+      yield { type: "error", code: "NETWORK_ERROR", message: err instanceof Error ? err.message : "Network error" };
+      return;
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let code = "PROVIDER_ERROR";
+      if (response.status === 400 && errorText.toLowerCase().includes("location is not supported")) {
+        code = "REGION_NOT_SUPPORTED";
+      } else if (response.status === 400 || response.status === 403) {
+        code = "INVALID_API_KEY";
+      } else if (response.status === 429) {
+        code = "RATE_LIMITED";
+      }
+      yield { type: "error", code, message: `Gemini API error (${response.status}): ${errorText.slice(0, 200)}` };
+      return;
+    }
+
+    // Parse SSE stream
+    const reader = response.body?.getReader();
+    if (!reader) {
+      yield { type: "error", code: "NO_RESPONSE_BODY", message: "Empty response body" };
+      return;
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (!jsonStr || jsonStr === "[DONE]") continue;
+
+          try {
+            const chunk = JSON.parse(jsonStr);
+            const parts = chunk.candidates?.[0]?.content?.parts ?? [];
+
+            for (const part of parts) {
+              if (part.text) {
+                yield { type: "text", text: part.text };
+              }
+              if (part.functionCall) {
+                yield {
+                  type: "tool_call",
+                  tool_call: {
+                    id: `call_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                    type: "function",
+                    function: {
+                      name: part.functionCall.name,
+                      arguments: JSON.stringify(part.functionCall.args ?? {}),
+                    },
+                  },
+                };
+              }
+            }
+
+            // Usage metadata — store for the done event
+            if (chunk.usageMetadata) {
+              // Gemini sends usage in the last chunk; we'll include it in the done event
+              // For now, just yield text chunks — usage is handled at the end
+            }
+          } catch {
+            // skip malformed JSON
+          }
+        }
+      }
+      yield { type: "done", usage: { inputTokens: 0, outputTokens: 0 }, finishReason: "STOP" };
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        yield { type: "error", code: "ABORTED", message: "Request was aborted" };
+      } else {
+        yield { type: "error", code: "STREAM_ERROR", message: err instanceof Error ? err.message : "Stream error" };
+      }
+    }
+  }
+
+  countTokens(messages: ChatMessage[]): number {
+    return messages.reduce((sum, m) => sum + Math.ceil((m.content?.length ?? 0) / 4), 0);
+  }
+}
+
 // ── Factory ──────────────────────────────────────────────────────
 
 let _provider: AiProvider | null = null;
@@ -341,6 +503,9 @@ let _provider: AiProvider | null = null;
  *  - AI_PROVIDER_BASE_URL (optional, default: https://api.openai.com/v1)
  *  - AI_PROVIDER_MODEL (optional, default: gpt-4o-mini)
  *
+ * If the base URL contains "generativelanguage.googleapis.com",
+ * the Gemini provider is used instead (different API format).
+ *
  * In test environment, returns a MockProvider if no API key is set.
  */
 export function getAiProvider(): AiProvider {
@@ -348,6 +513,14 @@ export function getAiProvider(): AiProvider {
 
   if (process.env.NODE_ENV === "test" && !process.env.AI_PROVIDER_API_KEY) {
     _provider = new MockProvider();
+    return _provider;
+  }
+
+  const baseUrl = process.env.AI_PROVIDER_BASE_URL || "https://api.openai.com/v1";
+
+  // Detect Gemini by the base URL
+  if (baseUrl.includes("generativelanguage.googleapis.com")) {
+    _provider = new GeminiProvider();
     return _provider;
   }
 

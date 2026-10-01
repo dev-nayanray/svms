@@ -23,8 +23,8 @@ const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 
 const DEFAULT_MODELS = [
   {
-    modelId: "gemini-1.5-flash",
-    name: "Gemini 1.5 Flash",
+    modelId: "gemini-3.8-flash",
+    name: "Gemini 3.8 Flash (Latest)",
     supportsStreaming: true,
     supportsToolCalling: true,
     supportsVision: true,
@@ -33,18 +33,8 @@ const DEFAULT_MODELS = [
     outputPricePerMillionCents: 0,
   },
   {
-    modelId: "gemini-1.5-pro",
-    name: "Gemini 1.5 Pro",
-    supportsStreaming: true,
-    supportsToolCalling: true,
-    supportsVision: true,
-    contextWindow: 2000000,
-    inputPricePerMillionCents: 125, // $1.25/1M (paid tier)
-    outputPricePerMillionCents: 500, // $5.00/1M (paid tier)
-  },
-  {
-    modelId: "gemini-2.0-flash-exp",
-    name: "Gemini 2.0 Flash (Experimental)",
+    modelId: "gemini-flash-latest",
+    name: "Gemini Flash (Latest Auto)",
     supportsStreaming: true,
     supportsToolCalling: true,
     supportsVision: true,
@@ -52,10 +42,37 @@ const DEFAULT_MODELS = [
     inputPricePerMillionCents: 0,
     outputPricePerMillionCents: 0,
   },
+  {
+    modelId: "gemini-1.5-flash",
+    name: "Gemini 1.5 Flash (Legacy)",
+    supportsStreaming: true,
+    supportsToolCalling: true,
+    supportsVision: true,
+    contextWindow: 1000000,
+    inputPricePerMillionCents: 0,
+    outputPricePerMillionCents: 0,
+  },
+  {
+    modelId: "gemini-1.5-pro",
+    name: "Gemini 1.5 Pro (Legacy)",
+    supportsStreaming: true,
+    supportsToolCalling: true,
+    supportsVision: true,
+    contextWindow: 2000000,
+    inputPricePerMillionCents: 125,
+    outputPricePerMillionCents: 500,
+  },
 ];
 
 function classifyError(status: number, body: string): ConnectionTestResult {
   const lowerBody = body.toLowerCase();
+  // Handle "User location is not supported" — Gemini is geo-restricted
+  if (lowerBody.includes("location is not supported") || lowerBody.includes("user location")) {
+    return {
+      status: "provider_unavailable",
+      message: "Gemini API is not available in your region. Google restricts access by geographic location. Consider using a VPN, a proxy server, or switching to OpenAI/Anthropic which don't have this restriction.",
+    };
+  }
   if (status === 400 || status === 403) {
     if (lowerBody.includes("api key") || lowerBody.includes("api_key") || lowerBody.includes("permission")) {
       return {
@@ -63,10 +80,10 @@ function classifyError(status: number, body: string): ConnectionTestResult {
         message: "Invalid API key. Check that the key is correct and has the Generative Language API enabled.",
       };
     }
-    if (lowerBody.includes("model") && (lowerBody.includes("not found") || lowerBody.includes("not supported"))) {
+    if (lowerBody.includes("model") && (lowerBody.includes("not found") || lowerBody.includes("not supported") || lowerBody.includes("no longer available"))) {
       return {
         status: "unsupported_model",
-        message: "Model not found. Check that the model ID is correct.",
+        message: "Model not found or deprecated. Google frequently updates model names. Try 'gemini-3.8-flash' or 'gemini-flash-latest'.",
       };
     }
     return {
