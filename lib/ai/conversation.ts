@@ -111,6 +111,24 @@ export function listConversations(studentId: string): Conversation[] {
 }
 
 /**
+ * Delete a conversation by ID.
+ *
+ * SECURITY: Verifies the conversation belongs to the given studentId
+ * before deleting. Returns false if the conversation doesn't exist or
+ * doesn't belong to the student — so a student cannot delete another
+ * student's conversation (and cannot tell whether a given ID exists
+ * for someone else).
+ *
+ * @returns true if deleted, false if not found / not owned
+ */
+export function deleteConversation(conversationId: string, studentId: string): boolean {
+  const conv = store.get(conversationId);
+  if (!conv || conv.studentId !== studentId) return false;
+  store.delete(conversationId);
+  return true;
+}
+
+/**
  * Clear all conversations (for tests).
  */
 export function _clearAllConversationsForTests(): void {
