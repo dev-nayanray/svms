@@ -1,26 +1,39 @@
 /**
- * Student Panel navigation. Icons are referenced by name (serializable
- * across the server/client boundary) and resolved in the client shell,
- * mirroring the admin navigation pattern.
+ * Student Panel navigation — simplified to 5 bottom-nav tabs.
+ *
+ * The 5 tabs are the most important destinations for a student:
+ *   Home → dashboard (overview, next steps, quick actions)
+ *   Universities → browse + compare study destinations
+ *   Application → visa application progress + timeline
+ *   Notifications → alerts + updates
+ *   Profile → personal info, documents, messages, settings, logout
+ *
+ * The "More" bottom sheet is removed — all secondary destinations
+ * (Documents, Messages, Tasks, Payments, etc.) are accessible from
+ * the Profile page as quick-link cards.
  */
 
 export const STUDENT_TABS = [
   { href: "/student", label: "Home", icon: "House" },
+  { href: "/student/universities", label: "Universities", icon: "Building2" },
   { href: "/student/applications", label: "Application", icon: "FolderKanban" },
-  { href: "/student/documents", label: "Documents", icon: "FileText" },
-  { href: "/student/messages", label: "Messages", icon: "MessageSquare" },
+  { href: "/student/notifications", label: "Updates", icon: "Bell" },
+  { href: "/student/profile", label: "Profile", icon: "UserRound" },
 ] as const;
 
+/**
+ * Secondary destinations — shown as quick-link cards on the Profile page.
+ * Not in the bottom nav to keep it simple (5 tabs max).
+ */
 export const STUDENT_MORE = [
-  { href: "/student/profile", label: "Profile", icon: "UserRound" },
-  { href: "/student/universities", label: "Universities", icon: "Building2" },
+  { href: "/student/documents", label: "Documents", icon: "FileText" },
   { href: "/student/courses", label: "Courses", icon: "BookOpen" },
   { href: "/student/visa", label: "Visa", icon: "Stamp" },
   { href: "/student/tasks", label: "Tasks", icon: "CheckSquare" },
   { href: "/student/payments", label: "Payments", icon: "CreditCard" },
   { href: "/student/invoices", label: "Invoices", icon: "Receipt" },
   { href: "/student/appointments", label: "Appointments", icon: "CalendarClock" },
-  { href: "/student/notifications", label: "Notifications", icon: "Bell" },
+  { href: "/student/messages", label: "Messages", icon: "MessageSquare" },
   { href: "/student/support", label: "Support", icon: "LifeBuoy" },
   { href: "/student/settings", label: "Settings", icon: "Settings" },
 ] as const;
