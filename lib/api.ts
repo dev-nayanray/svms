@@ -9,7 +9,9 @@ export type ApiErrorCode =
   | "NOT_FOUND"
   | "CONFLICT"
   | "BAD_REQUEST"
-  | "INTERNAL_ERROR";
+  | "INTERNAL_ERROR"
+  | "RATE_LIMITED"
+  | "UNAVAILABLE";
 
 export function ok<T>(data: T, init?: ResponseInit) {
   return NextResponse.json({ success: true, data }, init);

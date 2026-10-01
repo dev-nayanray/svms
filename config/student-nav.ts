@@ -13,6 +13,7 @@ export const STUDENT_TABS = [
 
 export const STUDENT_MORE = [
   { href: "/student/profile", label: "Profile", icon: "UserRound" },
+  { href: "/student/assistant", label: "AI Assistant", icon: "Sparkles" },
   { href: "/student/universities", label: "Universities", icon: "Building2" },
   { href: "/student/courses", label: "Courses", icon: "BookOpen" },
   { href: "/student/visa", label: "Visa", icon: "Stamp" },
