@@ -69,7 +69,10 @@ export function AdminShell({
   const [query, setQuery] = useState("");
   // Detect theme on mount — use useState initializer to avoid the
   // set-state-in-effect lint rule.
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof document === "undefined") return false;
+    return document.documentElement.classList.contains("dark");
+  });
 
   // ⌘K / Ctrl+K shortcut for global search
   useEffect(() => {
@@ -114,25 +117,31 @@ export function AdminShell({
         title={collapsed ? item.label : undefined}
         onClick={() => setMobileOpen(false)}
         className={cn(
-          "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-200",
+          "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-all duration-150",
           collapsed && "justify-center",
           active
-            ? "bg-primary/8 text-primary"
-            : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+            ? "bg-primary/10 text-primary"
+            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
         )}
       >
         {/* Active indicator bar — left edge */}
-        {active && (
+        {active && !collapsed && (
           <span
             aria-hidden
-            className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-primary transition-opacity"
+            className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-primary"
+          />
+        )}
+        {active && collapsed && (
+          <span
+            aria-hidden
+            className="absolute inset-0 rounded-lg ring-1 ring-primary/20"
           />
         )}
         <NavIcon
           name={item.icon}
           className={cn(
             "h-4 w-4 shrink-0 transition-colors",
-            active ? "text-primary" : "text-muted-foreground/70 group-hover:text-foreground",
+            active ? "text-primary" : "text-muted-foreground/60 group-hover:text-foreground",
           )}
         />
         {!collapsed && <span className="truncate">{item.label}</span>}
@@ -144,10 +153,10 @@ export function AdminShell({
     // If grouped nav is provided, render with section labels
     if (navGroups && !collapsed) {
       return (
-        <nav className="flex-1 overflow-y-auto px-2 py-2" aria-label="Admin navigation">
-          {navGroups.map((group) => (
-            <div key={group.label} className="mb-3">
-              <p className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+        <nav className="flex-1 overflow-y-auto px-2 py-3" aria-label="Admin navigation">
+          {navGroups.map((group, gi) => (
+            <div key={group.label} className={gi > 0 ? "mt-4" : ""}>
+              <p className="px-2.5 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
                 {group.label}
               </p>
               <div className="space-y-0.5">{group.items.map(renderItem)}</div>
@@ -158,7 +167,7 @@ export function AdminShell({
     }
     // Flat nav (for collapsed mode or employee/student shells)
     return (
-      <nav className="flex-1 space-y-0.5 overflow-y-auto p-2" aria-label="Admin navigation">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-3" aria-label="Admin navigation">
         {items.map(renderItem)}
       </nav>
     );

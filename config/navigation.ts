@@ -3,6 +3,13 @@ import type { NavIconName } from "@/components/shared/nav-icons";
 export type NavItem = { href: string; label: string; icon: NavIconName };
 export type NavGroup = { label: string; items: NavItem[] };
 
+/**
+ * Admin Navigation — reorganized into 8 clear groups.
+ *
+ * Design principle: a sidebar should be scannable in 3 seconds.
+ * Groups are ordered by frequency of use, not alphabetically.
+ * The most-used items (Dashboard, CRM, Admissions) are at the top.
+ */
 export const ADMIN_NAV_GROUPS: NavGroup[] = [
   {
     label: "Overview",
@@ -15,33 +22,25 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/admin/leads", label: "Leads", icon: "Target" },
       { href: "/admin/students", label: "Students", icon: "Users" },
-      { href: "/admin/applications", label: "Applications", icon: "FolderKanban" },
+      { href: "/admin/employees", label: "Employees", icon: "GraduationCap" },
     ],
   },
   {
-    label: "Academic Catalog",
+    label: "Admissions",
     items: [
-      { href: "/admin/countries", label: "Countries", icon: "Globe" },
+      { href: "/admin/applications", label: "Applications", icon: "FolderKanban" },
       { href: "/admin/universities", label: "Universities", icon: "Building2" },
       { href: "/admin/courses", label: "Courses", icon: "BookOpen" },
       { href: "/admin/intakes", label: "Intakes", icon: "CalendarClock" },
+      { href: "/admin/countries", label: "Countries", icon: "Globe" },
+      { href: "/admin/branches", label: "Branches", icon: "GitBranch" },
     ],
   },
   {
     label: "Documents & Visa",
     items: [
-      { href: "/admin/documents", label: "Document Review", icon: "FileText" },
-      { href: "/admin/visa", label: "Visa Management", icon: "Stamp" },
-    ],
-  },
-  {
-    label: "Operations",
-    items: [
-      { href: "/admin/tasks", label: "Tasks", icon: "CheckSquare" },
-      { href: "/admin/appointments", label: "Appointments", icon: "CalendarClock" },
-      { href: "/admin/support", label: "Support Tickets", icon: "LifeBuoy" },
-      { href: "/admin/messages", label: "Messages", icon: "MessageSquare" },
-      { href: "/admin/notifications", label: "Notifications", icon: "Bell" },
+      { href: "/admin/documents", label: "Documents", icon: "FileText" },
+      { href: "/admin/visa", label: "Visa", icon: "Stamp" },
     ],
   },
   {
@@ -53,44 +52,33 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Team & Organization",
+    label: "Operations",
     items: [
-      { href: "/admin/users", label: "Team & Users", icon: "Users" },
-      { href: "/admin/employees", label: "Employees", icon: "GraduationCap" },
-      { href: "/admin/branches", label: "Branches", icon: "GitBranch" },
-      { href: "/admin/roles-permissions", label: "Roles & Permissions", icon: "ShieldCheck" },
-    ],
-  },
-  {
-    label: "System Administration",
-    items: [
-      { href: "/admin/data-management", label: "Data Management", icon: "Database" },
-      { href: "/admin/branding", label: "Branding & Logo", icon: "Image" },
-      { href: "/admin/marketing", label: "Marketing Site", icon: "Megaphone" },
-      { href: "/admin/settings", label: "System Settings", icon: "Settings" },
-      { href: "/admin/audit", label: "Audit Logs", icon: "ScrollText" },
-      { href: "/admin/design-preview", label: "Design System", icon: "Palette" },
-    ],
-  },
-  {
-    label: "System Operations",
-    items: [
-      { href: "/admin/system", label: "Overview", icon: "LayoutDashboard" },
-      { href: "/admin/system/backups", label: "Backup & Restore", icon: "DatabaseBackup" },
-      { href: "/admin/system/security", label: "Security Center", icon: "ShieldCheck" },
-      { href: "/admin/system/seo", label: "SEO", icon: "Search" },
-      { href: "/admin/system/analytics", label: "Analytics & Pixels", icon: "BarChart3" },
-      { href: "/admin/system/health", label: "System Health", icon: "Activity" },
-      { href: "/admin/system/configuration", label: "Configuration", icon: "Settings" },
-      { href: "/admin/system/logs", label: "Logs", icon: "FileText" },
-      { href: "/admin/system/maintenance", label: "Maintenance", icon: "Wrench" },
-      { href: "/admin/system/audit", label: "Audit Logs", icon: "ScrollText" },
+      { href: "/admin/tasks", label: "Tasks", icon: "CheckSquare" },
+      { href: "/admin/appointments", label: "Appointments", icon: "CalendarClock" },
+      { href: "/admin/support", label: "Support", icon: "LifeBuoy" },
+      { href: "/admin/messages", label: "Messages", icon: "MessageSquare" },
+      { href: "/admin/notifications", label: "Notifications", icon: "Bell" },
     ],
   },
   {
     label: "AI & Automation",
     items: [
       { href: "/admin/ai", label: "AI Control Center", icon: "Brain" },
+    ],
+  },
+  {
+    label: "Administration",
+    items: [
+      { href: "/admin/users", label: "Users", icon: "Users" },
+      { href: "/admin/roles-permissions", label: "Roles & Permissions", icon: "ShieldCheck" },
+      { href: "/admin/branding", label: "Branding", icon: "Image" },
+      { href: "/admin/marketing", label: "Marketing CMS", icon: "Megaphone" },
+      { href: "/admin/data-management", label: "Data Management", icon: "Database" },
+      { href: "/admin/settings", label: "Settings", icon: "Settings" },
+      { href: "/admin/audit", label: "Audit Logs", icon: "ScrollText" },
+      { href: "/admin/system", label: "System Operations", icon: "DatabaseBackup" },
+      { href: "/admin/design-preview", label: "Design System", icon: "Palette" },
     ],
   },
 ];
@@ -100,39 +88,38 @@ export const ADMIN_NAV: NavItem[] = ADMIN_NAV_GROUPS.flatMap((g) => g.items);
 
 export const EMPLOYEE_NAV_GROUPS: NavGroup[] = [
   {
-    label: "Overview",
+    label: "Main",
     items: [{ href: "/employee", label: "Dashboard", icon: "LayoutDashboard" }],
   },
   {
-    label: "My Work",
-    items: [
-      { href: "/employee/students", label: "My Students", icon: "Users" },
-      { href: "/employee/applications", label: "Applications", icon: "FolderKanban" },
-      { href: "/employee/tasks", label: "Tasks", icon: "CheckSquare" },
-      { href: "/employee/appointments", label: "Appointments", icon: "CalendarClock" },
-    ],
-  },
-  {
-    label: "Student Processing",
-    items: [
-      { href: "/employee/documents", label: "Documents", icon: "FileText" },
-      { href: "/employee/visa", label: "Visa Management", icon: "Stamp" },
-      { href: "/employee/universities", label: "Universities", icon: "Building2" },
-      { href: "/employee/courses", label: "Courses", icon: "BookOpen" },
-    ],
-  },
-  {
-    label: "CRM",
+    label: "Sales & Admissions",
     items: [
       { href: "/employee/leads", label: "Leads", icon: "Target" },
+      { href: "/employee/students", label: "My Students", icon: "Users" },
+      { href: "/employee/applications", label: "My Applications", icon: "FolderKanban" },
+      { href: "/employee/documents", label: "Documents", icon: "FileText" },
     ],
   },
   {
-    label: "Communication",
+    label: "Academic",
     items: [
+      { href: "/employee/universities", label: "Universities", icon: "Building2" },
+      { href: "/employee/courses", label: "Courses", icon: "BookOpen" },
+      { href: "/employee/intakes", label: "Intakes", icon: "CalendarClock" },
+    ],
+  },
+  {
+    label: "Visa",
+    items: [{ href: "/employee/visa", label: "Visa", icon: "Stamp" }],
+  },
+  {
+    label: "Operations",
+    items: [
+      { href: "/employee/tasks", label: "Tasks", icon: "CheckSquare" },
+      { href: "/employee/appointments", label: "Appointments", icon: "CalendarClock" },
       { href: "/employee/messages", label: "Messages", icon: "MessageSquare" },
       { href: "/employee/notifications", label: "Notifications", icon: "Bell" },
-      { href: "/employee/support", label: "Support Tickets", icon: "LifeBuoy" },
+      { href: "/employee/support", label: "Support", icon: "LifeBuoy" },
     ],
   },
   {
@@ -146,12 +133,14 @@ export const EMPLOYEE_NAV_GROUPS: NavGroup[] = [
     label: "Insights",
     items: [
       { href: "/employee/reports", label: "Reports", icon: "BarChart3" },
+      { href: "/employee/performance", label: "Performance", icon: "TrendingUp" },
     ],
   },
   {
-    label: "Resources",
+    label: "Account",
     items: [
-      { href: "/employee/design-preview", label: "Design System", icon: "Palette" },
+      { href: "/employee/profile", label: "Profile", icon: "UserCircle" },
+      { href: "/employee/settings", label: "Settings", icon: "Settings" },
     ],
   },
 ];
