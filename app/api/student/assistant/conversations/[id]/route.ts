@@ -64,10 +64,18 @@ export async function GET(
 
     const { id: conversationId } = await params;
 
-    // ── 2. Load the conversation (ownership-validated) ──────────
+    // ── 2. Parse pagination params (for message pagination) ─────
+    const sp = req.nextUrl.searchParams;
+    const messageLimit = sp.get("limit") ? Math.max(1, parseInt(sp.get("limit")!, 10)) : undefined;
+    const messageOffset = sp.get("offset") ? Math.max(0, parseInt(sp.get("offset")!, 10)) : undefined;
+
+    // ── 3. Load the conversation (ownership-validated) ──────────
     // loadConversation returns null if the conversation doesn't exist
     // OR doesn't belong to this student. Either way → 404.
-    const conversation = loadConversation(conversationId, g.student.id);
+    const conversation = loadConversation(conversationId, g.student.id, {
+      limit: messageLimit,
+      offset: messageOffset,
+    });
 
     if (!conversation) {
       logAiRequest({

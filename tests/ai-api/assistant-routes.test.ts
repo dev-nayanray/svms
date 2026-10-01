@@ -293,10 +293,15 @@ describe("GET /api/student/assistant/conversations", () => {
     expect(body.data.conversations).toHaveLength(2);
     // List view should not include messages
     expect(body.data.conversations[0].messages).toBeUndefined();
-    // Should have id + title + timestamps
+    // Should have id + title + timestamps + messageCount
     expect(body.data.conversations[0].id).toMatch(/^conv-/);
     expect(body.data.conversations[0].title).toBeDefined();
     expect(body.data.conversations[0].createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(body.data.conversations[0].messageCount).toBeDefined();
+    // Should include pagination metadata
+    expect(body.data.pagination).toBeDefined();
+    expect(body.data.pagination.total).toBe(2);
+    expect(body.data.pagination.page).toBe(1);
   });
 
   it("does NOT return other students' conversations", async () => {

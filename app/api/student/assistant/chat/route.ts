@@ -50,6 +50,7 @@ import {
   createConversation,
   loadConversation,
   appendMessage,
+  getConversationHistory,
 } from "@/lib/ai/conversation";
 import { checkApiRateLimit } from "@/lib/ai/api-rate-limit";
 import { logAiRequest, previewMessage, generateRequestId } from "@/lib/ai/request-logger";
@@ -162,20 +163,15 @@ export async function POST(req: NextRequest) {
   });
 
   // ── 7. Build history for the LLM ──────────────────────────────
-  const history = conversation.messages.slice(-20).map((m) => ({
+  // getConversationHistory returns the most recent 20 user+assistant
+  // messages (tool messages excluded — they're internal), re-sanitized
+  // for defense in depth. Returns null only if the conversation isn't
+  // owned by this student (which can't happen here since we created/
+  // loaded it above with the correct studentId).
+  const historyRaw = getConversationHistory(conversation.id, g.student.id) ?? [];
+  const history = historyRaw.map((m) => ({
     role: m.role,
     content: m.content,
-    ...(m.toolCalls
-      ? {
-          tool_calls: m.toolCalls.map((tc) => ({
-            id: tc.id,
-            type: "function" as const,
-            function: { name: tc.name, arguments: tc.args },
-          })),
-        }
-      : {}),
-    ...(m.toolCallId ? { tool_call_id: m.toolCallId } : {}),
-    ...(m.role === "tool" ? { name: "tool" } : {}),
   }));
 
   // ── 8. Log the request (no PII, no message content) ───────────

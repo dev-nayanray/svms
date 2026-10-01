@@ -108,13 +108,14 @@ describe("Conversation Manager", () => {
     });
     createConversation("stu-2"); // Another student's conversation
 
-    const list = listConversations("stu-1");
-    expect(list).toHaveLength(2);
+    const result = listConversations("stu-1");
+    expect(result.conversations).toHaveLength(2);
+    expect(result.pagination.total).toBe(2);
     // Most recent first (by updatedAt)
-    const ids = list.map((c) => c.id);
+    const ids = result.conversations.map((c) => c.id);
     expect(ids).toContain(conv1.id);
     expect(ids).toContain(conv2.id);
     // List view should not include messages
-    expect(list[0].messages).toEqual([]);
+    expect(result.conversations[0].messageCount).toBeDefined();
   });
 });
