@@ -4,6 +4,7 @@ import type { AuthUser } from "@/lib/auth/guards";
 import { auditLog } from "./audit";
 import { notifications } from "./notification";
 import { formatApplicationNumber } from "@/lib/constants/applications";
+import { nextSequence, maxSuffixOfPrefix } from "./counters";
 
 export const DEFAULT_STAGES = [
   "LEAD",
@@ -29,8 +30,10 @@ export const DEFAULT_STAGES = [
 export const applicationService = {
   async nextApplicationNumber(): Promise<string> {
     const year = new Date().getFullYear();
-    const count = await prisma.application.count();
-    return formatApplicationNumber(year, count + 1);
+    const prefix = `SV-${year}-`;
+    const max = await maxSuffixOfPrefix("application", "applicationNumber", prefix);
+    const seq = await nextSequence(`application-${year}`, max + 1);
+    return formatApplicationNumber(year, seq);
   },
 
   async list(params: {
@@ -140,6 +143,7 @@ export const applicationService = {
       courseId?: string;
       intakeId?: string;
       priority?: string;
+      stage?: string;
     },
     actor: AuthUser
   ) {
@@ -147,6 +151,11 @@ export const applicationService = {
       where: { id: input.studentId, deletedAt: null },
     });
     if (!student) throw new HttpError(404, "NOT_FOUND", "Student not found");
+
+    const initialStage = input.stage ?? "LEAD";
+    if (!DEFAULT_STAGES.includes(initialStage as (typeof DEFAULT_STAGES)[number])) {
+      throw new HttpError(400, "BAD_REQUEST", `Unknown stage "${initialStage}"`);
+    }
 
     const applicationNumber = await this.nextApplicationNumber();
     const employeeId =
@@ -164,11 +173,11 @@ export const applicationService = {
         courseId: input.courseId,
         intakeId: input.intakeId,
         priority: input.priority ?? "MEDIUM",
-        stageKey: "LEAD",
+        stageKey: initialStage,
         statusHistory: {
           create: {
             fromStage: null,
-            toStage: "LEAD",
+            toStage: initialStage,
             changedById: actor.id,
             note: "Application created",
           },

@@ -100,7 +100,15 @@ export async function DELETE(req: NextRequest, { params }: Ctx) {
 
     await prisma.user.update({
       where: { id },
-      data: { deletedAt: new Date(), status: "INACTIVE" },
+      data: {
+        deletedAt: new Date(),
+        status: "INACTIVE",
+        // Tombstone the email: `email` has a unique index that survives soft
+        // delete, so keeping it would permanently block reusing the address
+        // for a new account. Prefix + timestamp keeps the value unique and
+        // traceable back to the original address.
+        email: `deleted.${Date.now()}.${existing.email}`,
+      },
     });
 
     const { ipAddress, userAgent } = auditLog.fromRequest(req);

@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     const readFilter = (sp.get("filter") ?? "all") as NotificationReadFilter;
     const search = sp.get("search") ?? undefined;
     const page = Math.max(Number(sp.get("page") ?? 1), 1);
-    const pageSize = Math.min(Number(sp.get("pageSize") ?? 50), 100);
+    const pageSize = Math.min(Number(sp.get("pageSize") ?? sp.get("limit") ?? 50), 100);
 
     const where = buildNotificationWhere({ userId: user.id, readFilter, search });
 

@@ -5,6 +5,7 @@ import { HttpError } from "@/lib/api";
 import type { AuthUser } from "@/lib/auth/guards";
 import { auditLog } from "./audit";
 import { slugify } from "@/lib/utils/slug";
+import { nextSequence, maxSuffixOfPrefix } from "./counters";
 
 /**
  * Generate a random 12-char temporary password (lowercase + digits).
@@ -33,8 +34,10 @@ export const studentService = {
 
   async nextStudentId(): Promise<string> {
     const year = new Date().getFullYear();
-    const count = await prisma.student.count();
-    return `STD-${year}-${String(count + 1).padStart(6, "0")}`;
+    const prefix = `STD-${year}-`;
+    const max = await maxSuffixOfPrefix("student", "studentId", prefix);
+    const seq = await nextSequence(`student-${year}`, max + 1);
+    return `${prefix}${String(seq).padStart(6, "0")}`;
   },
 
   async list(params: {
@@ -117,7 +120,10 @@ export const studentService = {
     [key: string]: unknown;
   }, actor: AuthUser) {
     const email = input.email.toLowerCase();
-    const existing = await prisma.user.findUnique({ where: { email } });
+    // Only an ACTIVE user blocks the email. Soft-deleted users get their
+    // email tombstoned on delete (users/[id] DELETE), so a match here is a
+    // real conflict, not a leftover from a deleted account.
+    const existing = await prisma.user.findFirst({ where: { email, deletedAt: null } });
     if (existing) throw new HttpError(409, "CONFLICT", "A user with this email already exists");
 
     // SECURITY: do not fall back to a hardcoded default password. The
@@ -143,24 +149,32 @@ export const studentService = {
       },
     });
 
-    const student = await prisma.student.create({
-      data: {
-        userId: user.id,
-        studentId,
-        firstName: input.firstName,
-        lastName: input.lastName,
-        email,
-        phone: input.phone,
-        dateOfBirth: (input.dateOfBirth as Date) ?? undefined,
-        gender: input.gender as string | undefined,
-        nationality: input.nationality as string | undefined,
-        address: input.address as string | undefined,
-        city: input.city as string | undefined,
-        country: input.country as string | undefined,
-        passportNumber: input.passportNumber as string | undefined,
-        assignedEmployeeId: input.assignedEmployeeId,
-      },
-    });
+    let student;
+    try {
+      student = await prisma.student.create({
+        data: {
+          userId: user.id,
+          studentId,
+          firstName: input.firstName,
+          lastName: input.lastName,
+          email,
+          phone: input.phone,
+          dateOfBirth: (input.dateOfBirth as Date) ?? undefined,
+          gender: input.gender as string | undefined,
+          nationality: input.nationality as string | undefined,
+          address: input.address as string | undefined,
+          city: input.city as string | undefined,
+          country: input.country as string | undefined,
+          passportNumber: input.passportNumber as string | undefined,
+          assignedEmployeeId: input.assignedEmployeeId,
+        },
+      });
+    } catch (err) {
+      // Compensating delete: without this a failed student row leaves an
+      // orphaned user account that permanently blocks the email.
+      await prisma.user.delete({ where: { id: user.id } }).catch(() => undefined);
+      throw err;
+    }
 
     await auditLog.record({
       userId: actor.id,

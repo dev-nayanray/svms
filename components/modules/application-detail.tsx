@@ -5,6 +5,7 @@ import { formatDate, titleCase } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import { StageChangeForm } from "./stage-change-form";
 import { AddNoteForm } from "@/components/admin/add-note-form";
+import { DeleteNoteButton } from "@/components/admin/delete-note-button";
 
 export async function ApplicationDetail({
   id,
@@ -180,7 +181,10 @@ export async function ApplicationDetail({
               <li key={n.id} className="rounded-md border border-border px-3 py-2">
                 <div className="flex items-center justify-between gap-2">
                   <StatusBadge status={n.visibility} />
-                  <span className="text-xs text-muted-foreground">{formatDate(n.createdAt)}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-muted-foreground">{formatDate(n.createdAt)}</span>
+                    {canManage && <DeleteNoteButton applicationId={app.id} noteId={n.id} />}
+                  </div>
                 </div>
                 <p className="mt-1">{n.body}</p>
               </li>

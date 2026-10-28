@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { HttpError } from "@/lib/api";
 import type { AuthUser } from "@/lib/auth/guards";
 import { auditLog } from "./audit";
+import { nextSequence, maxSuffixOfPrefix } from "./counters";
 
 export type InvoiceItemInput = { description: string; quantity: number; unitPrice: number };
 
@@ -16,8 +17,10 @@ export function computeInvoiceTotals(items: InvoiceItemInput[], discount = 0) {
 export const invoiceService = {
   async nextInvoiceNumber(): Promise<string> {
     const year = new Date().getFullYear();
-    const count = await prisma.invoice.count();
-    return `INV-${year}-${String(count + 1).padStart(5, "0")}`;
+    const prefix = `INV-${year}-`;
+    const max = await maxSuffixOfPrefix("invoice", "invoiceNumber", prefix);
+    const seq = await nextSequence(`invoice-${year}`, max + 1);
+    return `${prefix}${String(seq).padStart(5, "0")}`;
   },
 
   async create(

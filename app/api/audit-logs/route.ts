@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
     const sp = req.nextUrl.searchParams;
     const page = Math.max(Number(sp.get("page") ?? 1), 1);
-    const pageSize = Math.min(Number(sp.get("pageSize") ?? 25), 100);
+    const pageSize = Math.min(Number(sp.get("pageSize") ?? sp.get("limit") ?? 25), 100);
 
     const dateFrom = sp.get("dateFrom") ? new Date(sp.get("dateFrom")!) : undefined;
     const dateTo = sp.get("dateTo") ? new Date(sp.get("dateTo")!) : undefined;

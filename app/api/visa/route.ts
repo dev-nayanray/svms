@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     if (g.error) return g.error;
     const sp = req.nextUrl.searchParams;
     const page = Math.max(Number(sp.get("page") ?? 1), 1);
-    const pageSize = Math.min(Number(sp.get("pageSize") ?? 20), 100);
+    const pageSize = Math.min(Number(sp.get("pageSize") ?? sp.get("limit") ?? 20), 100);
 
     const where = buildAdminVisaWhere({
       search: sp.get("search") ?? undefined,

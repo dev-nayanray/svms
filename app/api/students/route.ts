@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     const sp = req.nextUrl.searchParams;
     const params = paginationSchema.parse({
       page: sp.get("page") ?? 1,
-      pageSize: sp.get("pageSize") ?? 20,
+      pageSize: sp.get("pageSize") ?? sp.get("limit") ?? 20,
       search: sp.get("search") ?? undefined,
       status: sp.get("status") ?? undefined,
     });

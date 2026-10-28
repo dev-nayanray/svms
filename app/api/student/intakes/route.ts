@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     const sp = req.nextUrl.searchParams;
     const params = studentIntakeQuerySchema.parse({
       page: sp.get("page") ?? 1,
-      pageSize: Math.min(Number(sp.get("pageSize") ?? 20), 50),
+      pageSize: Math.min(Number(sp.get("pageSize") ?? sp.get("limit") ?? 20), 50),
       search: sp.get("search") ?? undefined,
       countryId: sp.get("countryId") ?? undefined,
       universityId: sp.get("universityId") ?? undefined,

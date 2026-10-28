@@ -48,6 +48,15 @@ model Branch {
   updatedAt  DateTime  @updatedAt
 
   @@index([status])
+  @@index([deletedAt])
+}
+
+
+/// Keyed atomic sequence counters for human-facing IDs (see lib/services/counters.ts).
+model Counter {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  key   String @unique
+  value Int    @default(0)
 }
 
 model User {
@@ -75,6 +84,7 @@ model User {
 
   @@index([roleName])
   @@index([branchId])
+  @@index([deletedAt])
 }
 
 // ─────────────────────────────────────────────
@@ -137,6 +147,7 @@ model Student {
   @@index([branchId])
   @@index([status])
   @@index([email])
+  @@index([deletedAt])
 }
 
 model Employee {
@@ -157,6 +168,7 @@ model Employee {
   updatedAt DateTime  @updatedAt
 
   @@index([branchId])
+  @@index([deletedAt])
 }
 
 model Lead {
@@ -206,6 +218,7 @@ model Lead {
   @@index([priority])
   @@index([nextFollowUpAt])
   @@index([createdAt])
+  @@index([deletedAt])
 }
 
 // ─────────────────────────────────────────────
@@ -292,6 +305,7 @@ model Country {
   documentRequirements DocumentRequirement[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+  @@index([deletedAt])
 }
 
 model University {
@@ -319,6 +333,7 @@ model University {
   @@index([countryId])
   @@index([status])
   @@index([city])
+  @@index([deletedAt])
 }
 
 model Course {
@@ -349,6 +364,7 @@ model Course {
   @@index([universityId])
   @@index([degreeLevel])
   @@index([status])
+  @@index([deletedAt])
 }
 
 model Intake {
@@ -369,6 +385,7 @@ model Intake {
   @@index([courseId])
   @@index([status])
   @@index([year])
+  @@index([deletedAt])
 }
 
 // ─────────────────────────────────────────────
@@ -423,6 +440,7 @@ model Application {
   @@index([stageKey])
   @@index([countryId])
   @@index([status])
+  @@index([deletedAt])
 }
 
 model ApplicationStatusHistory {
@@ -507,6 +525,7 @@ model Document {
   @@index([reviewedById])
   // Composite: typical list query filters by student + status together.
   @@index([studentId, status])
+  @@index([deletedAt])
 }
 
 // ─────────────────────────────────────────────
@@ -548,6 +567,7 @@ model VisaApplication {
   updatedAt     DateTime @updatedAt
 
   @@index([stage])
+  @@index([deletedAt])
 }
 
 // ─────────────────────────────────────────────
@@ -581,6 +601,7 @@ model Task {
   @@index([studentId])
   // Composite: typical student-dashboard query is by student + status.
   @@index([studentId, status])
+  @@index([deletedAt])
 }
 
 // ─────────────────────────────────────────────
@@ -752,6 +773,7 @@ model Invoice {
   @@index([status])
   // Composite: student list endpoint filters by student + status.
   @@index([studentId, status])
+  @@index([deletedAt])
 }
 
 model Payment {
@@ -779,6 +801,7 @@ model Payment {
   @@index([status])
   // Composite: student list endpoint filters by student + status.
   @@index([studentId, status])
+  @@index([deletedAt])
 }
 
 // ─────────────────────────────────────────────

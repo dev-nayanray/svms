@@ -223,42 +223,39 @@ async function runEmployeeTable(filters: ReportFilters) {
     orderBy: { createdAt: "asc" },
     take: 500,
   });
-  const stats = await Promise.all(
-    employees.map(async (emp) => {
-      const [pending, overdue, completed] = await Promise.all([
-        prisma.task.count({
-          where: {
-            assignedToId: emp.userId,
-            deletedAt: null,
-            status: { in: ["TODO", "IN_PROGRESS"] },
-          },
-        }),
-        prisma.task.count({
-          where: {
-            assignedToId: emp.userId,
-            deletedAt: null,
-            status: { in: ["TODO", "IN_PROGRESS"] },
-            dueDate: { lt: new Date() },
-          },
-        }),
-        prisma.task.count({
-          where: {
-            assignedToId: emp.userId,
-            deletedAt: null,
-            status: "COMPLETED",
-          },
-        }),
-      ]);
-      return {
-        Name: emp.user.name,
-        Email: emp.user.email,
-        Students: emp._count.students,
-        Pending: pending,
-        Overdue: overdue,
-        Completed: completed,
-      };
+
+  // Three grouped queries instead of three COUNT queries per employee —
+  // with 500 employees this collapses ~1500 round-trips into 3.
+  const notCompleted = { in: ["TODO", "IN_PROGRESS"] as string[] };
+  const [pendingByUser, overdueByUser, completedByUser] = await Promise.all([
+    prisma.task.groupBy({
+      by: ["assignedToId"],
+      where: { deletedAt: null, status: notCompleted },
+      _count: { _all: true },
     }),
-  );
+    prisma.task.groupBy({
+      by: ["assignedToId"],
+      where: { deletedAt: null, status: notCompleted, dueDate: { lt: new Date() } },
+      _count: { _all: true },
+    }),
+    prisma.task.groupBy({
+      by: ["assignedToId"],
+      where: { deletedAt: null, status: "COMPLETED" },
+      _count: { _all: true },
+    }),
+  ]);
+  const pending = new Map(pendingByUser.map((r) => [r.assignedToId, r._count._all]));
+  const overdue = new Map(overdueByUser.map((r) => [r.assignedToId, r._count._all]));
+  const completed = new Map(completedByUser.map((r) => [r.assignedToId, r._count._all]));
+
+  const stats = employees.map((emp) => ({
+    Name: emp.user.name,
+    Email: emp.user.email,
+    Students: emp._count.students,
+    Pending: pending.get(emp.userId) ?? 0,
+    Overdue: overdue.get(emp.userId) ?? 0,
+    Completed: completed.get(emp.userId) ?? 0,
+  }));
   return {
     headers: ["Name", "Email", "Students", "Pending", "Overdue", "Completed"],
     rows: stats,

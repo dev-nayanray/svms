@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     const body = registerSchema.parse(await req.json());
     const email = body.email.toLowerCase();
 
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await prisma.user.findFirst({ where: { email, deletedAt: null } });
     if (existing) {
       return ok({ alreadyRegistered: true });
     }

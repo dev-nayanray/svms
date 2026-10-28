@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     const sp = req.nextUrl.searchParams;
     const params = studentCourseQuerySchema.parse({
       page: sp.get("page") ?? 1,
-      pageSize: Math.min(Number(sp.get("pageSize") ?? 12), 24),
+      pageSize: Math.min(Number(sp.get("pageSize") ?? sp.get("limit") ?? 12), 24),
       search: sp.get("search") ?? undefined,
       status: undefined, // students can't filter by status — always ACTIVE
       countryId: sp.get("countryId") ?? undefined,

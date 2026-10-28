@@ -61,6 +61,9 @@ export const applicationSchema = z.object({
   courseId: z.string().optional(),
   intakeId: z.string().optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).default("MEDIUM"),
+  // Optional initial stage; defaults to LEAD when omitted. Useful when an
+  // application is created retroactively (e.g. offer letter already received).
+  stage: z.string().optional(),
 });
 
 export const applicationStatusSchema = z.object({

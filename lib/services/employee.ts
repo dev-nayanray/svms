@@ -57,7 +57,7 @@ export const employeeService = {
     actor: AuthUser
   ) {
     const email = input.email.toLowerCase();
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await prisma.user.findFirst({ where: { email, deletedAt: null } });
     if (existing) throw new HttpError(409, "CONFLICT", "A user with this email already exists");
 
     const passwordHash = await bcrypt.hash(input.password, 10);
