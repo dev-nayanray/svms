@@ -70,16 +70,16 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           {/* Stats row */}
           <div className="flex gap-8">
             <div>
-              <p className="text-2xl font-bold">8+</p>
-              <p className="text-xs text-white/50">European countries</p>
+              <p className="text-2xl font-bold">3</p>
+              <p className="text-xs text-white/50">Destination countries</p>
             </div>
             <div className="border-l border-white/10 pl-8">
-              <p className="text-2xl font-bold">500+</p>
-              <p className="text-xs text-white/50">Universities</p>
+              <p className="text-2xl font-bold">36+</p>
+              <p className="text-xs text-white/50">Degree programmes</p>
             </div>
             <div className="border-l border-white/10 pl-8">
-              <p className="text-2xl font-bold">1000+</p>
-              <p className="text-xs text-white/50">Students guided</p>
+              <p className="text-2xl font-bold">1:1</p>
+              <p className="text-xs text-white/50">Counselor support</p>
             </div>
           </div>
 
@@ -114,7 +114,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             </span>
             <span className="flex items-center gap-1.5">
               <MapPin className="h-3.5 w-3.5" style={{ color: "#3b82f6" }} />
-              Germany · France · Italy · Spain · Netherlands
+              Romania · Bulgaria · Uzbekistan
             </span>
             <span className="flex items-center gap-1.5">
               <Star className="h-3.5 w-3.5" style={{ color: "#d4af37" }} />
@@ -125,27 +125,27 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
         {/* ── Bottom: Testimonial + copyright ── */}
         <div className="relative space-y-4">
-          {/* Testimonial */}
+          {/* Partner highlight */}
           <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur">
             <div className="mb-2 flex gap-0.5">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="h-3.5 w-3.5 fill-current" style={{ color: "#d4af37" }} />
               ))}
             </div>
-            <p className="text-sm italic leading-relaxed text-white/80">
-              &ldquo;Euroscope made my dream of studying in Germany a reality. From university
-              selection to visa preparation, they were with me every step.&rdquo;
+            <p className="text-sm leading-relaxed text-white/80">
+              Official partner university: <strong className="font-semibold text-white">Burgas Free University</strong> (Bulgaria) —
+              appointment letters already issued for our 2026/27 applicants.
             </p>
             <div className="mt-3 flex items-center gap-2">
               <span
                 className="grid h-7 w-7 place-items-center rounded-full text-xs font-semibold"
                 style={{ backgroundColor: "rgba(212, 175, 55, 0.2)", color: "#d4af37" }}
               >
-                SA
+                BFU
               </span>
               <div>
-                <p className="text-xs font-medium text-white">Sarah Ahmed</p>
-                <p className="text-[10px] text-white/50">Now studying at TU Munich</p>
+                <p className="text-xs font-medium text-white">Burgas Free University</p>
+                <p className="text-[10px] text-white/50">2026/27 intake · Burgas, Bulgaria</p>
               </div>
             </div>
           </div>

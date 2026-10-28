@@ -124,9 +124,9 @@ export function HeroSection({ content }: { content: MarketingContent }) {
             <MarketingReveal delay={320}>
               <div className="mt-12 grid grid-cols-3 gap-4 border-t border-slate-200 pt-8">
                 {[
-                  { value: "8+", label: "Countries" },
-                  { value: "500+", label: "Universities" },
-                  { value: "1000+", label: "Students guided" },
+                  { value: "3", label: "Countries" },
+                  { value: "36+", label: "Programmes" },
+                  { value: "1:1", label: "Counseling" },
                 ].map((stat) => (
                   <div key={stat.label}>
                     <p className="text-2xl font-bold text-slate-900 sm:text-3xl">{stat.value}</p>
@@ -151,15 +151,9 @@ export function HeroSection({ content }: { content: MarketingContent }) {
 
 function HeroCollage() {
   const destinations = [
-    { flag: "🇩🇪", name: "Germany" },
-    { flag: "🇫🇷", name: "France" },
-    { flag: "🇮🇹", name: "Italy" },
-    { flag: "🇪🇸", name: "Spain" },
-    { flag: "🇳🇱", name: "Netherlands" },
-    { flag: "🇸🇪", name: "Sweden" },
-    { flag: "🇫🇮", name: "Finland" },
-    { flag: "🇮🇪", name: "Ireland" },
-    { flag: "🇵🇱", name: "Poland" },
+    { flag: "🇧🇬", name: "Bulgaria" },
+    { flag: "🇷🇴", name: "Romania" },
+    { flag: "🇺🇿", name: "Uzbekistan" },
   ];
 
   return (

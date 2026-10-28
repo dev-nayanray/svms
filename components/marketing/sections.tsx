@@ -388,27 +388,29 @@ export function CTASection({ content }: { content?: { eyebrow: string; headlineP
  *  TESTIMONIALS — social proof cards
  * ════════════════════════════════════════════════════════════ */
 
+// Factual proof points instead of invented student quotes — real
+// partnerships and outcomes only (no fabricated names/universities).
 const TESTIMONIALS = [
   {
-    name: "Sarah Ahmed",
-    role: "MSc Computer Science, TU Munich",
-    avatar: "SA",
+    name: "Burgas Free University",
+    role: "Partner university · Burgas, Bulgaria",
+    avatar: "BF",
     rating: 5,
-    text: "Euroscope made my dream of studying in Germany a reality. From university selection to visa preparation, they were with me every step. The platform kept everything organized — I always knew what was next.",
+    text: "We work directly with BFU for the 2026/27 intake — appointment letters have already been issued to our applicants for both Bachelor and Master programmes.",
   },
   {
-    name: "Rahul Sharma",
-    role: "BSc Business, University of Amsterdam",
-    avatar: "RS",
+    name: "3 countries, end-to-end",
+    role: "Romania · Bulgaria · Uzbekistan",
+    avatar: "3",
     rating: 5,
-    text: "The personal counselor assigned to me was incredible. They understood my background and budget, and recommended universities I hadn't even considered. The document tracking feature saved me so much stress.",
+    text: "University selection, application handling, appointment letters, visa preparation and travel support — one counselor team manages your full journey.",
   },
   {
-    name: "Fatima Khan",
-    role: "MSc Design, Politecnico di Milano",
-    avatar: "FK",
+    name: "Full document tracking",
+    role: "Passport to visa, in one place",
+    avatar: "DT",
     rating: 5,
-    text: "I was overwhelmed by the visa process — different requirements, financial proof, deadlines. Euroscope broke it down step by step. I got my Italian visa on the first try, no rejections.",
+    text: "Every passport, police clearance, embassy appointment and payment is tracked per student in the platform — nothing gets missed before your deadline.",
   },
 ];
 
@@ -422,12 +424,12 @@ export function TestimonialsSection() {
           </MarketingReveal>
           <MarketingReveal delay={80}>
             <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-              Trusted by students across Europe
+              Why students trust Euroscope
             </h2>
           </MarketingReveal>
           <MarketingReveal delay={160}>
             <p className="mt-5 text-base leading-relaxed text-muted-foreground md:text-lg">
-              Real students, real journeys. Here&apos;s what they say about working with {APP_NAME}.
+              Real partnerships, real applications, real outcomes — here is how {APP_NAME} supports every student.
             </p>
           </MarketingReveal>
         </div>
@@ -441,7 +443,7 @@ export function TestimonialsSection() {
               ))}
             </div>
             <span className="text-sm font-semibold text-foreground">4.9/5</span>
-            <span className="text-sm text-muted-foreground">from 500+ students</span>
+            <span className="text-sm text-muted-foreground">across Romania, Bulgaria & Uzbekistan</span>
           </div>
         </MarketingReveal>
 

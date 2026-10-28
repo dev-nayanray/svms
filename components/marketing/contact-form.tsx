@@ -27,11 +27,7 @@ const STUDY_LEVELS = [
   { value: "OTHER", label: "Other" },
 ] as const;
 
-const DESTINATIONS = [
-  "Germany", "France", "Italy", "Spain", "Netherlands",
-  "Sweden", "Finland", "Denmark", "Ireland", "Poland",
-  "Hungary", "Portugal", "Austria", "Belgium", "Czech Republic",
-] as const;
+const DESTINATIONS = ["Romania", "Bulgaria", "Uzbekistan"] as const;
 
 export function ContactForm() {
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");

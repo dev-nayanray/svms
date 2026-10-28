@@ -4,73 +4,34 @@ import { Container, Section, Eyebrow, MarketingButton } from "./ui";
 import { MarketingReveal } from "./reveal";
 
 /**
- * European destination data — reflects the countries Euroscope actually
- * supports in the platform (see prisma/seed.ts for the source of truth).
+ * Destination data — reflects the countries Euroscope actually works with
+ * (managed under Admin → Countries; the /study-in-europe/[country] pages
+ * render live university data from the platform).
  */
 const EUROPEAN_DESTINATIONS = [
   {
-    slug: "germany",
-    name: "Germany",
-    flag: "🇩🇪",
-    blurb: "Public universities with low or no tuition fees — a top destination for engineering, computer science and business.",
-    areas: ["Engineering", "Computer Science", "Business"],
-    accent: "from-blue-500/20 to-blue-600/5",
-  },
-  {
-    slug: "france",
-    name: "France",
-    flag: "🇫🇷",
-    blurb: "World-class public universities and grandes écoles — strong in management, science and the arts.",
-    areas: ["Business", "Science", "Fashion"],
-    accent: "from-indigo-500/20 to-indigo-600/5",
-  },
-  {
-    slug: "italy",
-    name: "Italy",
-    flag: "🇮🇹",
-    blurb: "Affordable tuition and Europe's oldest universities — ideal for design, architecture and humanities.",
-    areas: ["Design", "Architecture", "Humanities"],
+    slug: "bulgaria",
+    name: "Bulgaria",
+    flag: "🇧🇬",
+    blurb: "EU-member country with recognized universities, low tuition and living costs — home of our partner Burgas Free University.",
+    areas: ["Business", "Computer Science", "Engineering"],
     accent: "from-emerald-500/20 to-emerald-600/5",
   },
   {
-    slug: "spain",
-    name: "Spain",
-    flag: "🇪🇸",
-    blurb: "Warm climate, vibrant culture and strong business schools — a growing destination for international students.",
-    areas: ["Business", "Tourism", "Arts"],
-    accent: "from-amber-500/20 to-amber-600/5",
+    slug: "romania",
+    name: "Romania",
+    flag: "🇷🇴",
+    blurb: "Affordable EU universities with English-taught programs in medicine, engineering and IT.",
+    areas: ["Medicine", "Engineering", "IT"],
+    accent: "from-blue-500/20 to-blue-600/5",
   },
   {
-    slug: "netherlands",
-    name: "Netherlands",
-    flag: "🇳🇱",
-    blurb: "Most English-taught programs in continental Europe — leading in engineering, agriculture and economics.",
-    areas: ["Engineering", "Economics", "Data Science"],
-    accent: "from-orange-500/20 to-orange-600/5",
-  },
-  {
-    slug: "sweden",
-    name: "Sweden",
-    flag: "🇸🇪",
-    blurb: "Innovation-driven education with strong industry links — sustainability, technology and design focus.",
-    areas: ["Sustainability", "Technology", "Design"],
+    slug: "uzbekistan",
+    name: "Uzbekistan",
+    flag: "🇺🇿",
+    blurb: "Growing hub for medical and engineering education with a simple admission process and low costs.",
+    areas: ["Medicine", "Engineering", "Business"],
     accent: "from-sky-500/20 to-sky-600/5",
-  },
-  {
-    slug: "finland",
-    name: "Finland",
-    flag: "🇫🇮",
-    blurb: "World-leading education system — excellent for education, technology and environmental sciences.",
-    areas: ["Education", "Technology", "Environmental"],
-    accent: "from-cyan-500/20 to-cyan-600/5",
-  },
-  {
-    slug: "ireland",
-    name: "Ireland",
-    flag: "🇮🇪",
-    blurb: "English-speaking EU country with strong tech and pharma industry — home to many global headquarters.",
-    areas: ["Computer Science", "Pharma", "Business"],
-    accent: "from-green-500/20 to-green-600/5",
   },
 ];
 
@@ -84,20 +45,20 @@ export function DestinationSection() {
           </MarketingReveal>
           <MarketingReveal delay={80}>
             <h2 className="mt-4 font-display text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-              Choose your European destination
+              Choose your study destination
             </h2>
           </MarketingReveal>
           <MarketingReveal delay={160}>
             <p className="mt-5 text-base leading-relaxed text-muted-foreground md:text-lg">
-              Euroscope supports applications to universities across Europe.
-              Explore popular study destinations, courses and admission requirements.
+              Euroscope supports applications to universities in Bulgaria, Romania and
+              Uzbekistan — explore destinations, courses and admission requirements.
             </p>
           </MarketingReveal>
         </div>
 
-        <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {EUROPEAN_DESTINATIONS.map((dest, i) => (
-            <MarketingReveal key={dest.slug} delay={(i % 4) * 80}>
+            <MarketingReveal key={dest.slug} delay={(i % 3) * 80}>
               <Link
                 href={`/study-in-europe/${dest.slug}`}
                 className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5"

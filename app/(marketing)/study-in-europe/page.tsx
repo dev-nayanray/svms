@@ -7,7 +7,7 @@ import { CTASection } from "@/components/marketing/sections";
 export const metadata: Metadata = {
   title: "Study in Europe — European Study Destinations",
   description:
-    "Explore European study destinations with Euroscope. Germany, France, Italy, Netherlands, Sweden, Finland, Ireland and more — find the right university for you.",
+    "Explore study destinations with Euroscope — Bulgaria, Romania and Uzbekistan. Find universities, courses and admission requirements.",
 };
 
 export default function StudyInEuropePage() {
@@ -73,7 +73,7 @@ export default function StudyInEuropePage() {
               },
               {
                 title: "Affordable Tuition",
-                body: "Many European countries — especially Germany, Norway and Finland — offer low or no tuition fees at public universities for international students.",
+                body: "Our destinations — Bulgaria, Romania and Uzbekistan — offer affordable tuition and living costs at recognized universities for international students.",
               },
               {
                 title: "Post-Study Work Opportunities",

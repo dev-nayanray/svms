@@ -13,7 +13,7 @@ const DEFAULT_FAQS = [
   },
   {
     q: "Which European countries can I study in?",
-    a: "Euroscope supports applications to universities across major European study destinations including Germany, France, Italy, Spain, the Netherlands, Sweden, Finland, Denmark, Ireland and more.",
+    a: "Euroscope currently supports applications to universities in Bulgaria, Romania and Uzbekistan — including our partner Burgas Free University in Bulgaria.",
   },
   {
     q: "How can I get started?",

@@ -27,10 +27,9 @@ const FALLBACK_COLUMNS: FooterColumn[] = [
     heading: "Study in Europe",
     enabled: true,
     links: [
-      { id: "fb-germany", label: "Germany", href: "/study-in-europe/germany" },
-      { id: "fb-france", label: "France", href: "/study-in-europe/france" },
-      { id: "fb-italy", label: "Italy", href: "/study-in-europe/italy" },
-      { id: "fb-spain", label: "Spain", href: "/study-in-europe/spain" },
+      { id: "fb-romania", label: "Romania", href: "/study-in-europe/romania" },
+      { id: "fb-bulgaria", label: "Bulgaria", href: "/study-in-europe/bulgaria" },
+      { id: "fb-uzbekistan", label: "Uzbekistan", href: "/study-in-europe/uzbekistan" },
     ],
   },
   {
@@ -151,7 +150,7 @@ export function MarketingFooter({ footerConfig, socialLinks, contactConfig }: Pr
               </div>
               <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5">
                 <FaIcon icon={ICONS.star} className="h-3.5 w-3.5" style={{ color: "#d4af37" }} />
-                <span className="text-[10px] font-medium text-white/60">1000+ Students</span>
+                <span className="text-[10px] font-medium text-white/60">Romania · Bulgaria · Uzbekistan</span>
               </div>
             </div>
           </div>
